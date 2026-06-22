@@ -1,41 +1,41 @@
-# Quy Chuẩn và Tiêu Chuẩn Đầu Vào/Đầu Ra Dự Án Owly
+# Owly Project Coding Standards and I/O Conventions
 
-Tài liệu này tổng hợp toàn bộ các tiêu chuẩn kỹ thuật, quy tắc đặt tên, và thiết kế luồng dữ liệu đầu vào/đầu ra (Input/Output) áp dụng cho cả Backend (Express.js) và Frontend (React.js + Vite) của dự án **Owly**.
+This document outlines all technical standards, naming conventions, and data input/output (I/O) design flow rules applicable to both the Backend (Express.js) and Frontend (React.js + Vite & React Native + Expo) of the **Owly** project.
 
 ---
 
-## I. Quy Chuẩn Đặt Tên & Cấu Trúc File (Naming Conventions)
+## I. Naming Conventions & File Structures
 
-### 1. Thư mục và File
-*   **Thư mục (Directories):** Sử dụng danh từ viết thường (`lowercase`) hoặc `kebab-case` nếu ghép nhiều từ.
-    *   *Ví dụ:* `controllers`, `services`, `custom-hooks`, `pages`.
-*   **File React Component (Frontend):** Sử dụng `PascalCase` với đuôi `.jsx`.
-    *   *Ví dụ:* `UserProfile.jsx`, `Sidebar.jsx`, `Button.jsx`.
-*   **File Logic / Utils / Hook / Route / Controller:** Sử dụng `camelCase` với đuôi `.js` (hoặc `.jsx` nếu chứa React component).
-    *   *Ví dụ:* `errorHandler.js`, `useAuth.js`, `formatDate.js`, `userController.js`.
-*   **File Cấu hình (Config):** Sử dụng `lowercase` hoặc `kebab-case`.
-    *   *Ví dụ:* `vite.config.js`, `eslint.config.js`, `pnpm-lock.yaml`.
+### 1. Directories and Files
+*   **Directories:** Use lowercase nouns or `kebab-case` for multi-word folders.
+    *   *Examples:* `controllers`, `services`, `custom-hooks`, `pages`.
+*   **React Component Files (Frontend):** Use `PascalCase` with a `.jsx` (or `.tsx`) extension.
+    *   *Examples:* `UserProfile.jsx`, `Sidebar.jsx`, `Button.jsx`.
+*   **Logic / Utils / Hooks / Routes / Controllers:** Use `camelCase` with a `.js` (or `.ts`) extension (or `.jsx`/`.tsx` if they contain React components).
+    *   *Examples:* `errorHandler.js`, `useAuth.js`, `formatDate.js`, `userController.js`.
+*   **Configuration Files (Config):** Use lowercase or `kebab-case`.
+    *   *Examples:* `vite.config.js`, `eslint.config.js`, `pnpm-lock.yaml`.
 
-### 2. Biến, Hàm và Class
-*   **Biến & Hàm:** Sử dụng `camelCase`. Tên hàm nên là động từ hoặc cụm động từ.
-    *   *Ví dụ:* `const userData = ...`, `function getUserProfile() { ... }`.
-*   **Hằng số (Constants):** Sử dụng `UPPER_SNAKE_CASE`.
-    *   *Ví dụ:* `const PORT = 5000;`, `const MAX_RETRY_LIMIT = 5;`.
-*   **Class:** Sử dụng `PascalCase`.
-    *   *Ví dụ:* `class AppError extends Error { ... }`.
-*   **Trường dữ liệu trong Database (Supabase):** Dùng `snake_case`.
-    *   *Ví dụ:* `user_id`, `created_at`, `is_active`.
+### 2. Variables, Functions, and Classes
+*   **Variables & Functions:** Use `camelCase`. Function names should be verbs or verb phrases.
+    *   *Examples:* `const userData = ...`, `function getUserProfile() { ... }`.
+*   **Constants:** Use `UPPER_SNAKE_CASE`.
+    *   *Examples:* `const PORT = 5000;`, `const MAX_RETRY_LIMIT = 5;`.
+*   **Classes:** Use `PascalCase`.
+    *   *Examples:* `class AppError extends Error { ... }`.
+*   **Database Fields (Supabase):** Use `snake_case`.
+    *   *Examples:* `user_id`, `created_at`, `is_active`.
 *   **React Props & Event Handlers:**
-    *   *Props nhận giá trị:* Dùng `camelCase` (ví dụ: `userId`, `themeColor`).
-    *   *Props nhận callback:* Bắt đầu bằng `on` (ví dụ: `onClick`, `onClose`, `onUserUpdate`).
-    *   *Hàm xử lý sự kiện trong Component:** Bắt đầu bằng `handle` (ví dụ: `handleFormSubmit`, `handleClose`).
+    *   *Value props:* Use `camelCase` (e.g., `userId`, `themeColor`).
+    *   *Callback props:* Start with `on` (e.g., `onClick`, `onClose`, `onUserUpdate`).
+    *   *Event handlers inside components:* Start with `handle` (e.g., `handleFormSubmit`, `handleClose`).
 
 ---
 
-## II. Tiêu Chuẩn Cho Backend (Express.js)
+## II. Backend Standards (Express.js)
 
-### 1. Kiến Trúc Luồng Dữ Liệu (Monolithic Layered Architecture)
-Luồng xử lý một Request đi qua các lớp như sau:
+### 1. Data Flow Architecture (Monolithic Layered Architecture)
+The processing flow of a Request goes through the following layers:
 ```mermaid
 graph TD
     Client[Client / FE] -->|HTTP Request| Routes[1. Routes & Middlewares]
@@ -45,50 +45,50 @@ graph TD
     Services -->|Query / Mutate| DB[(Supabase / Database)]
 ```
 
-### 2. Tiêu Chuẩn Đầu Vào (Input)
-*   **Validate Nghiêm Ngặt Ở Cửa Ngõ:** Không chuyển dữ liệu thô (`req.body`, `req.query`, `req.params`) trực tiếp vào Controller/Service mà chưa kiểm tra.
-*   **Giải Pháp:** Sử dụng thư viện **Zod** để định nghĩa schema và validate bằng middleware trước khi vào controller:
+### 2. Input Standards
+*   **Strict Validation at the Entry:** Never pass raw data (`req.body`, `req.query`, `req.params`) directly into Controllers/Services without validation.
+*   **Solution:** Use **Zod** to define schemas and validate inputs using middleware before they reach the controller:
     ```javascript
-    // Định nghĩa Schema
+    // Schema Definition
     import { z } from 'zod';
     export const loginSchema = z.object({
-      email: z.string().email('Email không đúng định dạng'),
-      password: z.string().min(6, 'Mật khẩu phải tối thiểu 6 ký tự'),
+      email: z.string().email('Invalid email format'),
+      password: z.string().min(6, 'Password must be at least 6 characters'),
     });
     ```
-*   **Tách Biệt Đối Tượng:** Controller chỉ trích xuất các thuộc tính cần thiết từ request và truyền dạng tham số tường minh (ví dụ: `userService.login(email, password)`) thay vì truyền cả đối tượng `req` vào tầng Service.
+*   **Separation of Concerns:** Controllers must extract only the required parameters from the request object and pass them explicitly (e.g., `userService.login(email, password)`) instead of passing the entire `req` object to the Service layer.
 
-### 3. Tiêu Chuẩn Đầu Ra (Output) & Xử Lý Lỗi
-*   **Định Dạng Response Thành Công (HTTP 2xx):**
-    Phải luôn trả về một cấu trúc JSON thống nhất:
+### 3. Output Standards & Error Handling
+*   **Successful Response Format (HTTP 2xx):**
+    Always return a unified JSON structure:
     ```json
     {
       "success": true,
       "data": {
-        // Dữ liệu trả về ở đây (Object hoặc Array)
+        // Returned data payload (Object or Array)
       }
     }
     ```
-*   **Định Dạng Response Thất Bại (HTTP 4xx, 5xx):**
-    Không để lộ Stack Trace của lỗi cho Client ở môi trường Production.
+*   **Failed Response Format (HTTP 4xx, 5xx):**
+    Never expose stack traces to the client in Production.
     ```json
     {
       "success": false,
-      "message": "Thông báo lỗi thân thiện với người dùng",
-      "errors": [] // Chi tiết lỗi (nếu có, ví dụ lỗi validation)
+      "message": "User-friendly error message",
+      "errors": [] // Error details (e.g., validation error messages)
     }
     ```
-*   **Xử Lý Lỗi Tập Trung (Centralized Error Handling):**
-    *   Sử dụng một wrapper `asyncHandler` để chuyển lỗi không đồng bộ sang middleware xử lý lỗi cuối cùng.
-    *   Tất cả các lỗi nghiệp vụ chủ động ném ra bằng class lỗi tùy chỉnh (ví dụ: `AppError(message, statusCode)`).
+*   **Centralized Error Handling:**
+    *   Use an `asyncHandler` wrapper to automatically catch and forward asynchronous errors to the final error handling middleware.
+    *   All business/domain errors must be thrown explicitly using custom error classes (e.g., `AppError(message, statusCode)`).
 
 ---
 
-## III. Tiêu Chuẩn Cho Frontend (React.js + Vite)
+## III. Frontend Standards (React.js + Vite)
 
-### 1. Phân Tách Giao Diện Và Logic (UI & Logic Boundary)
-*   **Không Gọi API Trực Tiếp Trong Component:** Tránh viết `useEffect` chứa các hàm fetch API trực tiếp tại file JSX hiển thị UI.
-*   **Giải Pháp:** Tách logic fetch dữ liệu và xử lý state cục bộ thành các **Custom Hooks** trong thư mục `hooks/`.
+### 1. UI & Logic Boundary Separation
+*   **No Direct API Calls in Components:** Avoid using `useEffect` containing direct fetch/API calls inside JSX visual components.
+*   **Solution:** Separate data fetching and local state management into **Custom Hooks** inside the `hooks/` directory.
     ```javascript
     // hooks/useUserProfile.js
     export function useUserProfile(userId) {
@@ -105,27 +105,71 @@ graph TD
     }
     ```
 
-### 2. Tiêu Chuẩn Đầu Vào (Nhận Dữ Liệu Từ API)
-*   **Cấu Hình Axios Instance Tập Trung:** Thiết lập baseUrl, cấu hình timeout, headers (authorization) tại một file chung.
-*   **Response Interceptor:** Sử dụng interceptor để xử lý các mã lỗi hệ thống một cách tự động:
-    *   `401 Unauthorized`: Xóa token ở local storage và chuyển hướng người dùng về trang Đăng nhập.
-    *   `500 Internal Error`: Hiển thị thông báo lỗi hệ thống chung qua Mantine Notification Toast.
-    *   Bóc tách sẵn trường `.data` để component/hook chỉ nhận về cục data sạch.
+### 2. Input Standards (Receiving Data from API)
+*   **Centralized Axios Instance:** Define base URLs, timeouts, and authorization headers in a single shared configuration file.
+*   **Response Interceptors:** Use interceptors to handle global system errors automatically:
+    *   `401 Unauthorized`: Clear tokens from local storage and redirect users to the Login page.
+    *   `500 Internal Error`: Show a generic system error toast using Mantine Notifications.
+    *   Automatically extract the `.data` property so that hooks/components only receive clean data payload.
 
-### 3. Tiêu Chuẩn Đầu Ra (Gửi Dữ Liệu Đi)
-*   **Kiểm Tra Dữ Liệu Ở FE (Client-side Validation):** Validate form trước khi submit lên server (sử dụng Mantine Form Validation hoặc Zod kết hợp với form library).
-*   **Đồng Bộ Trạng thái State (Zustand Stores):**
-    *   Tách biệt dữ liệu toàn cục (Global State) như thông tin User đã đăng nhập, Theme hệ thống vào Zustand.
-    *   Dữ liệu cục bộ (Local State) của form hoặc các UI component khác thì chỉ giữ lại trong component đó bằng `useState`.
+### 3. Output Standards (Sending Data)
+*   **Client-side Validation:** Validate forms before submitting them to the server (use Mantine Form Validation or Zod in combination with form libraries).
+*   **State Synchronization (Zustand Stores):**
+    *   Separate global states (such as logged-in User info, application Theme) into Zustand stores.
+    *   Keep local states (like form inputs or UI modal states) within the local component using `useState`.
 
 ---
 
-## IV. Kiểm Soát Chất Lượng Code Tự Động (Quality Automation)
+## IV. Mobile Standards (React Native + Expo)
 
-Để đảm bảo các nhà phát triển tuân thủ nghiêm ngặt các quy chuẩn trên, dự án sẽ thiết lập các quy trình tự động sau:
+### 1. Directory Structure & Navigation (Expo Router)
+*   **Routing Architecture:** The project uses **Expo Router** for file-based routing located under the `app/` directory.
+*   **Sub-directory Structure:**
+    *   `app/`: Contains screens and layouts (`_layout.tsx`, `index.tsx`, `(tabs)/`, etc.).
+    *   `components/`: Contains shared reusable UI components (e.g., `Button.tsx`, `Card.tsx`).
+    *   `hooks/`: Contains custom hooks handling API calls and local states.
+    *   `constants/`: Contains constants like colors (`Colors.ts`), layouts, configs.
+    *   `services/`: Contains the Axios client setup and API endpoints.
 
-1.  **Định Dạng Tự Động (Formatter):** Dùng **Prettier** để tự động căn lề, chấm phẩy, khoảng trắng.
-2.  **Rà Soát Lỗi Tĩnh (Linter):** Dùng **ESLint** để kiểm tra các biến không sử dụng, cú pháp lỗi hoặc các React hooks bị vi phạm quy tắc.
+### 2. UI & Styling Standards
+*   **Mantine UI Incompatibility:** Since Mantine UI is web-only, mobile interfaces must be built using native React Native components (`View`, `Text`, `TouchableOpacity`, `ScrollView`, `FlatList`).
+*   **Safe Area Management:** Always wrap screens in `SafeAreaView` from `react-native-safe-area-context` to prevent layout overlaps with notches, status bars, or home indicator areas.
+*   **Styling:** Use Tailwind CSS via **NativeWind** or React Native's standard `StyleSheet.create`. Avoid inline styles unless style values are dynamic.
+*   **Images & Assets:** Use `<Image>` or suitable SVG libraries, and always optimize image sizes before adding them to the `assets` folder.
+
+### 3. Networking & API Integration
+*   **API URL for Local Development:**
+    *   Do not use `localhost` or `127.0.0.1` as the base API URL on mobile, as emulator/simulator environments cannot resolve it.
+    *   Use the local development machine's internal IP address (e.g., `http://192.168.x.x:5000`) or configure it via Expo's env variables (`EXPO_PUBLIC_API_URL`).
+*   **State Management:** Reuse **Zustand** to construct stores for tokens and user details, mimicking the Web implementation.
+
+---
+
+## V. Timezone & Date-Time Conventions
+
+The application primarily targets the Vietnamese market (timezone **UTC+7** / Asia/Ho_Chi_Minh). To avoid timezone discrepancies between clients (Web/Mobile), backend (Express.js), and the database (Supabase), adhere to the following rules:
+
+### 1. Database Storage (Supabase / Postgres)
+*   **Data Type:** Use `timestamptz` (Timestamp with Time Zone) for all columns storing time events (e.g., `created_at`, `updated_at`, `scheduled_at`).
+*   **Default Value:** Always default to `now()` or `timezone('utc'::text, now())` so that Supabase records timestamps in UTC upon record creation.
+*   **No Local Time Storage:** Never add timezone offset (+7 hours) manually before saving raw strings to the database. This prevents errors when querying, filtering, or aggregating dates inside PostgreSQL.
+
+### 2. Backend Processing (Express.js)
+*   **Data Transmission Standard:** API payloads must transfer dates as standard **ISO 8601** strings containing explicit timezone offsets (e.g., `2026-06-22T14:35:37Z` or `2026-06-22T21:35:37+07:00`).
+*   **Libraries:** Use libraries like `dayjs` or `date-fns` to parse, compare, and manipulate dates. Avoid using JavaScript's default `Date` object for complex timezone calculations.
+
+### 3. Frontend Presentation (Web & Mobile)
+*   **Timezone Conversion:** The frontend receives ISO 8601 (UTC) dates from the API and converts them to the user's local timezone (defaulting to UTC+7 for Vietnam).
+*   **Formatting:** Use common helper functions under `utils/formatDate.js` (or `.ts`) to format dates for users (e.g., `DD/MM/YYYY HH:mm` or relative labels like *"5 minutes ago"*).
+
+---
+
+## VI. Quality Automation
+
+To ensure strict adherence to the standards above, the project utilizes the following automated workflows:
+
+1.  **Auto-Formatting:** Use **Prettier** to automatically format spacing, semicolons, and quotes.
+2.  **Linter:** Use **ESLint** to verify unused variables, syntax problems, or hook rules violations.
 3.  **Git Hooks (Husky + lint-staged):**
-    *   Mỗi khi chạy lệnh `git commit`, hệ thống sẽ tự động chạy ESLint và Prettier kiểm tra các file đang sửa đổi.
-    *   Nếu phát hiện lỗi, lệnh commit sẽ bị hủy cho tới khi lỗi được khắc phục.
+    *   Every `git commit` automatically triggers ESLint and Prettier on staged files.
+    *   If errors are found, the commit is aborted until they are resolved.
