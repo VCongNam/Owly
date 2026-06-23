@@ -50,6 +50,16 @@ app.get('/supabase-check', async (req, res) => {
   }
 });
 
+// Health check endpoint for Production / Dev environment verification
+app.get('/health', async (req, res) => {
+  res.json({
+    status: 'UP',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
