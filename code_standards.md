@@ -47,14 +47,22 @@ graph TD
 
 ### 2. Input Standards
 *   **Strict Validation at the Entry:** Never pass raw data (`req.body`, `req.query`, `req.params`) directly into Controllers/Services without validation.
-*   **Solution:** Use **Zod** to define schemas and validate inputs using middleware before they reach the controller:
+*   **Tiếng Việt hóa thông báo lỗi:** Toàn bộ thông báo lỗi trả về cho client (đặc biệt là lỗi validate đầu vào) **bắt buộc phải viết bằng Tiếng Việt** thân thiện với người dùng cuối.
+*   **Zod Validation Middleware:** Định nghĩa schema chi tiết và sử dụng middleware `validate(schema)` để chặn dữ liệu không hợp lệ ngay tại tầng Route:
     ```javascript
-    // Schema Definition
+    // Định nghĩa Schema (validation/authSchema.js)
     import { z } from 'zod';
-    export const loginSchema = z.object({
-      email: z.string().email('Invalid email format'),
-      password: z.string().min(6, 'Password must be at least 6 characters'),
+    export const signUpSchema = z.object({
+      email: z.string().email('Email không đúng định dạng'),
+      password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
+      phone: z.string().regex(/^(0[3|5|7|8|9])+([0-9]{8})$/, 'Số điện thoại không đúng định dạng')
     });
+    ```
+    ```javascript
+    // Áp dụng tại Route (routes/authRoutes.js)
+    import { validate } from '../middlewares/validate.js';
+    import { signUpSchema } from '../validation/authSchema.js';
+    router.post('/signup', validate(signUpSchema), authController.signUp);
     ```
 *   **Separation of Concerns:** Controllers must extract only the required parameters from the request object and pass them explicitly (e.g., `userService.login(email, password)`) instead of passing the entire `req` object to the Service layer.
 

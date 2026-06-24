@@ -1,0 +1,300 @@
+datasource db {
+  provider  = "postgresql"
+}
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ==========================================
+// PHÂN HỆ 1: NGƯỜI DÙNG & TÀI KHOẢN (IDENTITY)
+// ==========================================
+
+model Account {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  adminProfile   SystemAdmin?
+  teacherProfile Teacher?
+  studentProfile Student?
+
+  @@map("accounts")
+}
+
+model SystemAdmin {
+  id       String  @id @db.Uuid // Khóa ngoại trỏ thẳng tới Account.id
+  fullName String  @map("full_name") @db.VarChar(255)
+  account  Account @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  @@map("system_admins")
+}
+
+model Teacher {
+  id             String            @id @db.Uuid // Khóa ngoại trỏ thẳng tới Account.id
+  teacherCode    String            @unique @map("teacher_code") @db.VarChar(50)
+  fullName       String            @map("full_name") @db.VarChar(255)
+  account        Account           @relation(fields: [id], references: [id], onDelete: Cascade)
+  
+  classes              Class[]
+  createdStudents      Student[]         @relation("TeacherCreatedStudents")
+  feedbacksWritten     SessionFeedback[]
+  reviewedTransactions Transaction[]
+  specializations      TeacherSubject[]
+
+  @@map("teachers")
+}
+
+model Student {
+  id          String   @id @db.Uuid // Khóa ngoại trỏ thẳng tới Account.id
+  studentCode String   @unique @map("student_code") @db.VarChar(50)
+  fullName    String   @map("full_name") @db.VarChar(255)
+  dateOfBirth DateTime @map("date_of_birth") @db.Date
+  parentPhone String   @map("parent_phone") @db.VarChar(50)
+  createdById String   @map("created_by_id") @db.Uuid
+
+  account     Account  @relation(fields: [id], references: [id], onDelete: Cascade)
+  createdBy   Teacher  @relation("TeacherCreatedStudents", fields: [createdById], references: [id])
+
+  enrollments      ClassEnrollment[]
+  attendances      Attendance[]
+  submissions      Submission[]
+  sessionFeedbacks SessionFeedback[]
+  invoices         Invoice[]
+
+  @@map("students")
+}
+
+// ==========================================
+// PHÂN HỆ 2: VẬN HÀNH ĐÀO TẠO & LỚP HỌC
+// ==========================================
+
+model Class {
+  id              String            @id @default(uuid()) @db.Uuid
+  classCode       String            @unique @map("class_code") @db.VarChar(50)
+  name            String            @db.VarChar(255)
+  teacherId       String            @map("teacher_id") @db.Uuid // Giáo viên sở hữu và quản lý lớp này
+  status          String            @default("Active") @db.VarChar(50) // Active, Completed, Archived
+  startDate       DateTime          @map("start_date") @db.Timestamptz
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  
+  // Cột JSON linh hoạt để lưu các thuộc tính mở rộng phát sinh sau này mà không sợ vỡ DB
+  extraProperties Json?             @map("extra_properties")
+
+  teacher         Teacher           @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  enrollments     ClassEnrollment[]
+  schedules       ClassSchedule[]
+  sessions        Session[]
+  gradeCategories GradeCategory[]
+  assignments     Assignment[]
+  tuitionConfig   ClassTum?
+  invoices        Invoice[]
+
+  @@map("classes")
+}
+
+model ClassEnrollment {
+  id             String   @id @default(uuid()) @db.Uuid
+  classId        String   @map("class_id") @db.Uuid
+  studentId      String   @map("student_id") @db.Uuid
+  enrollmentDate DateTime @default(now()) @map("enrollment_date") @db.Timestamptz
+  isActive       Boolean  @default(true) @map("is_active")
+
+  class          Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  student        Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([classId, studentId])
+  @@map("class_enrollments")
+}
+
+model ClassSchedule {
+  id        String @id @default(uuid()) @db.Uuid
+  classId   String @map("class_id") @db.Uuid
+  dayOfWeek Int    @map("day_of_week") // 2 = Thứ 2, 3 = Thứ 3...
+  startTime String @map("start_time") @db.VarChar(5) // Định dạng chuỗi lặp "HH:mm"
+  endTime   String @map("end_time") @db.VarChar(5)   // Định dạng chuỗi lặp "HH:mm"
+  room      String @db.VarChar(100)
+
+  class     Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@map("class_schedules")
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  classId   String   @map("class_id") @db.Uuid
+  title     String?  @db.VarChar(255)
+  date      DateTime @db.Timestamptz
+  status    String   @default("Scheduled") @db.VarChar(50) // Scheduled, Completed, Cancelled
+
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  attendances Attendance[]
+  feedbacks   SessionFeedback[]
+
+  @@map("sessions")
+}
+
+model Attendance {
+  id        String   @id @default(uuid()) @db.Uuid
+  sessionId String   @map("session_id") @db.Uuid
+  studentId String   @map("student_id") @db.Uuid
+  status    String   @db.VarChar(50) // Present, Absent, Late, Excused
+  notes     String?  @db.Text
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, studentId])
+  @@map("attendances")
+}
+
+// ==========================================
+// PHÂN HỆ 3: NHẬN XÉT CHI TIẾT & HỌC THUẬT
+// ==========================================
+
+model SessionFeedback {
+  id               String   @id @default(uuid()) @db.Uuid
+  sessionId        String   @map("session_id") @db.Uuid
+  studentId        String   @map("student_id") @db.Uuid
+  teacherId        String   @map("teacher_id") @db.Uuid
+  academicComment  String?  @map("academic_comment") @db.Text // Nhận xét học lực tiếp thu
+  attitudeComment  String?  @map("attitude_comment") @db.Text // Nhận xét thái độ nề nếp
+  homeworkComment  String?  @map("homework_comment") @db.Text // Nhận xét bài tập về nhà cũ
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  session          Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student          Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacher          Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, studentId])
+  @@map("session_feedbacks")
+}
+
+model GradeCategory {
+  id          String       @id @default(uuid()) @db.Uuid
+  classId     String       @map("class_id") @db.Uuid
+  name        String       @db.VarChar(100) // Chuyên cần, Giữa kỳ, Cuối kỳ
+  weight      Float        // Trọng số phần trăm (Ví dụ: 0.2, 0.3, 0.5)
+  class       Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
+  assignments Assignment[]
+
+  @@map("grade_categories")
+}
+
+model Assignment {
+  id              String        @id @default(uuid()) @db.Uuid
+  classId         String        @map("class_id") @db.Uuid
+  gradeCategoryId String        @map("grade_category_id") @db.Uuid
+  title           String        @db.VarChar(255)
+  dueDate         DateTime      @map("due_date") @db.Timestamptz
+  maxPoints       Float         @map("max_points")
+
+  class           Class         @relation(fields: [classId], references: [id], onDelete: Cascade)
+  category        GradeCategory @relation(fields: [gradeCategoryId], references: [id], onDelete: Cascade)
+  submissions     Submission[]
+
+  @@map("assignments")
+}
+
+model Submission {
+  id           String              @id @default(uuid()) @db.Uuid
+  assignmentId String              @map("assignment_id") @db.Uuid
+  studentId    String              @map("student_id") @db.Uuid
+  submittedAt  DateTime            @default(now()) @map("submitted_at") @db.Timestamptz
+  content      String              @db.Text // Link file bài nộp lưu trên Supabase Storage
+
+  assignment   Assignment          @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  student      Student             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  feedback     SubmissionFeedback?
+
+  @@map("submissions")
+}
+
+model SubmissionFeedback {
+  id           String     @id @default(uuid()) @db.Uuid
+  submissionId String     @unique @map("submission_id") @db.Uuid
+  grade        Float
+  remarks      String     @db.Text
+  gradedById   String     @map("graded_by_id") @db.Uuid // Giáo viên trực tiếp chấm điểm
+
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@map("submission_feedbacks")
+}
+
+// ==========================================
+// PHÂN HỆ 4: LUỒNG TIỀN HỌC PHÍ RIÊNG BIỆT
+// ==========================================
+
+model ClassTum {
+  id           String @id @default(uuid()) @db.Uuid
+  classId      String @unique @map("class_id") @db.Uuid
+  amount       Float  // Định mức giá học phí trên mỗi buổi học
+  billingCycle String @default("Monthly") @map("billing_cycle") @db.VarChar(50)
+
+  class        Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@map("class_tums")
+}
+
+model Invoice {
+  id        String        @id @default(uuid()) @db.Uuid
+  studentId String        @map("student_id") @db.Uuid
+  classId   String        @map("class_id") @db.Uuid
+  amount    Float
+  dueDate   DateTime      @map("due_date") @db.Timestamptz
+  status    String        @default("Unpaid") @db.VarChar(50) // Unpaid, Pending, Paid
+
+  class     Class         @relation(fields: [classId], references: [id], onDelete: Cascade)
+  student   Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@map("invoices")
+}
+
+model Transaction {
+  id                String   @id @default(uuid()) @db.Uuid
+  invoiceId         String   @map("invoice_id") @db.Uuid
+  paymentMethod     String   @default("VietQR") @map("payment_method") @db.VarChar(50)
+  amountPaid        Float    @map("amount_paid")
+  proofUrl          String   @map("proof_url") @db.Text // Ảnh chụp minh chứng giao dịch học sinh tải lên
+  transactionStatus String   @default("Pending") @map("transaction_status") @db.VarChar(50) // Pending, Approved, Rejected
+  processedById     String   @map("processed_by_id") @db.Uuid // Giáo viên chủ nhiệm lớp trực tiếp đối soát và duyệt tiền
+
+  invoice           Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  processedBy       Teacher  @relation(fields: [processedById], references: [id])
+
+  @@map("transactions")
+}
+
+// ==========================================
+// PHÂN HỆ 5: DANH MỤC MÔN HỌC (SPECIALIZATIONS)
+// ==========================================
+
+model Subject {
+  id        String           @id @default(uuid()) @db.Uuid
+  name      String           @unique @db.VarChar(100) // Ví dụ: "Toán học", "Vật lý"
+  code      String           @unique @db.VarChar(50)  // Ví dụ: "MATH", "PHYSICS"
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz
+
+  teachers  TeacherSubject[]
+
+  @@map("subjects")
+}
+
+model TeacherSubject {
+  teacherId String  @map("teacher_id") @db.Uuid
+  subjectId String  @map("subject_id") @db.Uuid
+
+  teacher   Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@id([teacherId, subjectId])
+  @@map("teacher_subjects")
+}

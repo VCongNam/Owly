@@ -1,0 +1,21 @@
+meta {
+  name: Sign Up
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/auth/signup
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "teacher.test@example.com",
+    "password": "SecurePassword123!",
+    "fullName": "Nguyễn Văn Nam",
+    "phone": "0987654321",
+    "specialization": "Toán học THPT"
+  }
+}
