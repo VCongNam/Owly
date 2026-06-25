@@ -1,6 +1,88 @@
-body {
-  margin: 0;
+:root {
+  /* Prussian Blue & Copper Palette */
+  --bg-color: #faf8f8;
+  --text-color: #111e2e;
+  --accent-color: #c87a8a;
+  --card-bg: #ffffff;
+  --border-color: #e4ecf3;
+  --shadow-color: rgba(17, 30, 46, 0.05);
+
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: #090e16;
+    --text-color: #e6edf8;
+    --accent-color: #e08c9c;
+    --card-bg: #111a24;
+    --border-color: #22354a;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+  }
+}
+
+html[data-mantine-color-scheme="dark"] {
+  --bg-color: #090e16;
+  --text-color: #e6edf8;
+  --accent-color: #e08c9c;
+  --card-bg: #111a24;
+  --border-color: #22354a;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+}
+
+html[data-mantine-color-scheme="light"] {
+  --bg-color: #faf8f8;
+  --text-color: #111e2e;
+  --accent-color: #c87a8a;
+  --card-bg: #ffffff;
+  --border-color: #e4ecf3;
+  --shadow-color: rgba(17, 30, 46, 0.05);
+}
+
 * {
   box-sizing: border-box;
 }
+
+body {
+  margin: 0;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+}
+
+/* Taste Skill responsive and touch standards */
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+/* Ensure nice focus outlines */
+*:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+/* Global utility classes for premium layouts without Tailwind */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* Prevent text wrap on primary CTAs */
+.cta-button {
+  white-space: nowrap;
+}
+

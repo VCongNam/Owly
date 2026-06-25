@@ -13,6 +13,7 @@
     "@mantine/charts": "^9.3.2",
     "@mantine/core": "^9.3.2",
     "@mantine/dates": "^9.3.2",
+    "@mantine/form": "^9.4.0",
     "@mantine/hooks": "^9.3.2",
     "@mantine/notifications": "^9.3.2",
     "axios": "^1.18.0",

@@ -5,7 +5,7 @@ import { supabase } from '../config/supabase.js';
 // Hàm helper để sinh mã giáo viên tự động (ví dụ: GV001, GV002...)
 const generateTeacherCode = async (tx) => {
   const lastTeacher = await tx.teacher.findFirst({
-    orderBy: { createdAt: 'desc' }
+    orderBy: { teacherCode: 'desc' }
   });
   
   let nextNum = 1;
