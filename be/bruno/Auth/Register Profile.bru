@@ -1,0 +1,22 @@
+meta {
+  name: Register Profile
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/auth/register-profile
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+body:json {
+  {
+    "fullName": "Nguyễn Văn Nam",
+    "specialization": "Toán học THPT"
+  }
+}
