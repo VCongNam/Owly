@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { MantineProvider, Container, Title, Text, Card, Button, Group } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
@@ -5,6 +6,7 @@ import { theme } from './theme';
 import { SignIn } from './pages/SignIn';
 import { SignUp } from './pages/SignUp';
 import { useAuth } from './hooks/useAuth';
+import { supabase } from './services/supabaseClient';
 
 import '@mantine/core/styles.css';
 import '@mantine/dates/styles.css';
@@ -53,6 +55,28 @@ function Home() {
 }
 
 export function App() {
+  const { setSession } = useAuth();
+
+  useEffect(() => {
+    // 1. Kiểm tra session hiện tại khi ứng dụng khởi chạy
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setSession(session.user, session.access_token);
+      }
+    });
+
+    // 2. Lắng nghe thay đổi trạng thái xác thực từ Supabase (Đăng nhập, Đăng xuất, Refresh Token...)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        setSession(session.user, session.access_token);
+      } else {
+        setSession(null, null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [setSession]);
+
   return (
     <MantineProvider theme={theme} defaultColorScheme="auto">
       <Notifications position="top-right" zIndex={1000} />

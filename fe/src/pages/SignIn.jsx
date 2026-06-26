@@ -3,6 +3,7 @@ import { useForm } from '@mantine/form';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { notifications } from '@mantine/notifications';
+import { supabase } from '../services/supabaseClient';
 import logo from '../assets/logo.png';
 import classes from '../components/AuthenticationImage.module.css';
 
@@ -41,9 +42,27 @@ export function SignIn() {
     }
   };
 
+  const handleOAuthLogin = async (provider) => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: provider.toLowerCase(), // 'google' hoặc 'facebook'
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+      if (error) throw error;
+    } catch (err) {
+      notifications.show({
+        title: `Lỗi đăng nhập ${provider}`,
+        message: err.message || 'Không thể thiết lập kết nối OAuth. Vui lòng thử lại.',
+        color: 'red',
+      });
+    }
+  };
+
   return (
     <div className={classes.wrapper}>
-      {/* Cột trái: Ảnh minh họa / Nền gradient thương hiệu (bạn có thể thay ảnh sau) */}
+      {/* Cột trái: Ảnh minh họa / Nền gradient thương hiệu */}
       <div className={classes.leftSide}>
         <div style={{ textAlign: 'center', color: '#fff', zIndex: 10 }}>
           <img
@@ -80,24 +99,55 @@ export function SignIn() {
       {/* Cột phải: Form nhập liệu */}
       <div className={classes.rightSide}>
         <Paper className={classes.form} withBorder={false}>
-          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-             <img
-                        src={logo}
-                        alt="Owly Logo"
-                        style={{
-                          width: '90px',
-                          height: '90px',
-                          objectFit: 'contain',
-                        }}
-                      />
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
             <Title order={2} className={classes.title}>
               Chào mừng quay lại
             </Title>
-            
-
             <Text size="sm" style={{ color: 'var(--text-color)', opacity: 0.6, marginTop: '0.25rem' }}>
               Nhập thông tin tài khoản của bạn để tiếp tục
             </Text>
+          </div>
+
+          {/* Social Logins */}
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '1.5rem' }}>
+            <Button
+              variant="outline"
+              color="gray"
+              fullWidth
+              onClick={() => handleOAuthLogin('Google')}
+              style={{ borderColor: 'var(--border-color)' }}
+              leftSection={
+                <img
+                  src="https://cdn.simpleicons.org/google/000000"
+                  alt="Google"
+                  style={{ width: '16px', height: '16px' }}
+                />
+              }
+            >
+              Google
+            </Button>
+            <Button
+              variant="outline"
+              color="gray"
+              fullWidth
+              onClick={() => handleOAuthLogin('Facebook')}
+              style={{ borderColor: 'var(--border-color)' }}
+              leftSection={
+                <img
+                  src="https://cdn.simpleicons.org/facebook/1877F2"
+                  alt="Facebook"
+                  style={{ width: '16px', height: '16px' }}
+                />
+              }
+            >
+              Facebook
+            </Button>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', margin: '1rem 0', justifyContent: 'center' }}>
+            <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
+            <Text size="xs" style={{ padding: '0 10px', color: 'var(--text-color)', opacity: 0.5 }}>HOẶC ĐĂNG NHẬP BẰNG EMAIL</Text>
+            <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
           </div>
 
           <form onSubmit={form.onSubmit(handleSubmit)}>
