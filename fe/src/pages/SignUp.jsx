@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Container, Card, Title, Text, TextInput, PasswordInput, Button, Stack, Stepper, MultiSelect, Anchor, Group } from '@mantine/core';
+import { Paper, Title, Text, TextInput, PasswordInput, Button, Stepper, MultiSelect, Anchor, Group } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiClient } from '../services/apiClient';
 import { notifications } from '@mantine/notifications';
+import logo from '../assets/logo.png';
+import classes from '../components/AuthenticationImage.module.css';
 
 export function SignUp() {
   const { signUp, loading } = useAuth();
@@ -21,7 +23,6 @@ export function SignUp() {
       setLoadingSubjects(true);
       try {
         const data = await apiClient.get('/api/subjects');
-        // Assuming subjects list returns [{ id, name, code }]
         const formatted = (data || []).map((sub) => ({
           value: sub.id,
           label: `${sub.name} (${sub.code})`,
@@ -57,7 +58,6 @@ export function SignUp() {
   });
 
   const nextStep = () => {
-    // Validate step 0 fields
     if (activeStep === 0) {
       const hasEmailError = form.validateField('email').hasError;
       const hasPasswordError = form.validateField('password').hasError;
@@ -86,21 +86,9 @@ export function SignUp() {
 
   if (registeredEmail) {
     return (
-      <Container size="sm" style={{ minHeight: 'calc(100vh - 180px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem 1rem' }}>
-        <Card
-          withBorder
-          shadow="md"
-          p="xl"
-          radius="md"
-          style={{
-            width: '100%',
-            backgroundColor: 'var(--card-bg)',
-            borderColor: 'var(--border-color)',
-            boxShadow: '0 8px 30px var(--shadow-color)',
-            textAlign: 'center',
-          }}
-        >
-          <Stack align="center" gap="md">
+      <div className={classes.wrapper}>
+        <Paper className={classes.form} radius="md" p="xl">
+          <div style={{ textAlign: 'center' }}>
             <div
               style={{
                 width: '64px',
@@ -112,154 +100,199 @@ export function SignUp() {
                 justifyContent: 'center',
                 fontSize: '2rem',
                 color: 'var(--accent-color)',
+                margin: '0 auto 1.5rem',
               }}
             >
               ✉
             </div>
-            <Title order={2} style={{ color: 'var(--text-color)', fontWeight: 800 }}>
+            <Title order={2} className={classes.title}>
               Xác thực tài khoản của bạn
             </Title>
-            <Text size="md" style={{ color: 'var(--text-color)', opacity: 0.8, maxWidth: '450px' }}>
+            <Text size="sm" style={{ color: 'var(--text-color)', opacity: 0.8, marginTop: '1rem', lineHeight: '1.6' }}>
               Chúng tôi đã gửi một email kích hoạt tài khoản đến địa chỉ{' '}
               <strong>{registeredEmail}</strong>. Vui lòng kiểm tra hộp thư của bạn và nhấn vào liên kết xác thực trước khi tiến hành đăng nhập.
             </Text>
             <Button
               color="copper"
+              fullWidth
               onClick={() => navigate('/signin')}
-              style={{ marginTop: '1rem', width: '200px' }}
+              style={{ marginTop: '2rem' }}
+              size="md"
+              radius="md"
+              className={classes.button}
             >
               Đi tới đăng nhập
             </Button>
-          </Stack>
-        </Card>
-      </Container>
+          </div>
+        </Paper>
+      </div>
     );
   }
 
   return (
-    <Container size="sm" style={{ minHeight: 'calc(100vh - 180px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem 1rem' }}>
-      <Card
-        withBorder
-        shadow="md"
-        p="xl"
-        radius="md"
-        style={{
-          width: '100%',
-          backgroundColor: 'var(--card-bg)',
-          borderColor: 'var(--border-color)',
-          boxShadow: '0 8px 30px var(--shadow-color)',
-        }}
-      >
-        <Stack align="center" gap="xs" mb="lg">
-          <Title order={2} style={{ color: 'var(--text-color)', fontWeight: 800 }}>
-            Đăng ký tài khoản Giáo viên
+    <div className={classes.wrapper}>
+      {/* Cột trái: Ảnh minh họa / Nền gradient thương hiệu (bạn có thể thay ảnh sau) */}
+      <div className={classes.leftSide}>
+        <div style={{ textAlign: 'center', color: '#fff', zIndex: 10 }}>
+          <img
+            src={logo}
+            alt="Owly Logo Large"
+            style={{
+              width: '120px',
+              height: '120px',
+              objectFit: 'contain',
+              marginBottom: '1.5rem',
+              filter: 'brightness(0) invert(1)',
+            }}
+          />
+          <Title order={1} style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '2.5rem', marginBottom: '1rem' }}>
+            Owly
           </Title>
-          <Text size="sm" style={{ color: 'var(--text-color)', opacity: 0.7 }}>
-            Khởi tạo hệ thống quản lý lớp học Owly của riêng bạn
+          <Text size="lg" style={{ opacity: 0.9, maxWidth: '400px', margin: '0 auto', lineHeight: '1.6' }}>
+            Khởi tạo hệ thống và số hóa hoạt động giảng dạy của bạn một cách trực quan, tối ưu và chuyên nghiệp.
           </Text>
-        </Stack>
+        </div>
+        <div style={{
+          position: 'absolute',
+          top: '-20%',
+          right: '-20%',
+          width: '600px',
+          height: '600px',
+          borderRadius: '50%',
+          background: 'rgba(255, 255, 255, 0.05)',
+          pointerEvents: 'none',
+        }} />
+      </div>
 
-        <Stepper active={activeStep} onStepClick={setActiveStep} allowNextStepsSelect={false} color="copper" size="sm" mb="xl">
-          <Stepper.Step label="Tài khoản" description="Email và mật khẩu">
-            <Stack gap="md" mt="md">
-              <TextInput
-                required
-                label="Địa chỉ Email"
-                placeholder="email@example.com"
-                {...form.getInputProps('email')}
-                styles={{
-                  input: { backgroundColor: 'var(--bg-color)', color: 'var(--text-color)', borderColor: 'var(--border-color)' },
-                  label: { color: 'var(--text-color)', fontWeight: 500 },
-                }}
-              />
-              <PasswordInput
-                required
-                label="Mật khẩu"
-                placeholder="Mật khẩu bảo mật"
-                {...form.getInputProps('password')}
-                styles={{
-                  input: { backgroundColor: 'var(--bg-color)', color: 'var(--text-color)', borderColor: 'var(--border-color)' },
-                  label: { color: 'var(--text-color)', fontWeight: 500 },
-                }}
-              />
-              <TextInput
-                required
-                label="Số điện thoại"
-                placeholder="0987654321"
-                {...form.getInputProps('phone')}
-                styles={{
-                  input: { backgroundColor: 'var(--bg-color)', color: 'var(--text-color)', borderColor: 'var(--border-color)' },
-                  label: { color: 'var(--text-color)', fontWeight: 500 },
-                }}
-              />
-            </Stack>
-          </Stepper.Step>
-
-          <Stepper.Step label="Hồ sơ" description="Thông tin giảng dạy">
-            <Stack gap="md" mt="md">
-              <TextInput
-                required
-                label="Họ và tên"
-                placeholder="Nguyễn Văn Nam"
-                {...form.getInputProps('fullName')}
-                styles={{
-                  input: { backgroundColor: 'var(--bg-color)', color: 'var(--text-color)', borderColor: 'var(--border-color)' },
-                  label: { color: 'var(--text-color)', fontWeight: 500 },
-                }}
-              />
-              <MultiSelect
-                label="Môn học chuyên môn"
-                placeholder={loadingSubjects ? 'Đang tải môn học...' : 'Chọn môn học giảng dạy'}
-                data={subjects}
-                disabled={loadingSubjects}
-                {...form.getInputProps('specializationIds')}
-                styles={{
-                  input: { backgroundColor: 'var(--bg-color)', color: 'var(--text-color)', borderColor: 'var(--border-color)' },
-                  label: { color: 'var(--text-color)', fontWeight: 500 },
-                }}
-              />
-            </Stack>
-          </Stepper.Step>
-        </Stepper>
-
-        <form onSubmit={form.onSubmit(handleSubmit)}>
-          {submitError && (
-            <Text color="red" size="sm" mb="md" style={{ textAlign: 'center' }}>
-              {submitError}
+      {/* Cột phải: Stepper Đăng ký */}
+      <div className={classes.rightSide}>
+        <Paper className={classes.form} withBorder={false}>
+          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+            <img
+                        src={logo}
+                        alt="Owly Logo"
+                        style={{
+                          width: '90px',
+                          height: '90px',
+                          objectFit: 'contain',
+                        }}
+                      />
+            <Title order={2} className={classes.title}>
+              Đăng ký Giáo viên
+            </Title>
+            <Text size="sm" style={{ color: 'var(--text-color)', opacity: 0.6, marginTop: '0.25rem' }}>
+              Điền thông tin để bắt đầu hành trình của bạn
             </Text>
-          )}
+          </div>
 
-          <Group justify="space-between" mt="xl">
-            {activeStep > 0 ? (
-              <Button variant="outline" color="copper" onClick={prevStep}>
-                Quay lại
-              </Button>
-            ) : (
-              <div />
+          <Stepper active={activeStep} onStepClick={setActiveStep} allowNextStepsSelect={false} color="copper" size="sm" mb="xl">
+            <Stepper.Step label="Tài khoản" description="Email & bảo mật">
+              <div style={{ marginTop: '1.5rem' }}>
+                <TextInput
+                  required
+                  label="Địa chỉ email"
+                  placeholder="email@example.com"
+                  {...form.getInputProps('email')}
+                  size="md"
+                  radius="md"
+                  styles={{
+                    label: { marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: 'var(--text-color)' },
+                  }}
+                />
+                <PasswordInput
+                  required
+                  label="Mật khẩu"
+                  placeholder="Mật khẩu bảo mật"
+                  {...form.getInputProps('password')}
+                  size="md"
+                  radius="md"
+                  mt="md"
+                  styles={{
+                    label: { marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: 'var(--text-color)' },
+                  }}
+                />
+                <TextInput
+                  required
+                  label="Số điện thoại"
+                  placeholder="0987654321"
+                  {...form.getInputProps('phone')}
+                  size="md"
+                  radius="md"
+                  mt="md"
+                  styles={{
+                    label: { marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: 'var(--text-color)' },
+                  }}
+                />
+              </div>
+            </Stepper.Step>
+
+            <Stepper.Step label="Hồ sơ" description="Thông tin giảng dạy">
+              <div style={{ marginTop: '1.5rem' }}>
+                <TextInput
+                  required
+                  label="Họ và tên"
+                  placeholder="Nguyễn Văn Nam"
+                  {...form.getInputProps('fullName')}
+                  size="md"
+                  radius="md"
+                  styles={{
+                    label: { marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: 'var(--text-color)' },
+                  }}
+                />
+                <MultiSelect
+                  label="Môn học chuyên môn"
+                  placeholder={loadingSubjects ? 'Đang tải môn học...' : 'Chọn môn học giảng dạy'}
+                  data={subjects}
+                  disabled={loadingSubjects}
+                  {...form.getInputProps('specializationIds')}
+                  size="md"
+                  radius="md"
+                  mt="md"
+                  styles={{
+                    label: { marginBottom: '6px', fontSize: '14px', fontWeight: 500, color: 'var(--text-color)' },
+                  }}
+                />
+              </div>
+            </Stepper.Step>
+          </Stepper>
+
+          <form onSubmit={form.onSubmit(handleSubmit)}>
+            {submitError && (
+              <Text color="red" size="sm" mb="md" style={{ textAlign: 'center' }}>
+                {submitError}
+              </Text>
             )}
 
-            {activeStep < 1 ? (
-              <Button color="copper" onClick={nextStep}>
-                Tiếp tục
-              </Button>
-            ) : (
-              <Button type="submit" color="copper" loading={loading}>
-                Đăng ký hoàn tất
-              </Button>
-            )}
-          </Group>
-        </form>
+            <Group justify="space-between" mt="xl">
+              {activeStep > 0 ? (
+                <Button variant="outline" color="copper" onClick={prevStep} size="md" radius="md">
+                  Quay lại
+                </Button>
+              ) : (
+                <div />
+              )}
 
-        <Group justify="center" mt="xl">
-          <Text size="sm" style={{ color: 'var(--text-color)', opacity: 0.8 }}>
+              {activeStep < 1 ? (
+                <Button color="copper" onClick={nextStep} size="md" radius="md" className={classes.button}>
+                  Tiếp tục
+                </Button>
+              ) : (
+                <Button type="submit" color="copper" loading={loading} size="md" radius="md" className={classes.button}>
+                  Đăng ký hoàn tất
+                </Button>
+              )}
+            </Group>
+          </form>
+
+          <Text ta="center" mt="lg" size="sm" style={{ color: 'var(--text-color)', opacity: 0.8 }}>
             Đã có tài khoản?{' '}
-            <Anchor component={Link} to="/signin" color="copper" fw={600}>
+            <Anchor component={Link} to="/signin" fw={600} color="copper">
               Đăng nhập
             </Anchor>
           </Text>
-        </Group>
-      </Card>
-    </Container>
+        </Paper>
+      </div>
+    </div>
   );
 }
 

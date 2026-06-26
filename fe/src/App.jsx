@@ -2,8 +2,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { MantineProvider, Container, Title, Text, Card, Button, Group } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import { theme } from './theme';
-import { Navbar } from './components/Navbar';
-import { Footer } from './components/Footer';
 import { SignIn } from './pages/SignIn';
 import { SignUp } from './pages/SignUp';
 import { useAuth } from './hooks/useAuth';
@@ -60,8 +58,7 @@ export function App() {
       <Notifications position="top-right" zIndex={1000} />
       <BrowserRouter>
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-          <Navbar />
-          <main style={{ flex: 1, backgroundColor: 'var(--bg-color)' }}>
+          <main style={{ flex: 1, backgroundColor: 'var(--bg-color)', display: 'flex', flexDirection: 'column' }}>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/signin" element={<SignIn />} />
@@ -69,7 +66,6 @@ export function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
-          <Footer />
         </div>
       </BrowserRouter>
     </MantineProvider>

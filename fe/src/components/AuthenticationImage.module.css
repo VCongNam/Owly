@@ -1,0 +1,60 @@
+.wrapper {
+  min-height: 100vh;
+  display: flex;
+  background: var(--bg-color);
+}
+
+.leftSide {
+  flex: 1;
+  background: linear-gradient(135deg, var(--accent-color), var(--bg-color));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .leftSide {
+    display: none;
+  }
+}
+
+.rightSide {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.form {
+  width: 100%;
+  max-width: 600px;
+  padding: 2.5rem 2rem !important;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 12px 40px var(--shadow-color);
+  transition: transform 0.2s ease;
+  border-radius: 12px;
+}
+
+.title {
+  font-family: var(--font-display);
+  color: var(--text-color);
+  font-weight: 900;
+  font-size: 1.8rem;
+  letter-spacing: -0.03em;
+  margin-top: 0.5rem;
+  margin-bottom: 0px;
+}
+
+.button {
+  transition: transform 0.1s ease, filter 0.2s ease;
+}
+
+.button:active {
+  transform: scale(0.98);
+}
+

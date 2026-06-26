@@ -1,14 +1,14 @@
-import { useState } from 'react';
-import { Container, Card, Title, Text, TextInput, PasswordInput, Button, Stack, Anchor, Group } from '@mantine/core';
+import { Paper, Title, Text, TextInput, PasswordInput, Button, Anchor, Checkbox } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { notifications } from '@mantine/notifications';
+import logo from '../assets/logo.png';
+import classes from '../components/AuthenticationImage.module.css';
 
 export function SignIn() {
   const { login, loading } = useAuth();
   const navigate = useNavigate();
-  const [authError, setAuthError] = useState(null);
 
   const form = useForm({
     initialValues: {
@@ -22,8 +22,9 @@ export function SignIn() {
   });
 
   const handleSubmit = async (values) => {
-    setAuthError(null);
+    console.log('Submitting login form', values);
     const result = await login(values.email, values.password);
+    console.log('Login result', result);
     if (result.success) {
       notifications.show({
         title: 'Đăng nhập thành công',
@@ -32,102 +33,130 @@ export function SignIn() {
       });
       navigate('/');
     } else {
-      setAuthError(result.error);
+      notifications.show({
+        title: 'Đăng nhập thất bại',
+        message: result.error || 'Email hoặc mật khẩu không chính xác',
+        color: 'red',
+      });
     }
   };
 
   return (
-    <Container size="xs" style={{ minHeight: 'calc(100vh - 180px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem 1rem' }}>
-      <Card
-        withBorder
-        shadow="md"
-        p="xl"
-        radius="md"
-        style={{
-          width: '100%',
-          backgroundColor: 'var(--card-bg)',
-          borderColor: 'var(--border-color)',
-          boxShadow: '0 8px 30px var(--shadow-color)',
-        }}
-      >
-        <Stack align="center" gap="xs" mb="lg">
-          <Title order={2} style={{ color: 'var(--text-color)', fontWeight: 800 }}>
-            Đăng nhập tài khoản
+    <div className={classes.wrapper}>
+      {/* Cột trái: Ảnh minh họa / Nền gradient thương hiệu (bạn có thể thay ảnh sau) */}
+      <div className={classes.leftSide}>
+        <div style={{ textAlign: 'center', color: '#fff', zIndex: 10 }}>
+          <img
+            src={logo}
+            alt="Owly Logo Large"
+            style={{
+              width: '120px',
+              height: '120px',
+              objectFit: 'contain',
+              marginBottom: '1.5rem',
+              filter: 'brightness(0) invert(1)', // Chuyển logo sang màu trắng trên nền tối
+            }}
+          />
+          <Title order={1} style={{ fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '2.5rem', marginBottom: '1rem' }}>
+            Owly
           </Title>
-          <Text size="sm" style={{ color: 'var(--text-color)', opacity: 0.7 }}>
-            Quản lý và cập nhật hoạt động lớp học của bạn
+          <Text size="lg" style={{ opacity: 0.9, maxWidth: '400px', margin: '0 auto', lineHeight: '1.6' }}>
+            Hệ thống quản lý thông minh giúp giáo viên kết nối và vận hành lớp học một cách tinh tế nhất.
           </Text>
-        </Stack>
+        </div>
+        {/* Lớp nền thiết kế trừu tượng */}
+        <div style={{
+          position: 'absolute',
+          top: '-20%',
+          right: '-20%',
+          width: '600px',
+          height: '600px',
+          borderRadius: '50%',
+          background: 'rgba(255, 255, 255, 0.05)',
+          pointerEvents: 'none',
+        }} />
+      </div>
 
-        <form onSubmit={form.onSubmit(handleSubmit)}>
-          <Stack gap="md">
+      {/* Cột phải: Form nhập liệu */}
+      <div className={classes.rightSide}>
+        <Paper className={classes.form} withBorder={false}>
+          <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+             <img
+                        src={logo}
+                        alt="Owly Logo"
+                        style={{
+                          width: '90px',
+                          height: '90px',
+                          objectFit: 'contain',
+                        }}
+                      />
+            <Title order={2} className={classes.title}>
+              Chào mừng quay lại
+            </Title>
+            
+
+            <Text size="sm" style={{ color: 'var(--text-color)', opacity: 0.6, marginTop: '0.25rem' }}>
+              Nhập thông tin tài khoản của bạn để tiếp tục
+            </Text>
+          </div>
+
+          <form onSubmit={form.onSubmit(handleSubmit)}>
             <TextInput
               required
-              label="Địa chỉ Email"
-              placeholder="email@example.com"
+              label="Địa chỉ email"
+              placeholder="Nhập email của bạn"
+              size="md"
+              radius="md"
               {...form.getInputProps('email')}
               styles={{
-                input: {
-                  backgroundColor: 'var(--bg-color)',
-                  color: 'var(--text-color)',
-                  borderColor: 'var(--border-color)',
-                },
                 label: {
-                  color: 'var(--text-color)',
+                  marginBottom: '6px',
+                  fontSize: '14px',
                   fontWeight: 500,
-                  marginBottom: '4px',
+                  color: 'var(--text-color)',
                 },
               }}
             />
-
             <PasswordInput
               required
               label="Mật khẩu"
               placeholder="Mật khẩu của bạn"
+              mt="md"
+              size="md"
+              radius="md"
               {...form.getInputProps('password')}
               styles={{
-                input: {
-                  backgroundColor: 'var(--bg-color)',
-                  color: 'var(--text-color)',
-                  borderColor: 'var(--border-color)',
-                },
                 label: {
-                  color: 'var(--text-color)',
+                  marginBottom: '6px',
+                  fontSize: '14px',
                   fontWeight: 500,
-                  marginBottom: '4px',
+                  color: 'var(--text-color)',
                 },
               }}
             />
-
-            {/* {authError && (
-              <Text color="red" size="sm" style={{ textAlign: 'center' }}>
-                {authError}
-              </Text>
-            )} */}
-
-            <Button
-              type="submit"
-              fullWidth
-              loading={loading}
+            <Checkbox label="Duy trì đăng nhập trên thiết bị này" mt="lg" size="sm" />
+            <Button 
+              fullWidth 
+              mt="xl" 
+              size="md" 
+              radius="md" 
+              type="submit" 
+              loading={loading} 
               color="copper"
-              size="md"
-              style={{ marginTop: '0.5rem' }}
+              className={classes.button}
             >
               Đăng nhập
             </Button>
-          </Stack>
-        </form>
-
-        <Group justify="center" mt="xl">
-          <Text size="sm" style={{ color: 'var(--text-color)', opacity: 0.8 }}>
+          </form>
+          <Text ta="center" mt="lg" size="sm" style={{ color: 'var(--text-color)', opacity: 0.8 }}>
             Chưa có tài khoản?{' '}
-            <Anchor component={Link} to="/signup" color="copper" fw={600}>
+            <Anchor component={Link} to="/signup" fw={600} color="copper">
               Đăng ký ngay
             </Anchor>
           </Text>
-        </Group>
-      </Card>
-    </Container>
+        </Paper>
+      </div>
+    </div>
   );
 }
 

@@ -3,6 +3,8 @@ import { useDisclosure } from '@mantine/hooks';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
+import logo from '../assets/logo.png';
+
 export function Navbar() {
   const [opened, { toggle, close }] = useDisclosure(false);
   const { user, logout } = useAuth();
@@ -71,23 +73,16 @@ export function Navbar() {
     >
       <Container size="lg" style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* Logo placeholder - User will provide logo later */}
-          <div
+          <img
+            src={logo}
+            alt="Owly Logo"
             style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
-              backgroundColor: 'var(--accent-color)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 'bold',
-              color: '#ffffff',
+              width: '50px',
+              height: '50px',
+              objectFit: 'contain',
             }}
-          >
-            O
-          </div>
-          <Text size="lg" fw={700} style={{ color: 'var(--text-color)' }}>
+          />
+          <Text size="xl" fw={700} style={{ color: 'var(--text-color)' }}>
             Owly
           </Text>
         </Link>
