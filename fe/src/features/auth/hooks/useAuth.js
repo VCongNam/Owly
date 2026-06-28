@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { apiClient } from '../services/apiClient';
+import { apiClient } from '../../../services/apiClient';
 
 const getInitialUser = () => {
   try {
@@ -98,7 +98,7 @@ export const useAuthStore = create((set) => ({
     } catch (err) {
       const errMsg = err.response?.data?.message || 'Đăng ký hồ sơ thất bại';
       set({ error: errMsg, loading: false });
-      return { success: false, error: errMsg };
+      return { success: false, error: updatedUser };
     }
   },
 

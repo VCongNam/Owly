@@ -1,9 +1,8 @@
-// be/src/routes/authRoutes.js
 import express from 'express';
-import * as authController from '../controllers/authController.js';
-import { authMiddleware } from '../middlewares/auth.js';
-import { validate } from '../middlewares/validate.js';
-import { signUpSchema, signInSchema } from '../validation/authSchema.js';
+import * as authController from './authController.js';
+import { authMiddleware } from '../../middlewares/auth.js';
+import { validate } from '../../middlewares/validate.js';
+import { signUpSchema, signInSchema } from './authSchema.js';
 
 const router = express.Router();
 
@@ -18,5 +17,12 @@ router.post('/register-profile', authMiddleware, authController.registerTeacherP
 
 // Route lấy thông tin cá nhân của Giáo viên đang đăng nhập
 router.get('/me', authMiddleware, authController.getProfile);
+
+// ── Google OAuth ────────────────────────────────────────────
+// Bước 1: Redirect người dùng đến trang chọn tài khoản Google
+router.get('/google', authController.googleAuth);
+
+// Bước 2: FE gọi sau khi nhận được `code` từ Google callback
+router.post('/google/exchange', authController.googleExchange);
 
 export default router;

@@ -1,6 +1,5 @@
-// be/src/services/authService.js
-import { prisma } from '../config/db.js';
-import { supabase } from '../config/supabase.js';
+import { prisma } from '../../config/db.js';
+import { supabase } from '../../config/supabase.js';
 
 // Hàm helper để sinh mã giáo viên tự động (ví dụ: GV001, GV002...)
 const generateTeacherCode = async (tx) => {
@@ -189,4 +188,91 @@ export const signInTeacher = async (email, password) => {
     user: data.user,
     session: data.session
   };
+};
+
+// ── Google OAuth ────────────────────────────────────────────────
+
+/**
+ * Đổi Google authorization code → Google tokens → Supabase session.
+ * Middleware hiện tại (supabase.auth.getUser) vẫn hoạt động bình thường.
+ */
+export const exchangeGoogleCode = async (code) => {
+  const frontendUrl = process.env.FRONTEND_URL;
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+
+  // 1. Đổi `code` lấy Google tokens
+  const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      code,
+      client_id: process.env.GOOGLE_CLIENT_ID,
+      client_secret: process.env.GOOGLE_CLIENT_SECRET,
+      redirect_uri: `${frontendUrl}/auth/callback`,
+      grant_type: 'authorization_code',
+    }).toString(),
+  });
+
+  const googleTokens = await tokenRes.json();
+  if (googleTokens.error) {
+    throw new Error(`Google token exchange thất bại: ${googleTokens.error_description || googleTokens.error}`);
+  }
+
+  // 2. Đổi Google ID token → Supabase session (không qua Supabase OAuth callback)
+  const supabaseRes = await fetch(
+    `${supabaseUrl}/auth/v1/token?grant_type=id_token`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': supabaseAnonKey,
+      },
+      body: JSON.stringify({
+        provider: 'google',
+        id_token: googleTokens.id_token,
+        access_token: googleTokens.access_token,
+      }),
+    }
+  );
+
+  const supabaseData = await supabaseRes.json();
+  if (supabaseData.error || supabaseData.error_code) {
+    throw new Error(
+      supabaseData.message || supabaseData.error_description || 'Supabase không thể xác thực Google token'
+    );
+  }
+
+  const { user, access_token } = supabaseData;
+
+  // 3. Tự động tạo hồ sơ giáo viên nếu là lần đăng nhập đầu tiên
+  await ensureTeacherProfile(user);
+
+  return {
+    user,
+    token: access_token,
+  };
+};
+
+/**
+ * Kiểm tra và tạo hồ sơ giáo viên cho user Google (nếu chưa tồn tại).
+ */
+const ensureTeacherProfile = async (user) => {
+  const existing = await prisma.account.findUnique({
+    where: { id: user.id }
+  });
+
+  if (!existing) {
+    const fullName =
+      user.user_metadata?.full_name ||
+      user.user_metadata?.name ||
+      user.email.split('@')[0];
+
+    await createTeacherProfile({
+      userId: user.id,
+      email: user.email,
+      fullName,
+      specializationIds: [],
+    });
+  }
 };

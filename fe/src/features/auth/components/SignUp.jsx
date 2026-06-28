@@ -3,11 +3,11 @@ import { Paper, Title, Text, TextInput, PasswordInput, Button, MultiSelect, Anch
 import { useForm } from '@mantine/form';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { apiClient } from '../services/apiClient';
+import { apiClient } from '../../../services/apiClient';
 import { notifications } from '@mantine/notifications';
-import { supabase } from '../services/supabaseClient';
-import logo from '../assets/logo.png';
-import classes from '../components/AuthenticationImage.module.css';
+import { supabase } from '../../../services/supabaseClient';
+import logo from '../../../assets/logo.png';
+import classes from './AuthenticationImage.module.css';
 
 export function SignUp() {
   const { signUp, loading } = useAuth();
@@ -344,7 +344,7 @@ export function SignUp() {
                   background: 'var(--border-color)',
                   color: 'var(--accent-color)',
                   padding: '8px 16px',
-                  borderRadius: '6px',
+                  radius: '6px',
                   fontFamily: 'monospace',
                   fontSize: '18px',
                   fontWeight: 'bold',

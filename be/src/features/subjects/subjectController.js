@@ -1,6 +1,5 @@
-// be/src/controllers/subjectController.js
-import { prisma } from '../config/db.js';
-import { formatToVietnamTime } from '../utils/dateHelper.js';
+import { prisma } from '../../config/db.js';
+import { formatToVietnamTime } from '../../utils/dateHelper.js';
 
 export const getSubjects = async (req, res) => {
   try {

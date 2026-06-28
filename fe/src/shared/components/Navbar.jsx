@@ -1,9 +1,9 @@
 import { Group, Button, Container, Burger, Drawer, Stack, Text, ActionIcon, useMantineColorScheme } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../../features/auth';
 
-import logo from '../assets/logo.png';
+import logo from '../../assets/logo.png';
 
 export function Navbar() {
   const [opened, { toggle, close }] = useDisclosure(false);

@@ -3,9 +3,8 @@ import { useForm } from '@mantine/form';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { notifications } from '@mantine/notifications';
-import { supabase } from '../services/supabaseClient';
-import logo from '../assets/logo.png';
-import classes from '../components/AuthenticationImage.module.css';
+import logo from '../../../assets/logo.png';
+import classes from './AuthenticationImage.module.css';
 
 export function SignIn() {
   const { login, loading } = useAuth();
@@ -42,22 +41,22 @@ export function SignIn() {
     }
   };
 
-  const handleOAuthLogin = async (provider) => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: provider.toLowerCase(), // 'google' hoặc 'facebook'
-        options: {
-          redirectTo: window.location.origin,
-        },
-      });
-      if (error) throw error;
-    } catch (err) {
-      notifications.show({
-        title: `Lỗi đăng nhập ${provider}`,
-        message: err.message || 'Không thể thiết lập kết nối OAuth. Vui lòng thử lại.',
-        color: 'red',
-      });
+  const handleOAuthLogin = (provider) => {
+    const beUrl = import.meta.env.VITE_API_URL || '';
+
+    if (provider === 'Google') {
+      // Redirect đến BE — BE sẽ chuyển tiếp đến Google với redirect_uri = FE /auth/callback
+      // Google sẽ hiển thị domain của FE (owly-demo.vercel.app) thay vì Supabase
+      window.location.href = `${beUrl}/api/auth/google`;
+      return;
     }
+
+    // Facebook và các provider khác giữ nguyên dùng Supabase (chưa hỗ trợ)
+    notifications.show({
+      title: `${provider} chưa được hỗ trợ`,
+      message: 'Tính năng này sẽ sớm được cập nhật.',
+      color: 'orange',
+    });
   };
 
   return (

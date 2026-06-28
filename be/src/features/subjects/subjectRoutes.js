@@ -1,6 +1,5 @@
-// be/src/routes/subjectRoutes.js
 import express from 'express';
-import * as subjectController from '../controllers/subjectController.js';
+import * as subjectController from './subjectController.js';
 
 const router = express.Router();
 

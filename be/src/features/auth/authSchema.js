@@ -1,4 +1,3 @@
-// be/src/validation/authSchema.js
 import { z } from 'zod';
 
 const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
@@ -43,4 +42,3 @@ export const signInSchema = z.object({
   })
   .min(6, 'Mật khẩu phải có ít nhất 6 ký tự')
 });
-

@@ -2,8 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { supabase } from './config/supabase.js';
-import authRoutes from './routes/authRoutes.js';
-import subjectRoutes from './routes/subjectRoutes.js';
+import authRoutes from './features/auth/authRoutes.js';
+import subjectRoutes from './features/subjects/subjectRoutes.js';
 
 dotenv.config();
 
