@@ -23,9 +23,9 @@ export function SignUp() {
   const [captchaError, setCaptchaError] = useState('');
 
   const generateCaptcha = () => {
-    const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()-_=+';
     let code = '';
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 8; i++) {
       code += chars[Math.floor(Math.random() * chars.length)];
     }
     setCaptchaCode(code);
@@ -345,10 +345,10 @@ export function SignUp() {
                   color: 'var(--accent-color)',
                   padding: '8px 16px',
                   radius: '6px',
-                  fontFamily: 'monospace',
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  letterSpacing: '3px',
+                  fontFamily: "'Henny Penny', cursive",
+                  fontSize: '22px',
+                  fontWeight: 'normal',
+                  letterSpacing: '4px',
                   userSelect: 'none',
                   fontStyle: 'italic',
                   textDecoration: 'line-through'
