@@ -1,0 +1,636 @@
+{
+  "EMS SaaS Plan": [
+    {
+      "ID": "UC-01",
+      "Use Case": "Register (Workspace Setup)",
+      "Actor": "Teacher (Guest)",
+      "Feature": "Authentication Management",
+      "Use Case Description": "Giáo viên tự truy cập hệ thống, đăng ký tài khoản và tự khởi tạo một Không gian làm việc (Workspace) riêng biệt cho mình.",
+      "Subsystem (Phân hệ)": "Phân hệ 1: Xác thực & Không gian"
+    },
+    {
+      "ID": "UC-02",
+      "Use Case": "Login",
+      "Actor": "All Actors",
+      "Feature": "Authentication Management",
+      "Use Case Description": "Xác thực bằng Email và Mật khẩu để điều hướng thẳng vào Portal riêng biệt của Giáo viên, Học sinh hoặc Admin.",
+      "Subsystem (Phân hệ)": "Phân hệ 1: Xác thực & Không gian"
+    },
+    {
+      "ID": "UC-03",
+      "Use Case": "Logout",
+      "Actor": "All Actors",
+      "Feature": "Authentication Management",
+      "Use Case Description": "Xóa phiên làm việc hiện tại và hủy hiệu lực Token JWT để bảo mật tài khoản.",
+      "Subsystem (Phân hệ)": "Phân hệ 1: Xác thực & Không gian"
+    },
+    {
+      "ID": "UC-04",
+      "Use Case": "Change Password",
+      "Actor": "All Actors",
+      "Feature": "Authentication Management",
+      "Use Case Description": "Cho phép người dùng chủ động thay đổi mật khẩu khi đang đăng nhập hệ thống.",
+      "Subsystem (Phân hệ)": "Phân hệ 1: Xác thực & Không gian"
+    },
+    {
+      "ID": "UC-05",
+      "Use Case": "Forgot Password",
+      "Actor": "All Actors",
+      "Feature": "Authentication Management",
+      "Use Case Description": "Khôi phục quyền truy cập bằng cách xác minh qua mã OTP gửi về Email.",
+      "Subsystem (Phân hệ)": "Phân hệ 1: Xác thực & Không gian"
+    },
+    {
+      "ID": "UC-06",
+      "Use Case": "View Personal Info",
+      "Actor": "All Actors",
+      "Feature": "User Profile Management",
+      "Use Case Description": "Người dùng xem chi tiết hồ sơ cá nhân và trạng thái gói tài khoản hiện tại.",
+      "Subsystem (Phân hệ)": "Phân hệ 1: Xác thực & Không gian"
+    },
+    {
+      "ID": "UC-07",
+      "Use Case": "Update Personal Info",
+      "Actor": "All Actors",
+      "Feature": "User Profile Management",
+      "Use Case Description": "Người dùng cập nhật thông tin liên hệ và tải ảnh đại diện lên bộ lưu trữ đám mây.",
+      "Subsystem (Phân hệ)": "Phân hệ 1: Xác thực & Không gian"
+    },
+    {
+      "ID": "UC-08",
+      "Use Case": "View Admin Dashboard",
+      "Actor": "Admin",
+      "Feature": "System Dashboard",
+      "Use Case Description": "Xem tổng quan sức khỏe hệ thống: Số Giáo viên mới, số lớp học mới, tổng doanh thu từ phí nâng cấp tài khoản.",
+      "Subsystem (Phân hệ)": "Phân hệ 2: Quản trị của Admin"
+    },
+    {
+      "ID": "UC-09",
+      "Use Case": "View Teacher Accounts",
+      "Actor": "Admin",
+      "Feature": "System Dashboard",
+      "Use Case Description": "Xem, tìm kiếm, phân trang và giám sát trạng thái hoạt động của tất cả Giáo viên sử dụng nền tảng.",
+      "Subsystem (Phân hệ)": "Phân hệ 2: Quản trị của Admin"
+    },
+    {
+      "ID": "UC-10",
+      "Use Case": "View Teacher Details",
+      "Actor": "Admin",
+      "Feature": "System Dashboard",
+      "Use Case Description": "Xem chi tiết thông tin không gian dạy học của một Giáo viên để kiểm tra tính tuân thủ pháp lý/quy chế hệ thống.",
+      "Subsystem (Phân hệ)": "Phân hệ 2: Quản trị của Admin"
+    },
+    {
+      "ID": "UC-11",
+      "Use Case": "Toggle Teacher Status",
+      "Actor": "Admin",
+      "Feature": "Account Management",
+      "Use Case Description": "Tạm khóa hoặc mở khóa tài khoản của một Giáo viên trong trường hợp vi phạm điều khoản.",
+      "Subsystem (Phân hệ)": "Phân hệ 2: Quản trị của Admin"
+    },
+    {
+      "ID": "UC-12",
+      "Use Case": "View Platform Subscriptions",
+      "Actor": "Admin",
+      "Feature": "Platform Billing",
+      "Use Case Description": "Xem danh sách các gói dịch vụ (Free/Premium) và lịch sử gia hạn tài khoản của các Giáo viên trên hệ thống.",
+      "Subsystem (Phân hệ)": "Phân hệ 2: Quản trị của Admin"
+    },
+    {
+      "ID": "UC-13",
+      "Use Case": "Review Upgrade Transaction",
+      "Actor": "Admin",
+      "Feature": "Platform Billing",
+      "Use Case Description": "Admin kiểm tra và phê duyệt các giao dịch đóng tiền nâng cấp tài khoản của Giáo viên trả cho hệ thống.",
+      "Subsystem (Phân hệ)": "Phân hệ 2: Quản trị của Admin"
+    },
+    {
+      "ID": "UC-14",
+      "Use Case": "Manage System Feedbacks",
+      "Actor": "Admin",
+      "Feature": "Feedback Center",
+      "Use Case Description": "Tiếp nhận và xử lý bài viết báo lỗi, góp ý phần mềm từ người dùng gửi về để lên kế hoạch cập nhật tính năng.",
+      "Subsystem (Phân hệ)": "Phân hệ 2: Quản trị của Admin"
+    },
+    {
+      "ID": "UC-15",
+      "Use Case": "Broadcast Notification",
+      "Actor": "Admin",
+      "Feature": "System Operations",
+      "Use Case Description": "Phát thông báo khẩn cấp hoặc tin tức bảo trì hệ thống thời gian thực tới tất cả các tài khoản trên nền tảng.",
+      "Subsystem (Phân hệ)": "Phân hệ 2: Quản trị của Admin"
+    },
+    {
+      "ID": "UC-16",
+      "Use Case": "View Responsible Classes",
+      "Actor": "Teacher",
+      "Feature": "Class Management",
+      "Use Case Description": "Xem danh sách tổng quan tất cả các lớp học do chính mình tạo ra.",
+      "Subsystem (Phân hệ)": "Phân hệ 3: Lớp học & Học viên (Teacher)"
+    },
+    {
+      "ID": "UC-17",
+      "Use Case": "Create New Class",
+      "Actor": "Teacher",
+      "Feature": "Class Management",
+      "Use Case Description": "Khởi tạo lớp học mới (Tự động kiểm tra giới hạn gói tài khoản nếu vượt quá sĩ số/số lớp cho phép).",
+      "Subsystem (Phân hệ)": "Phân hệ 3: Lớp học & Học viên (Teacher)"
+    },
+    {
+      "ID": "UC-18",
+      "Use Case": "Update Class Info",
+      "Actor": "Teacher",
+      "Feature": "Class Management",
+      "Use Case Description": "Chỉnh sửa tên lớp, môn học, ngày bắt đầu và ngày dự kiến bế mạc khóa học.",
+      "Subsystem (Phân hệ)": "Phân hệ 3: Lớp học & Học viên (Teacher)"
+    },
+    {
+      "ID": "UC-19",
+      "Use Case": "Archive Class",
+      "Actor": "Teacher",
+      "Feature": "Class Management",
+      "Use Case Description": "Ẩn và đưa lớp học vào kho lưu trữ khi khóa học đã kết thúc để tinh gọn không gian làm việc.",
+      "Subsystem (Phân hệ)": "Phân hệ 3: Lớp học & Học viên (Teacher)"
+    },
+    {
+      "ID": "UC-20",
+      "Use Case": "Restore Archived Class",
+      "Actor": "Teacher",
+      "Feature": "Class Management",
+      "Use Case Description": "Đưa một lớp học từ kho lưu trữ hoạt động trở lại bình thường.",
+      "Subsystem (Phân hệ)": "Phân hệ 3: Lớp học & Học viên (Teacher)"
+    },
+    {
+      "ID": "UC-21",
+      "Use Case": "View Class Detail Overview",
+      "Actor": "Teacher",
+      "Feature": "Class Management",
+      "Use Case Description": "Truy cập vào không gian riêng của lớp để quản lý bài giảng, điểm số và tài chính.",
+      "Subsystem (Phân hệ)": "Phân hệ 3: Lớp học & Học viên (Teacher)"
+    },
+    {
+      "ID": "UC-22",
+      "Use Case": "Create Student Account",
+      "Actor": "Teacher",
+      "Feature": "Student Management",
+      "Use Case Description": "Giáo viên trực tiếp tạo tài khoản mới cho Học sinh của lớp mình (Học sinh nhận tài khoản qua email để đăng nhập).",
+      "Subsystem (Phân hệ)": "Phân hệ 3: Lớp học & Học viên (Teacher)"
+    },
+    {
+      "ID": "UC-23",
+      "Use Case": "View Class Members",
+      "Actor": "Teacher",
+      "Feature": "Student Management",
+      "Use Case Description": "Hiển thị danh sách học viên trong lớp kèm thông tin liên lạc của Phụ huynh để tiện kết nối.",
+      "Subsystem (Phân hệ)": "Phân hệ 3: Lớp học & Học viên (Teacher)"
+    },
+    {
+      "ID": "UC-24",
+      "Use Case": "Assign Students to Class",
+      "Actor": "Teacher",
+      "Feature": "Student Management",
+      "Use Case Description": "Xếp nhanh một hoặc nhiều học sinh có sẵn từ cơ sở dữ liệu nội bộ của Giáo viên vào một lớp học mới.",
+      "Subsystem (Phân hệ)": "Phân hệ 3: Lớp học & Học viên (Teacher)"
+    },
+    {
+      "ID": "UC-25",
+      "Use Case": "Remove Student from Class",
+      "Actor": "Teacher",
+      "Feature": "Student Management",
+      "Use Case Description": "Hủy tư cách thành viên của một học sinh ra khỏi lớp do nghỉ học hoặc kết thúc khóa sớm.",
+      "Subsystem (Phân hệ)": "Phân hệ 3: Lớp học & Học viên (Teacher)"
+    },
+    {
+      "ID": "UC-26",
+      "Use Case": "View Teaching Schedule",
+      "Actor": "Teacher",
+      "Feature": "Schedule Management",
+      "Use Case Description": "Xem lịch dạy cá nhân theo tuần/tháng dưới dạng Calendar Grid.",
+      "Subsystem (Phân hệ)": "Phân hệ 4: Lịch học & Điểm danh (Teacher)"
+    },
+    {
+      "ID": "UC-27",
+      "Use Case": "Setup Recurring Schedule",
+      "Actor": "Teacher",
+      "Feature": "Schedule Management",
+      "Use Case Description": "Cấu hình lịch học lặp lại cố định định kỳ hàng tuần, hệ thống tự động sinh hàng loạt các buổi học tương ứng trong DB.",
+      "Subsystem (Phân hệ)": "Phân hệ 4: Lịch học & Điểm danh (Teacher)"
+    },
+    {
+      "ID": "UC-28",
+      "Use Case": "Create Class Session",
+      "Actor": "Teacher",
+      "Feature": "Schedule Management",
+      "Use Case Description": "Tạo thủ công một buổi học lẻ hoặc buổi học bù nằm ngoài khung lịch cố định.",
+      "Subsystem (Phân hệ)": "Phân hệ 4: Lịch học & Điểm danh (Teacher)"
+    },
+    {
+      "ID": "UC-29",
+      "Use Case": "Edit Session Info",
+      "Actor": "Teacher",
+      "Feature": "Schedule Management",
+      "Use Case Description": "Thay đổi thông tin một buổi học cụ thể (Điều chỉnh giờ, đổi phòng học tạm thời).",
+      "Subsystem (Phân hệ)": "Phân hệ 4: Lịch học & Điểm danh (Teacher)"
+    },
+    {
+      "ID": "UC-30",
+      "Use Case": "Cancel Session",
+      "Actor": "Teacher",
+      "Feature": "Schedule Management",
+      "Use Case Description": "Hủy buổi học khi trùng ngày lễ tết hoặc bận việc đột xuất.",
+      "Subsystem (Phân hệ)": "Phân hệ 4: Lịch học & Điểm danh (Teacher)"
+    },
+    {
+      "ID": "UC-31",
+      "Use Case": "View All Sessions in Class",
+      "Actor": "Teacher",
+      "Feature": "Schedule Management",
+      "Use Case Description": "Hiển thị toàn bộ danh sách các buổi học của lớp học để bám sát lộ trình đào tạo.",
+      "Subsystem (Phân hệ)": "Phân hệ 4: Lịch học & Điểm danh (Teacher)"
+    },
+    {
+      "ID": "UC-32",
+      "Use Case": "Take Attendance",
+      "Actor": "Teacher",
+      "Feature": "Attendance Management",
+      "Use Case Description": "Giáo viên trực tiếp thực hiện điểm danh trạng thái (Có mặt, Vắng, Muộn, Phép) cho học sinh.",
+      "Subsystem (Phân hệ)": "Phân hệ 4: Lịch học & Điểm danh (Teacher)"
+    },
+    {
+      "ID": "UC-33",
+      "Use Case": "Update Attendance Record",
+      "Actor": "Teacher",
+      "Feature": "Attendance Management",
+      "Use Case Description": "Chỉnh sửa lại lịch sử trạng thái điểm danh cũ nếu có sự nhầm lẫn.",
+      "Subsystem (Phân hệ)": "Phân hệ 4: Lịch học & Điểm danh (Teacher)"
+    },
+    {
+      "ID": "UC-34",
+      "Use Case": "View Session Attendance History",
+      "Actor": "Teacher",
+      "Feature": "Attendance Management",
+      "Use Case Description": "Xem lại danh sách điểm danh chi tiết của một buổi học đã kết thúc.",
+      "Subsystem (Phân hệ)": "Phân hệ 4: Lịch học & Điểm danh (Teacher)"
+    },
+    {
+      "ID": "UC-35",
+      "Use Case": "View Student Attendance Log",
+      "Actor": "Teacher",
+      "Feature": "Attendance Management",
+      "Use Case Description": "Xem báo cáo tổng hợp nhật ký điểm danh xuyên suốt của một học sinh để đánh giá mức độ chuyên cần.",
+      "Subsystem (Phân hệ)": "Phân hệ 4: Lịch học & Điểm danh (Teacher)"
+    },
+    {
+      "ID": "UC-35B",
+      "Use Case": "Write Session Feedback",
+      "Actor": "Teacher",
+      "Feature": "Session Evaluation",
+      "Use Case Description": "Giáo viên ghi nhận xét chi tiết về mức độ tiếp thu học thuật, thái độ nề nếp và bài tập về nhà của từng học sinh ngay sau khi kết thúc buổi học.",
+      "Subsystem (Phân hệ)": "Phân hệ 4: Lịch học & Điểm danh (Teacher)"
+    },
+    {
+      "ID": "UC-35C",
+      "Use Case": "Update Session Feedback",
+      "Actor": "Teacher",
+      "Feature": "Session Evaluation",
+      "Use Case Description": "Cho phép Giáo viên chỉnh sửa lại nội dung lời nhận xét của một buổi học cũ đã lưu trước đó.",
+      "Subsystem (Phân hệ)": "Phân hệ 4: Lịch học & Điểm danh (Teacher)"
+    },
+    {
+      "ID": "UC-36",
+      "Use Case": "Upload Learning Materials",
+      "Actor": "Teacher",
+      "Feature": "Material Management",
+      "Use Case Description": "Tải file bài giảng (PDF, Word, Slide ảnh) lên hệ thống chia sẻ cho học sinh.",
+      "Subsystem (Phân hệ)": "Phân hệ 5: Bảng tin & Học liệu (Teacher)"
+    },
+    {
+      "ID": "UC-37",
+      "Use Case": "View Learning Materials List",
+      "Actor": "Teacher, Student",
+      "Feature": "Material Management",
+      "Use Case Description": "Hiển thị danh mục toàn bộ file học liệu có trong lớp học.",
+      "Subsystem (Phân hệ)": "Phân hệ 5: Bảng tin & Học liệu (Teacher)"
+    },
+    {
+      "ID": "UC-38",
+      "Use Case": "View Material Details",
+      "Actor": "Teacher, Student",
+      "Feature": "Material Management",
+      "Use Case Description": "Xem mô tả, kích thước tệp tin và thực hiện tải file học liệu về máy.",
+      "Subsystem (Phân hệ)": "Phân hệ 5: Bảng tin & Học liệu (Teacher)"
+    },
+    {
+      "ID": "UC-39",
+      "Use Case": "Update Learning Materials",
+      "Actor": "Teacher",
+      "Feature": "Material Management",
+      "Use Case Description": "Sửa tiêu đề, mô tả tài liệu hoặc thay thế bằng file mới.",
+      "Subsystem (Phân hệ)": "Phân hệ 5: Bảng tin & Học liệu (Teacher)"
+    },
+    {
+      "ID": "UC-40",
+      "Use Case": "Delete Learning Materials",
+      "Actor": "Teacher",
+      "Feature": "Material Management",
+      "Use Case Description": "Xóa file tài liệu học tập ra khỏi lớp học.",
+      "Subsystem (Phân hệ)": "Phân hệ 5: Bảng tin & Học liệu (Teacher)"
+    },
+    {
+      "ID": "UC-41",
+      "Use Case": "Create Announcement Post",
+      "Actor": "Teacher",
+      "Feature": "Post Management",
+      "Use Case Description": "Đăng bài thông báo mới kèm tệp đính kèm lên Bảng tin chung (Class Stream) của lớp.",
+      "Subsystem (Phân hệ)": "Phân hệ 5: Bảng tin & Học liệu (Teacher)"
+    },
+    {
+      "ID": "UC-42",
+      "Use Case": "Update Announcement Post",
+      "Actor": "Teacher",
+      "Feature": "Post Management",
+      "Use Case Description": "Chỉnh sửa bài viết thông báo cũ trên bảng tin lớp học.",
+      "Subsystem (Phân hệ)": "Phân hệ 5: Bảng tin & Học liệu (Teacher)"
+    },
+    {
+      "ID": "UC-43",
+      "Use Case": "Comment on Post",
+      "Actor": "All Actors",
+      "Feature": "Post Management",
+      "Use Case Description": "Giáo viên và Học sinh bình luận, thảo luận trực tiếp dưới các bài đăng.",
+      "Subsystem (Phân hệ)": "Phân hệ 5: Bảng tin & Học liệu (Teacher)"
+    },
+    {
+      "ID": "UC-44",
+      "Use Case": "View Class Post List",
+      "Actor": "All Actors",
+      "Feature": "Post Management",
+      "Use Case Description": "Duyệt qua luồng bài đăng và đọc các tin tức mới nhất từ không gian của lớp.",
+      "Subsystem (Phân hệ)": "Phân hệ 5: Bảng tin & Học liệu (Teacher)"
+    },
+    {
+      "ID": "UC-45",
+      "Use Case": "Delete Announcement Post",
+      "Actor": "Teacher",
+      "Feature": "Post Management",
+      "Use Case Description": "Xóa bài viết thông báo và dọn dẹp sạch các bình luận đi kèm bài viết đó.",
+      "Subsystem (Phân hệ)": "Phân hệ 5: Bảng tin & Học liệu (Teacher)"
+    },
+    {
+      "ID": "UC-46",
+      "Use Case": "Create Online Assignment",
+      "Actor": "Teacher",
+      "Feature": "Assignment Management",
+      "Use Case Description": "Tạo bài tập trực tuyến, thiết lập hạn nộp (DueDate) và gắn vào danh mục đầu điểm.",
+      "Subsystem (Phân hệ)": "Phân hệ 6: Bài tập & Sổ điểm (Teacher)"
+    },
+    {
+      "ID": "UC-47",
+      "Use Case": "View Class Assignment List",
+      "Actor": "Teacher, Student",
+      "Feature": "Assignment Management",
+      "Use Case Description": "Xem danh sách bài tập được sắp xếp theo thời gian hạn chót (Deadline) cận kề nhất.",
+      "Subsystem (Phân hệ)": "Phân hệ 6: Bài tập & Sổ điểm (Teacher)"
+    },
+    {
+      "ID": "UC-48",
+      "Use Case": "Update Assignment Details",
+      "Actor": "Teacher",
+      "Feature": "Assignment Management",
+      "Use Case Description": "Sửa yêu cầu đề bài hoặc gia hạn thêm thời gian nộp bài cho học sinh.",
+      "Subsystem (Phân hệ)": "Phân hệ 6: Bài tập & Sổ điểm (Teacher)"
+    },
+    {
+      "ID": "UC-49",
+      "Use Case": "Delete Assignment",
+      "Actor": "Teacher",
+      "Feature": "Assignment Management",
+      "Use Case Description": "Xóa bài tập khỏi lớp học.",
+      "Subsystem (Phân hệ)": "Phân hệ 6: Bài tập & Sổ điểm (Teacher)"
+    },
+    {
+      "ID": "UC-50",
+      "Use Case": "View Assignment Submissions",
+      "Actor": "Teacher",
+      "Feature": "Assignment Management",
+      "Use Case Description": "Xem tiến độ nộp bài của cả lớp (Ai đã nộp, em nào nộp muộn, ai thiếu bài).",
+      "Subsystem (Phân hệ)": "Phân hệ 6: Bài tập & Sổ điểm (Teacher)"
+    },
+    {
+      "ID": "UC-51",
+      "Use Case": "Grade & Feedback Submission",
+      "Actor": "Teacher",
+      "Feature": "Assignment Management",
+      "Use Case Description": "Mở bài làm, chấm điểm, ghi lời phê bình trực tiếp cho từng học sinh.",
+      "Subsystem (Phân hệ)": "Phân hệ 6: Bài tập & Sổ điểm (Teacher)"
+    },
+    {
+      "ID": "UC-52",
+      "Use Case": "Create Offline Test Config",
+      "Actor": "Teacher",
+      "Feature": "Assignment Management",
+      "Use Case Description": "Khai báo đầu điểm kiểm tra trực tiếp tại lớp (ví dụ: Thi giấy).",
+      "Subsystem (Phân hệ)": "Phân hệ 6: Bài tập & Sổ điểm (Teacher)"
+    },
+    {
+      "ID": "UC-53",
+      "Use Case": "Upload Student Offline Grades",
+      "Actor": "Teacher",
+      "Feature": "Assignment Management",
+      "Use Case Description": "Nhập điểm thi giấy của học sinh vào hệ thống.",
+      "Subsystem (Phân hệ)": "Phân hệ 6: Bài tập & Sổ điểm (Teacher)"
+    },
+    {
+      "ID": "UC-54",
+      "Use Case": "Download All Submissions ZIP",
+      "Actor": "Teacher",
+      "Feature": "Assignment Management",
+      "Use Case Description": "Tải nhanh toàn bộ file bài làm của cả lớp thành một file .ZIP để chấm offline.",
+      "Subsystem (Phân hệ)": "Phân hệ 6: Bài tập & Sổ điểm (Teacher)"
+    },
+    {
+      "ID": "UC-55",
+      "Use Case": "View Grade Categories Config",
+      "Actor": "Teacher",
+      "Feature": "Gradebook Management",
+      "Use Case Description": "Xem danh sách và cơ cấu tỷ lệ % của các danh mục điểm trong lớp.",
+      "Subsystem (Phân hệ)": "Phân hệ 6: Bài tập & Sổ điểm (Teacher)"
+    },
+    {
+      "ID": "UC-56",
+      "Use Case": "Add Grade Category",
+      "Actor": "Teacher",
+      "Feature": "Gradebook Management",
+      "Use Case Description": "Thiết lập đầu điểm thành phần mới và gán % trọng số điểm (ví dụ: Cuối kỳ gánh 50%).",
+      "Subsystem (Phân hệ)": "Phân hệ 6: Bài tập & Sổ điểm (Teacher)"
+    },
+    {
+      "ID": "UC-57",
+      "Use Case": "Edit Grade Category",
+      "Actor": "Teacher",
+      "Feature": "Gradebook Management",
+      "Use Case Description": "Điều chỉnh tên hoặc % trọng số danh mục điểm (Đảm bảo tổng các danh mục bằng 100%).",
+      "Subsystem (Phân hệ)": "Phân hệ 6: Bài tập & Sổ điểm (Teacher)"
+    },
+    {
+      "ID": "UC-58",
+      "Use Case": "Delete Grade Category",
+      "Actor": "Teacher",
+      "Feature": "Gradebook Management",
+      "Use Case Description": "Xóa đầu điểm thành phần ra khỏi lớp học.",
+      "Subsystem (Phân hệ)": "Phân hệ 6: Bài tập & Sổ điểm (Teacher)"
+    },
+    {
+      "ID": "UC-59",
+      "Use Case": "View Master Gradebook",
+      "Actor": "Teacher",
+      "Feature": "Gradebook Management",
+      "Use Case Description": "Hiển thị Sổ điểm cái (Bảng Grid tổng hợp điểm số của tất cả học sinh trong lớp).",
+      "Subsystem (Phân hệ)": "Phân hệ 6: Bài tập & Sổ điểm (Teacher)"
+    },
+    {
+      "ID": "UC-60",
+      "Use Case": "Edit Gradebook Cell",
+      "Actor": "Teacher",
+      "Feature": "Gradebook Management",
+      "Use Case Description": "Click trực tiếp vào ô điểm trên sổ điểm cái để chỉnh sửa nhanh điểm số.",
+      "Subsystem (Phân hệ)": "Phân hệ 6: Bài tập & Sổ điểm (Teacher)"
+    },
+    {
+      "ID": "UC-61",
+      "Use Case": "Export Gradebook File",
+      "Actor": "Teacher",
+      "Feature": "Gradebook Management",
+      "Use Case Description": "Xuất toàn bộ sổ điểm của lớp học ra tệp Excel hoặc file PDF.",
+      "Subsystem (Phân hệ)": "Phân hệ 6: Bài tập & Sổ điểm (Teacher)"
+    },
+    {
+      "ID": "UC-62",
+      "Use Case": "Create Progress Report",
+      "Actor": "Teacher",
+      "Feature": "Progress Report Management",
+      "Use Case Description": "Hệ thống tự gom dữ liệu chuyên cần và điểm số để sinh báo cáo tiến độ dạng Draft.",
+      "Subsystem (Phân hệ)": "Phân hệ 7: Báo cáo & Học phí (Teacher)"
+    },
+    {
+      "ID": "UC-63",
+      "Use Case": "Update Progress Report",
+      "Actor": "Teacher",
+      "Feature": "Progress Report Management",
+      "Use Case Description": "Giáo viên bổ sung các nhận xét định tính về thái độ, học lực của học sinh.",
+      "Subsystem (Phân hệ)": "Phân hệ 7: Báo cáo & Học phí (Teacher)"
+    },
+    {
+      "ID": "UC-64",
+      "Use Case": "Send & Publish Report",
+      "Actor": "Teacher",
+      "Feature": "Progress Report Management",
+      "Use Case Description": "Xuất bản báo cáo, gửi trực tiếp về tài khoản Học sinh/Phụ huynh và đẩy thông báo.",
+      "Subsystem (Phân hệ)": "Phân hệ 7: Báo cáo & Học phí (Teacher)"
+    },
+    {
+      "ID": "UC-65",
+      "Use Case": "View Sent Progress List",
+      "Actor": "Teacher",
+      "Feature": "Progress Report Management",
+      "Use Case Description": "Quản lý danh sách trạng thái gửi báo cáo (Xem học sinh nào chưa có nhận xét).",
+      "Subsystem (Phân hệ)": "Phân hệ 7: Báo cáo & Học phí (Teacher)"
+    },
+    {
+      "ID": "UC-66",
+      "Use Case": "Configure Tuition Fee",
+      "Actor": "Teacher",
+      "Feature": "Tuition Fee Management",
+      "Use Case Description": "Giáo viên cài đặt giá tiền học phí theo buổi học và hạn chót đóng tiền của lớp mình.",
+      "Subsystem (Phân hệ)": "Phân hệ 7: Báo cáo & Học phí (Teacher)"
+    },
+    {
+      "ID": "UC-67",
+      "Use Case": "Generate Monthly Invoices",
+      "Actor": "Teacher",
+      "Feature": "Tuition Fee Management",
+      "Use Case Description": "Chạy công cụ tự động quét buổi học thực tế học sinh tham gia để sinh hóa đơn học phí định kỳ.",
+      "Subsystem (Phân hệ)": "Phân hệ 7: Báo cáo & Học phí (Teacher)"
+    },
+    {
+      "ID": "UC-68",
+      "Use Case": "Extend Invoice Due Date",
+      "Actor": "Teacher",
+      "Feature": "Tuition Fee Management",
+      "Use Case Description": "Gia hạn thêm ngày chót đóng học phí cho các học sinh có hoàn cảnh đặc biệt.",
+      "Subsystem (Phân hệ)": "Phân hệ 7: Báo cáo & Học phí (Teacher)"
+    },
+    {
+      "ID": "UC-69",
+      "Use Case": "Review Payment Transaction",
+      "Actor": "Teacher",
+      "Feature": "Payment Management",
+      "Use Case Description": "Giáo viên trực tiếp kiểm tra ảnh bill chuyển khoản của học sinh nộp và duyệt chuyển Invoice sang Paid.",
+      "Subsystem (Phân hệ)": "Phân hệ 7: Báo cáo & Học phí (Teacher)"
+    },
+    {
+      "ID": "UC-70",
+      "Use Case": "View Enrolled Classes List",
+      "Actor": "Student",
+      "Feature": "Student Learning Portal",
+      "Use Case Description": "Xem danh sách các lớp học mình đang theo học trên nền tảng.",
+      "Subsystem (Phân hệ)": "Phân hệ 8: Học viên Portal (Student)"
+    },
+    {
+      "ID": "UC-71",
+      "Use Case": "View Class Attendance Grid",
+      "Actor": "Student",
+      "Feature": "Student Learning Portal",
+      "Use Case Description": "Theo dõi chi tiết lịch sử chuyên cần, các buổi đi học hoặc vắng mặt của mình.",
+      "Subsystem (Phân hệ)": "Phân hệ 8: Học viên Portal (Student)"
+    },
+    {
+      "ID": "UC-71B",
+      "Use Case": "View Daily Session Feedback",
+      "Actor": "Student",
+      "Feature": "Student Learning Portal",
+      "Use Case Description": "Cho phép Học sinh/Phụ huynh xem lời nhận xét chi tiết về thái độ và học lực của buổi học tương ứng do Giáo viên viết.",
+      "Subsystem (Phân hệ)": "Phân hệ 8: Học viên Portal (Student)"
+    },
+    {
+      "ID": "UC-72",
+      "Use Case": "View Mark Report Details",
+      "Actor": "Student",
+      "Feature": "Student Learning Portal",
+      "Use Case Description": "Tra cứu bảng điểm thành phần môn học và đọc lời nhận xét của Giáo viên.",
+      "Subsystem (Phân hệ)": "Phân hệ 8: Học viên Portal (Student)"
+    },
+    {
+      "ID": "UC-73",
+      "Use Case": "Submit Assignment File",
+      "Actor": "Student",
+      "Feature": "Student Learning Portal",
+      "Use Case Description": "Tải tệp lời giải bài tập (PDF, Word, Ảnh) lên hệ thống để nộp bài.",
+      "Subsystem (Phân hệ)": "Phân hệ 8: Học viên Portal (Student)"
+    },
+    {
+      "ID": "UC-74",
+      "Use Case": "View Monthly Tuition Owed",
+      "Actor": "Student",
+      "Feature": "Student Learning Portal",
+      "Use Case Description": "Kiểm tra danh sách công nợ học phí theo chu kỳ từng tháng.",
+      "Subsystem (Phân hệ)": "Phân hệ 8: Học viên Portal (Student)"
+    },
+    {
+      "ID": "UC-75",
+      "Use Case": "Generate Dynamic VietQR",
+      "Actor": "Student",
+      "Feature": "Student Learning Portal",
+      "Use Case Description": "Ấn Pay để sinh mã VietQR động chứa thông tin tài khoản ngân hàng riêng của Giáo viên chủ nhiệm lớp.",
+      "Subsystem (Phân hệ)": "Phân hệ 8: Học viên Portal (Student)"
+    },
+    {
+      "ID": "UC-76",
+      "Use Case": "Upload Payment Proof Bill",
+      "Actor": "Student",
+      "Feature": "Student Learning Portal",
+      "Use Case Description": "Tệp ảnh chụp biên lai chuyển khoản thành công gửi lên cho Giáo viên đối soát duyệt (Pending).",
+      "Subsystem (Phân hệ)": "Phân hệ 8: Học viên Portal (Student)"
+    }
+  ]
+}

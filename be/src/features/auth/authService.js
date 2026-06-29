@@ -276,3 +276,32 @@ const ensureTeacherProfile = async (user) => {
     });
   }
 };
+
+export const signOutTeacher = async (token) => {
+  const { error } = await supabase.auth.admin.signOut(token);
+  if (error) {
+    throw new Error(error.message);
+  }
+  return true;
+};
+
+export const changeTeacherPassword = async (userId, newPassword) => {
+  const { data, error } = await supabase.auth.admin.updateUserById(userId, {
+    password: newPassword
+  });
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data;
+};
+
+export const forgotTeacherPassword = async (email, redirectTo) => {
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo
+  });
+  if (error) {
+    throw new Error(error.message);
+  }
+  return data;
+};
+

@@ -98,14 +98,47 @@ export const useAuthStore = create((set) => ({
     } catch (err) {
       const errMsg = err.response?.data?.message || 'Đăng ký hồ sơ thất bại';
       set({ error: errMsg, loading: false });
-      return { success: false, error: updatedUser };
+      return { success: false, error: errMsg };
     }
   },
 
-  logout: () => {
-    localStorage.removeItem('owly_token');
-    localStorage.removeItem('owly_user');
-    set({ user: null, token: null, error: null });
+  changePassword: async (newPassword, confirmNewPassword) => {
+    set({ loading: true, error: null });
+    try {
+      await apiClient.post('/api/auth/change-password', { newPassword, confirmNewPassword });
+      set({ loading: false });
+      return { success: true };
+    } catch (err) {
+      const errMsg = err.response?.data?.message || 'Đổi mật khẩu thất bại';
+      set({ error: errMsg, loading: false });
+      return { success: false, error: errMsg };
+    }
+  },
+
+  forgotPassword: async (email) => {
+    set({ loading: true, error: null });
+    try {
+      await apiClient.post('/api/auth/forgot-password', { email });
+      set({ loading: false });
+      return { success: true };
+    } catch (err) {
+      const errMsg = err.response?.data?.message || 'Yêu cầu đặt lại mật khẩu thất bại';
+      set({ error: errMsg, loading: false });
+      return { success: false, error: errMsg };
+    }
+  },
+
+  logout: async () => {
+    try {
+      await apiClient.post('/api/auth/logout');
+    } catch (err) {
+      console.warn('Logout request failed', err);
+    } finally {
+      localStorage.removeItem('owly_token');
+      localStorage.removeItem('owly_user');
+      delete apiClient.defaults.headers.common['Authorization'];
+      set({ user: null, token: null, error: null });
+    }
   },
 }));
 

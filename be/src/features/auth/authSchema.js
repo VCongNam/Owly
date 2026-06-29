@@ -42,3 +42,42 @@ export const signInSchema = z.object({
   })
   .min(6, 'Mật khẩu phải có ít nhất 6 ký tự')
 });
+
+export const changePasswordSchema = z.object({
+  newPassword: z.string({
+    required_error: 'Mật khẩu mới không được để trống'
+  })
+  .min(6, 'Mật khẩu mới phải có ít nhất 6 ký tự')
+  .max(100, 'Mật khẩu mới không được vượt quá 100 ký tự'),
+
+  confirmNewPassword: z.string({
+    required_error: 'Xác nhận mật khẩu mới không được để trống'
+  })
+}).refine(data => data.newPassword === data.confirmNewPassword, {
+  message: 'Mật khẩu xác nhận không khớp',
+  path: ['confirmNewPassword']
+});
+
+export const forgotPasswordSchema = z.object({
+  email: z.string({
+    required_error: 'Email không được để trống'
+  })
+  .min(1, 'Email không được để trống')
+  .email('Email không đúng định dạng')
+});
+
+export const resetPasswordSchema = z.object({
+  newPassword: z.string({
+    required_error: 'Mật khẩu mới không được để trống'
+  })
+  .min(6, 'Mật khẩu mới phải có ít nhất 6 ký tự')
+  .max(100, 'Mật khẩu mới không được vượt quá 100 ký tự'),
+
+  confirmNewPassword: z.string({
+    required_error: 'Xác nhận mật khẩu mới không được để trống'
+  })
+}).refine(data => data.newPassword === data.confirmNewPassword, {
+  message: 'Mật khẩu xác nhận không khớp',
+  path: ['confirmNewPassword']
+});
+

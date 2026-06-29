@@ -25,9 +25,55 @@ export function AuthCallback() {
     hasCalled.current = true;
 
     const handleCallback = async () => {
+      // 1. Kiểm tra hash (Supabase gửi link recovery dạng hash #access_token=...&type=recovery)
+      const hash = window.location.hash;
+      if (hash) {
+        const hashParams = new URLSearchParams(hash.replace('#', '?'));
+        const accessToken = hashParams.get('access_token');
+        const type = hashParams.get('type');
+
+        if (accessToken && type === 'recovery') {
+          try {
+            // Thiết lập session tạm với token để gọi API lấy thông tin cá nhân
+            setSession({ email: 'loading...' }, accessToken);
+            
+            // Gọi API lấy profile để cập nhật chính xác user info vào store
+            const profileResponse = await apiClient.get('/api/auth/me');
+            const user = profileResponse.data || profileResponse;
+            
+            setSession(user, accessToken);
+
+            notifications.show({
+              title: 'Xác thực khôi phục mật khẩu',
+              message: 'Vui lòng thiết lập mật khẩu mới của bạn.',
+              color: 'teal',
+            });
+
+            navigate('/change-password', { replace: true });
+            return;
+          } catch (err) {
+            console.error('Recovery callback error:', err);
+            notifications.show({
+              title: 'Lỗi khôi phục mật khẩu',
+              message: 'Không thể xác thực liên kết khôi phục. Vui lòng thử lại.',
+              color: 'red',
+            });
+            navigate('/signin', { replace: true });
+            return;
+          }
+        }
+      }
+
+      // 2. Kiểm tra search params (Google OAuth hoặc Supabase PKCE code flow)
       const params = new URLSearchParams(window.location.search);
       const code = params.get('code');
       const error = params.get('error');
+      const type = params.get('type');
+
+      // Check if it is a recovery code (PKCE flow)
+      if (type === 'recovery' && code) {
+        // Handle code flow for recovery if needed, but standard Google OAuth/Supabase hash flow is most common.
+      }
 
       // Google từ chối (user nhấn Cancel)
       if (error) {
@@ -43,7 +89,7 @@ export function AuthCallback() {
       if (!code) {
         notifications.show({
           title: 'Lỗi xác thực',
-          message: 'Không nhận được mã xác thực từ Google.',
+          message: 'Không nhận được mã xác thực phù hợp.',
           color: 'red',
         });
         navigate('/signin', { replace: true });

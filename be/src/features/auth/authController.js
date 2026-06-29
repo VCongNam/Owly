@@ -192,3 +192,63 @@ export const googleExchange = async (req, res) => {
     });
   }
 };
+
+export const signOut = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+      return res.status(400).json({
+        success: false,
+        message: 'Mã xác thực bị thiếu'
+      });
+    }
+    const token = authHeader.split(' ')[1];
+    await authService.signOutTeacher(token);
+    return res.status(200).json({
+      success: true,
+      message: 'Đăng xuất thành công'
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Đăng xuất thất bại'
+    });
+  }
+};
+
+export const changePassword = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { newPassword } = req.body;
+    await authService.changeTeacherPassword(userId, newPassword);
+    return res.status(200).json({
+      success: true,
+      message: 'Đổi mật khẩu thành công'
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Đổi mật khẩu thất bại'
+    });
+  }
+};
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    // Redirect to auth callback recovery
+    const redirectTo = `${frontendUrl}/auth/callback`;
+    await authService.forgotTeacherPassword(email, redirectTo);
+    return res.status(200).json({
+      success: true,
+      message: 'Email khôi phục mật khẩu đã được gửi'
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Yêu cầu khôi phục mật khẩu thất bại'
+    });
+  }
+};
+
