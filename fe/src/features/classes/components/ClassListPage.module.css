@@ -1,0 +1,6 @@
+.pageTitle {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text-color);
+}

@@ -183,7 +183,12 @@ export function SignIn() {
                 },
               }}
             />
-            <Checkbox label="Duy trì đăng nhập trên thiết bị này" mt="lg" size="sm" />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.25rem' }}>
+              <Checkbox label="Duy trì đăng nhập trên thiết bị này" size="sm" />
+              <Anchor component={Link} to="/forgot-password" size="sm" fw={500} color="copper">
+                Quên mật khẩu?
+              </Anchor>
+            </div>
             <Button 
               fullWidth 
               mt="xl" 

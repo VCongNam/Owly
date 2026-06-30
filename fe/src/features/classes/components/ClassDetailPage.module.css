@@ -1,0 +1,75 @@
+.root {
+  display: flex;
+  flex-direction: column;
+}
+
+.breadcrumb {
+  color: var(--text-color);
+  opacity: 0.6;
+  font-size: 13px;
+}
+
+.className {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text-color);
+}
+
+/* ── Tab Bar ─────────────────────────────────────────────── */
+.tabBar {
+  display: flex;
+  gap: 2px;
+  border-bottom: 2px solid var(--border-color);
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin-bottom: 24px;
+  flex-shrink: 0;
+}
+
+.tabBar::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-color);
+  opacity: 0.55;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  white-space: nowrap;
+  transition: opacity 0.15s, color 0.15s, border-color 0.15s;
+  border-radius: 4px 4px 0 0;
+}
+
+.tab:hover {
+  opacity: 0.85;
+  background: color-mix(in srgb, var(--accent-color) 6%, transparent);
+}
+
+.tabActive {
+  opacity: 1;
+  color: var(--accent-color);
+  border-bottom-color: var(--accent-color);
+  font-weight: 600;
+}
+
+/* ── Tab Content ─────────────────────────────────────────── */
+.tabContent {
+  flex: 1;
+}
+
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 40px;
+  opacity: 0.6;
+}

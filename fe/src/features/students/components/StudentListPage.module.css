@@ -1,0 +1,21 @@
+.pageTitle {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text-color);
+}
+
+.tableWrapper {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--card-bg);
+}
+
+.table {
+  background: var(--card-bg);
+}
+
+.tableRow {
+  transition: background 0.1s;
+}

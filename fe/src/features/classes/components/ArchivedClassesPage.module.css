@@ -1,0 +1,16 @@
+.pageTitle {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text-color);
+}
+
+.card {
+  background: var(--card-bg) !important;
+  opacity: 0.85;
+  transition: opacity 0.15s;
+}
+
+.card:hover {
+  opacity: 1;
+}

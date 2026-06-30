@@ -1,0 +1,52 @@
+.card {
+  background: var(--card-bg) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px var(--shadow-color) !important;
+}
+
+.accentBar {
+  height: 4px;
+  background: var(--mantine-color-copper-5);
+}
+
+.accentBar[data-color='blue'] { background: var(--mantine-color-blue-5); }
+.accentBar[data-color='violet'] { background: var(--mantine-color-violet-5); }
+.accentBar[data-color='teal'] { background: var(--mantine-color-teal-5); }
+.accentBar[data-color='green'] { background: var(--mantine-color-green-5); }
+.accentBar[data-color='orange'] { background: var(--mantine-color-orange-5); }
+.accentBar[data-color='yellow'] { background: var(--mantine-color-yellow-5); }
+.accentBar[data-color='cyan'] { background: var(--mantine-color-cyan-5); }
+
+.body {
+  padding: 16px;
+  flex: 1;
+}
+
+.className {
+  color: var(--text-color);
+  font-size: 15px;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-top: 1px solid var(--border-color);
+  text-decoration: none;
+  color: var(--accent-color);
+  background: color-mix(in srgb, var(--accent-color) 4%, transparent);
+  font-size: 12px;
+  transition: background 0.15s;
+}
+
+.footer:hover {
+  background: color-mix(in srgb, var(--accent-color) 10%, transparent);
+}

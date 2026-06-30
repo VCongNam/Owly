@@ -1,5 +1,4 @@
-// Feature: classes (Quản lý lớp học)
-// Các export sẽ được thêm vào đây khi feature được xây dựng.
-// Ví dụ:
-// export { ClassesListPage } from './components/ClassesListPage';
-// export { useClasses } from './hooks/useClasses';
+export { ClassListPage } from './components/ClassListPage';
+export { ClassDetailPage } from './components/ClassDetailPage';
+export { ArchivedClassesPage } from './components/ArchivedClassesPage';
+export { ClassCard } from './components/ClassCard';
