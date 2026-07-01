@@ -5,6 +5,8 @@ import { ClassListPage, ClassDetailPage, ArchivedClassesPage } from '../features
 import { StudentListPage } from '../features/students';
 import { DashboardLayout, ProtectedRoute } from '../shared';
 
+import { ProfilePage } from '../features/profile/components/ProfilePage';
+
 export function AppRoutes() {
   return (
     <Routes>
@@ -36,7 +38,7 @@ export function AppRoutes() {
         <Route path="/schedule" element={<div style={{ padding: 40, opacity: 0.5 }}>📅 Lịch học — đang phát triển</div>} />
 
         {/* Profile & settings */}
-        <Route path="/profile" element={<div style={{ padding: 40, opacity: 0.5 }}>👤 Hồ sơ cá nhân — đang phát triển</div>} />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/change-password" element={<ChangePassword />} />
       </Route>
 

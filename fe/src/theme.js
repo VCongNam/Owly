@@ -37,15 +37,6 @@ export const theme = createTheme({
         loaderProps: { type: 'dots' },
       },
     },
-    Input: {
-      styles: () => ({
-        input: {
-          '&:focus-within': {
-            borderColor: '#c87a8a',
-          },
-        },
-      }),
-    },
   },
 });
 

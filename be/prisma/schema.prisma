@@ -18,6 +18,8 @@ model Account {
   isActive         Boolean   @default(true) @map("is_active")
   packageType      String    @default("Free") @map("package_type") @db.VarChar(50)
   packageExpiresAt DateTime? @map("package_expires_at") @db.Timestamptz
+  phone            String?   @db.VarChar(50)
+  avatarUrl        String?   @map("avatar_url") @db.Text
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 

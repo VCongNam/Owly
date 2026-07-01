@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, NavLink, useParams } from 'react-router-dom';
-import { Group, Text, Badge, Breadcrumbs, Anchor } from '@mantine/core';
+import { Group, Text, Badge, Breadcrumbs, Anchor, Loader, Center } from '@mantine/core';
 import {
   MegaphoneSimple,
   CalendarBlank,
@@ -10,6 +10,7 @@ import {
   CurrencyCircleDollar,
 } from '@phosphor-icons/react';
 import { Link } from 'react-router-dom';
+import { useClassDetails } from '../hooks/useClasses';
 import classes from './ClassDetailPage.module.css';
 
 // ── Tab configuration ────────────────────────────────────────────────────────
@@ -29,24 +30,30 @@ function PlaceholderTab({ tab }) {
     <div className={classes.placeholder}>
       <tab.icon size={48} weight="duotone" color="var(--accent-color)" />
       <Text size="lg" fw={600} mt="md">{tab.label}</Text>
-      <Text size="sm" c="dimmed">Tính năng đang phát triển</Text>
+      <Text size="sm" c="dimmed">Tính năng đang phát triển cho lớp học này</Text>
     </div>
   );
 }
 
-// ── Mock class data (replace with API later) ─────────────────────────────────
-const MOCK_CLASS = {
-  id: '1',
-  name: 'Toán 12A1',
-  subject: 'Toán học',
-  studentCount: 24,
-};
-
 export function ClassDetailPage() {
   const { classId } = useParams();
+  const { classDetail: cls, loading } = useClassDetails(classId);
 
-  // TODO: fetch class info by classId
-  const cls = MOCK_CLASS;
+  if (loading) {
+    return (
+      <Center py={100}>
+        <Loader color="copper" />
+      </Center>
+    );
+  }
+
+  if (!cls) {
+    return (
+      <Center py={100}>
+        <Text c="dimmed">Không tìm thấy lớp học</Text>
+      </Center>
+    );
+  }
 
   return (
     <div className={classes.root}>
@@ -61,8 +68,10 @@ export function ClassDetailPage() {
         <div>
           <Group gap={10} align="center">
             <Text className={classes.className}>{cls.name}</Text>
-            <Badge size="sm" variant="light" color="copper">{cls.subject}</Badge>
-            <Badge size="sm" variant="dot" color="teal">{cls.studentCount} học viên</Badge>
+            <Badge size="sm" variant="light" color={cls.status === 'Active' ? 'green' : 'gray'}>
+              {cls.status}
+            </Badge>
+            <Badge size="sm" variant="dot" color="teal">0 học viên</Badge>
           </Group>
         </div>
       </Group>

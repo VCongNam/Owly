@@ -23,7 +23,17 @@ export const signUp = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: 'Đăng ký tài khoản giáo viên thành công',
-      data: result
+      data: {
+        user: {
+          id: result.userId,
+          email: result.email,
+          fullName: result.fullName,
+          teacherCode: result.teacherCode,
+          phone: result.phone,
+          specializations: result.specializations
+        },
+        token: result.token
+      }
     });
   } catch (error) {
     let msg = error.message;

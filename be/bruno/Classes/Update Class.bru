@@ -1,0 +1,26 @@
+meta {
+  name: Update Class
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/classes/:id
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: ID_CUA_LOP_HOC_TREN_DB
+}
+
+body:json {
+  {
+    "name": "Toán Học Lớp 10 (Nâng Cao)",
+    "status": "Archived"
+  }
+}

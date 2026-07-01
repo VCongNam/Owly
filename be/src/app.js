@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import { supabase } from './config/supabase.js';
 import authRoutes from './features/auth/authRoutes.js';
 import subjectRoutes from './features/subjects/subjectRoutes.js';
+import classRoutes from './features/classes/classRoutes.js';
+import profileRoutes from './features/profile/profileRoutes.js';
 
 dotenv.config();
 
@@ -16,6 +18,8 @@ app.use(express.json());
 // Register routes
 app.use('/api/auth', authRoutes);
 app.use('/api/subjects', subjectRoutes);
+app.use('/api/classes', classRoutes);
+app.use('/api/profile', profileRoutes);
 
 // Test route
 app.get('/', (req, res) => {

@@ -3,35 +3,26 @@ import { GraduationCap, Users, DotsThreeVertical, PencilSimple, Archive, ArrowRi
 import { Link } from 'react-router-dom';
 import classes from './ClassCard.module.css';
 
-const SUBJECT_COLORS = {
-  'Toán học': 'blue',
-  'Vật lý': 'violet',
-  'Hóa học': 'teal',
-  'Sinh học': 'green',
-  'Ngữ văn': 'orange',
-  'Lịch sử': 'yellow',
-  'Địa lý': 'cyan',
-};
-
 export function ClassCard({ cls, onEdit, onArchive }) {
-  const subjectColor = SUBJECT_COLORS[cls.subject] || 'copper';
+  const isArchived = cls.status === 'Archived';
+  const color = isArchived ? 'gray' : 'copper';
 
   return (
-    <Card withBorder radius="md" p={0} className={classes.card}>
+    <Card withBorder radius="md" p={0} className={classes.card} style={{ opacity: isArchived ? 0.7 : 1 }}>
       {/* Color accent bar */}
-      <div className={classes.accentBar} data-color={subjectColor} />
+      <div className={classes.accentBar} data-color={color} />
 
       <div className={classes.body}>
         <Group justify="space-between" align="flex-start" wrap="nowrap">
           <Group gap={12} wrap="nowrap" style={{ minWidth: 0 }}>
-            <ThemeIcon size={42} radius="md" variant="light" color={subjectColor} style={{ flexShrink: 0 }}>
+            <ThemeIcon size={42} radius="md" variant="light" color={color} style={{ flexShrink: 0 }}>
               <GraduationCap size={22} weight="duotone" />
             </ThemeIcon>
             <div style={{ minWidth: 0 }}>
               <Text fw={700} size="md" className={classes.className} lineClamp={1}>
                 {cls.name}
               </Text>
-              <Text size="xs" c="dimmed">{cls.subject}</Text>
+              <Text size="xs" c={isArchived ? "red" : "green"}>{cls.status}</Text>
             </div>
           </Group>
 
@@ -46,7 +37,7 @@ export function ClassCard({ cls, onEdit, onArchive }) {
                 Chỉnh sửa
               </Menu.Item>
               <Menu.Item leftSection={<Archive size={14} />} color="orange" onClick={() => onArchive?.(cls)}>
-                Lưu trữ lớp
+                {isArchived ? 'Khôi phục lớp' : 'Lưu trữ lớp'}
               </Menu.Item>
             </Menu.Dropdown>
           </Menu>
@@ -56,17 +47,12 @@ export function ClassCard({ cls, onEdit, onArchive }) {
         <Group gap={16} mt="md">
           <Group gap={4}>
             <Users size={14} color="var(--accent-color)" />
-            <Text size="xs" c="dimmed">{cls.studentCount ?? 0} học viên</Text>
+            <Text size="xs" c="dimmed">0 học viên</Text>
           </Group>
           {cls.startDate && (
             <Text size="xs" c="dimmed">
               Từ {new Date(cls.startDate).toLocaleDateString('vi-VN', { month: 'short', year: 'numeric' })}
             </Text>
-          )}
-          {cls.subject && (
-            <Badge size="xs" variant="light" color={subjectColor} ml="auto">
-              {cls.subject}
-            </Badge>
           )}
         </Group>
       </div>

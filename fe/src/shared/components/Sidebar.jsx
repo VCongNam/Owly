@@ -99,12 +99,12 @@ export function Sidebar() {
       {collapsed ? (
         <Tooltip label={avatarName} position="right" withArrow offset={8}>
           <div className={classes.profile} style={{ justifyContent: 'center', padding: '12px 0' }}>
-            <Avatar name={avatarName} size={32} radius="xl" color="copper" />
+            <Avatar src={user?.account?.avatarUrl} name={avatarName} size={32} radius="xl" color="copper" />
           </div>
         </Tooltip>
       ) : (
         <div className={classes.profile}>
-          <Avatar name={avatarName} size={32} radius="xl" color="copper" />
+          <Avatar src={user?.account?.avatarUrl} name={avatarName} size={32} radius="xl" color="copper" />
           <div className={classes.profileText}>
             <div className={classes.profileName}>{user?.fullName || user?.email}</div>
             <div className={classes.profileSub}>

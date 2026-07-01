@@ -14,8 +14,8 @@ export const apiClient = axios.create({
 // Request Interceptor: Attach JWT Token
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('owly_token');
-    if (token) {
+    const token = localStorage.getItem('owly_token') || sessionStorage.getItem('owly_token');
+    if (token && token !== 'undefined' && token !== 'null') {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -42,6 +42,8 @@ apiClient.interceptors.response.use(
         // Clear token & redirect to signin
         localStorage.removeItem('owly_token');
         localStorage.removeItem('owly_user');
+        sessionStorage.removeItem('owly_token');
+        sessionStorage.removeItem('owly_user');
         
         // Use custom event or location change to avoid circular dependencies
         window.dispatchEvent(new Event('owly_unauthorized'));

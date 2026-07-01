@@ -14,6 +14,7 @@ export function SignIn() {
     initialValues: {
       email: '',
       password: '',
+      rememberMe: false,
     },
     validate: {
       email: (value) => (/^\S+@\S+\.\S+$/.test(value) ? null : 'Email không đúng định dạng'),
@@ -23,7 +24,7 @@ export function SignIn() {
 
   const handleSubmit = async (values) => {
     console.log('Submitting login form', values);
-    const result = await login(values.email, values.password);
+    const result = await login(values.email, values.password, values.rememberMe);
     console.log('Login result', result);
     if (result.success) {
       notifications.show({
@@ -184,7 +185,11 @@ export function SignIn() {
               }}
             />
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.25rem' }}>
-              <Checkbox label="Duy trì đăng nhập trên thiết bị này" size="sm" />
+              <Checkbox 
+                label="Duy trì đăng nhập trên thiết bị này" 
+                size="sm" 
+                {...form.getInputProps('rememberMe', { type: 'checkbox' })} 
+              />
               <Anchor component={Link} to="/forgot-password" size="sm" fw={500} color="copper">
                 Quên mật khẩu?
               </Anchor>

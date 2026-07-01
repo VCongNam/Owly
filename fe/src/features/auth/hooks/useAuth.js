@@ -3,38 +3,54 @@ import { apiClient } from '../../../services/apiClient';
 
 const getInitialUser = () => {
   try {
-    const userStr = localStorage.getItem('owly_user');
-    return userStr ? JSON.parse(userStr) : null;
+    const userStr = localStorage.getItem('owly_user') || sessionStorage.getItem('owly_user');
+    return userStr && userStr !== 'undefined' ? JSON.parse(userStr) : null;
   } catch {
     return null;
   }
 };
 
+const getInitialToken = () => {
+  const token = localStorage.getItem('owly_token') || sessionStorage.getItem('owly_token');
+  if (token === 'undefined' || token === 'null') {
+    localStorage.removeItem('owly_token');
+    sessionStorage.removeItem('owly_token');
+    return null;
+  }
+  return token || null;
+};
+
 export const useAuthStore = create((set) => ({
   user: getInitialUser(),
-  token: localStorage.getItem('owly_token') || null,
+  token: getInitialToken(),
   loading: false,
   error: null,
 
   setSession: (user, token) => {
+    // Save to wherever it was previously saved, or fallback to localStorage
+    const useSession = !!sessionStorage.getItem('owly_token');
+    const storage = useSession ? sessionStorage : localStorage;
+    
     if (token) {
-      localStorage.setItem('owly_token', token);
+      storage.setItem('owly_token', token);
       apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     } else {
       localStorage.removeItem('owly_token');
+      sessionStorage.removeItem('owly_token');
       delete apiClient.defaults.headers.common['Authorization'];
     }
 
     if (user) {
-      localStorage.setItem('owly_user', JSON.stringify(user));
+      storage.setItem('owly_user', JSON.stringify(user));
     } else {
       localStorage.removeItem('owly_user');
+      sessionStorage.removeItem('owly_user');
     }
 
     set({ user, token });
   },
 
-  login: async (email, password) => {
+  login: async (email, password, rememberMe = false) => {
     set({ loading: true, error: null });
     try {
       // API call to backend login
@@ -43,11 +59,16 @@ export const useAuthStore = create((set) => ({
       // Assume API returns { token, user } or similar structure
       const { user, token } = response;
       
+      const storage = rememberMe ? localStorage : sessionStorage;
+
       if (token) {
-        localStorage.setItem('owly_token', token);
+        storage.setItem('owly_token', token);
+      } else {
+        console.error('Token is missing in login response!');
       }
+
       if (user) {
-        localStorage.setItem('owly_user', JSON.stringify(user));
+        storage.setItem('owly_user', JSON.stringify(user));
       }
       
       set({ user, token, loading: false });
@@ -136,6 +157,8 @@ export const useAuthStore = create((set) => ({
     } finally {
       localStorage.removeItem('owly_token');
       localStorage.removeItem('owly_user');
+      sessionStorage.removeItem('owly_token');
+      sessionStorage.removeItem('owly_user');
       delete apiClient.defaults.headers.common['Authorization'];
       set({ user: null, token: null, error: null });
     }

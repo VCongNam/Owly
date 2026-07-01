@@ -18,6 +18,7 @@ export const authMiddleware = async (req, res, next) => {
     const { data: { user }, error } = await supabase.auth.getUser(token);
 
     if (error || !user) {
+      console.error('Lỗi xác thực Token:', error?.message || 'User is null', 'Token:', token.substring(0, 20) + '...');
       return res.status(401).json({
         success: false,
         message: 'Mã xác thực không chính xác hoặc đã hết hạn'

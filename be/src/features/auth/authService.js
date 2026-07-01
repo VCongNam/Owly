@@ -92,7 +92,8 @@ export const signUpTeacher = async (email, password, fullName, phone, specializa
       fullName: savedTeacher.fullName,
       teacherCode: savedTeacher.teacherCode,
       phone: phone,
-      specializations: savedTeacher.specializations.map(s => s.subject)
+      specializations: savedTeacher.specializations.map(s => s.subject),
+      token: authData.session?.access_token
     };
   });
 };
@@ -186,7 +187,7 @@ export const signInTeacher = async (email, password) => {
 
   return {
     user: data.user,
-    session: data.session
+    token: data.session?.access_token
   };
 };
 
