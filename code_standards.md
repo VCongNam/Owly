@@ -77,6 +77,26 @@ graph TD
       }
     }
     ```
+*   **Pagination Response Format (Phân trang):**
+    Khi trả về danh sách dữ liệu có phân trang, cấu trúc bắt buộc phải trả về mảng dữ liệu nằm trong trường `items` kèm theo metadata `pagination`:
+    ```json
+    {
+      "success": true,
+      "data": {
+        "items": [], // Danh sách bản ghi của trang hiện tại
+        "pagination": {
+          "totalItems": 100, // Tổng số bản ghi khớp bộ lọc trong DB
+          "totalPages": 10,  // Tổng số trang
+          "currentPage": 1,  // Trang hiện tại (1-indexed)
+          "limit": 10        // Số lượng bản ghi trên mỗi trang
+        }
+      }
+    }
+    ```
+*   **Pagination Input Validation Rules:**
+    Khi nhận tham số phân trang từ Query parameters (`page`, `limit`), bắt buộc phải validate bằng Zod schema:
+    - `page`: Mặc định là `1`, giá trị nhỏ nhất là `1`, ép kiểu số nguyên (`z.coerce.number().int().min(1).default(1)`).
+    - `limit`: Mặc định phù hợp tùy màn hình (thường là `10` hoặc `12`), tối đa `100` để tránh query quá tải DB (`z.coerce.number().int().min(1).max(100).default(10)`).
 *   **Failed Response Format (HTTP 4xx, 5xx):**
     Never expose stack traces to the client in Production.
     ```json

@@ -64,17 +64,29 @@ export function ClassDetailPage() {
       </Breadcrumbs>
 
       {/* ── Class Header ────────────────────────── */}
-      <Group gap={12} mb="lg" align="center">
-        <div>
-          <Group gap={10} align="center">
-            <Text className={classes.className}>{cls.name}</Text>
-            <Badge size="sm" variant="light" color={cls.status === 'Active' ? 'green' : 'gray'}>
-              {cls.status}
-            </Badge>
-            <Badge size="sm" variant="dot" color="teal">0 học viên</Badge>
+      {(() => {
+        const STATUS_MAP = {
+          Scheduled: { label: 'Lên lịch', color: 'blue' },
+          OnGoing: { label: 'Đang diễn ra', color: 'green' },
+          Completed: { label: 'Đã hoàn thành', color: 'teal' },
+          Archived: { label: 'Đã lưu trữ', color: 'gray' },
+        };
+        const statusConfig = STATUS_MAP[cls.status] || { label: cls.status, color: 'copper' };
+        
+        return (
+          <Group gap={12} mb="lg" align="center">
+            <div>
+              <Group gap={10} align="center">
+                <Text className={classes.className}>{cls.name}</Text>
+                <Badge size="sm" variant="light" color={statusConfig.color}>
+                  {statusConfig.label}
+                </Badge>
+                <Badge size="sm" variant="dot" color="teal">0 học viên</Badge>
+              </Group>
+            </div>
           </Group>
-        </div>
-      </Group>
+        );
+      })()}
 
       {/* ── Tab Bar ─────────────────────────────── */}
       <div className={classes.tabBar}>

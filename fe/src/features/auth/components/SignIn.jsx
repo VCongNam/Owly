@@ -3,6 +3,7 @@ import { useForm } from '@mantine/form';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { notifications } from '@mantine/notifications';
+import { supabase } from '../../../services/supabaseClient';
 import logo from '../../../assets/logo.png';
 import classes from './AuthenticationImage.module.css';
 
@@ -42,13 +43,32 @@ export function SignIn() {
     }
   };
 
-  const handleOAuthLogin = (provider) => {
+  const handleOAuthLogin = async (provider) => {
     const beUrl = import.meta.env.VITE_API_URL || '';
 
     if (provider === 'Google') {
       // Redirect đến BE — BE sẽ chuyển tiếp đến Google với redirect_uri = FE /auth/callback
       // Google sẽ hiển thị domain của FE (owly-demo.vercel.app) thay vì Supabase
       window.location.href = `${beUrl}/api/auth/google`;
+      return;
+    }
+
+    if (provider === 'Facebook') {
+      try {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'facebook',
+          options: {
+            redirectTo: `${window.location.origin}/auth/callback`,
+          },
+        });
+        if (error) throw error;
+      } catch (err) {
+        notifications.show({
+          title: 'Lỗi kết nối Facebook',
+          message: err.message || 'Không thể thiết lập kết nối Facebook. Vui lòng thử lại.',
+          color: 'red',
+        });
+      }
       return;
     }
 

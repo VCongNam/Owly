@@ -1,8 +1,8 @@
 import apiClient from '../../../services/apiClient';
 
 export const classService = {
-  getClasses: async () => {
-    return await apiClient.get('/api/classes');
+  getClasses: async (params = {}) => {
+    return await apiClient.get('/api/classes', { params });
   },
 
   getClassById: async (id) => {

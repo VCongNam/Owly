@@ -1,31 +1,60 @@
-import { useState } from 'react';
-import { SimpleGrid, Button, Group, Title, Text, TextInput, Stack, Center, ThemeIcon, Loader } from '@mantine/core';
+import { useState, useEffect } from 'react';
+import { SimpleGrid, Button, Group, Title, Text, TextInput, Stack, Center, ThemeIcon, Loader, Pagination } from '@mantine/core';
 import { Plus, MagnifyingGlass, GraduationCap } from '@phosphor-icons/react';
-import { useDisclosure } from '@mantine/hooks';
+import { useDisclosure, useDebouncedValue } from '@mantine/hooks';
 import { ClassCard } from './ClassCard';
 import { ClassFormModal } from './ClassFormModal';
 import { useClasses } from '../hooks/useClasses';
 import classesCss from './ClassListPage.module.css';
 
 export function ClassListPage() {
-  const [search, setSearch] = useState('');
-  const { classes, loading, createClass } = useClasses();
+  const [searchValue, setSearchValue] = useState('');
+  const [debouncedSearch] = useDebouncedValue(searchValue, 300);
+  
+  const { 
+    classes, 
+    loading, 
+    pagination, 
+    setPage, 
+    setSearch, 
+    createClass, 
+    updateClass 
+  } = useClasses({
+    status: 'active_only',
+    limit: 9
+  });
+  
   const [opened, { open, close }] = useDisclosure(false);
+  const [selectedClass, setSelectedClass] = useState(null);
 
-  const filtered = classes.filter((c) =>
-    c.name.toLowerCase().includes(search.toLowerCase())
-  );
+  // Gọi API search khi kết thúc gõ
+  useEffect(() => {
+    setSearch(debouncedSearch);
+  }, [debouncedSearch]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const activeCount = classes.filter(c => c.status === 'Active').length;
+  const handleEditClick = (cls) => {
+    setSelectedClass(cls);
+    open();
+  };
+
+  const handleCreateClick = () => {
+    setSelectedClass(null);
+    open();
+  };
+
+  const handleModalClose = () => {
+    setSelectedClass(null);
+    close();
+  };
 
   return (
     <Stack gap="lg">
       <Group justify="space-between" align="flex-end" wrap="wrap" gap="sm">
         <div>
           <Title order={2} className={classesCss.pageTitle}>Lớp của tôi</Title>
-          <Text size="sm" c="dimmed">{activeCount} lớp đang hoạt động</Text>
+          <Text size="sm" c="dimmed">{pagination.totalItems} lớp đang hoạt động</Text>
         </div>
-        <Button leftSection={<Plus size={16} weight="bold" />} color="copper" onClick={open}>
+        <Button leftSection={<Plus size={16} weight="bold" />} color="copper" onClick={handleCreateClick}>
           Tạo lớp mới
         </Button>
       </Group>
@@ -33,8 +62,8 @@ export function ClassListPage() {
       <TextInput
         placeholder="Tìm lớp học..."
         leftSection={<MagnifyingGlass size={16} />}
-        value={search}
-        onChange={(e) => setSearch(e.currentTarget.value)}
+        value={searchValue}
+        onChange={(e) => setSearchValue(e.currentTarget.value)}
         style={{ maxWidth: 360 }}
       />
 
@@ -42,17 +71,34 @@ export function ClassListPage() {
         <Center py={80}>
           <Loader color="copper" />
         </Center>
-      ) : filtered.length > 0 ? (
-        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
-          {filtered.map((cls) => (
-            <ClassCard
-              key={cls.id}
-              cls={cls}
-              onEdit={(c) => console.log('Edit:', c)}
-              onArchive={(c) => console.log('Archive:', c)}
-            />
-          ))}
-        </SimpleGrid>
+      ) : classes.length > 0 ? (
+        <>
+          <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
+            {classes.map((cls) => (
+              <ClassCard
+                key={cls.id}
+                cls={cls}
+                onEdit={handleEditClick}
+                onArchive={async (c) => {
+                  const newStatus = c.status === 'Archived' ? 'OnGoing' : 'Archived';
+                  await updateClass(c.id, { status: newStatus });
+                }}
+              />
+            ))}
+          </SimpleGrid>
+
+          {/* Phân trang */}
+          {pagination.totalPages > 1 && (
+            <Group justify="center" mt="xl">
+              <Pagination
+                total={pagination.totalPages}
+                value={pagination.currentPage}
+                onChange={setPage}
+                color="copper"
+              />
+            </Group>
+          )}
+        </>
       ) : (
         <Center py={80}>
           <Stack align="center" gap="md">
@@ -60,10 +106,10 @@ export function ClassListPage() {
               <GraduationCap size={32} weight="duotone" />
             </ThemeIcon>
             <Text c="dimmed" ta="center">
-              {search ? `Không tìm thấy lớp nào với "${search}"` : 'Chưa có lớp học nào. Hãy tạo lớp đầu tiên!'}
+              {searchValue ? `Không tìm thấy lớp nào với "${searchValue}"` : 'Chưa có lớp học nào. Hãy tạo lớp đầu tiên!'}
             </Text>
-            {!search && (
-              <Button leftSection={<Plus size={16} />} variant="light" color="copper" onClick={open}>
+            {!searchValue && (
+              <Button leftSection={<Plus size={16} />} variant="light" color="copper" onClick={handleCreateClick}>
                 Tạo lớp mới
               </Button>
             )}
@@ -73,10 +119,16 @@ export function ClassListPage() {
 
       <ClassFormModal 
         opened={opened} 
-        onClose={close} 
+        onClose={handleModalClose} 
+        initialValues={selectedClass}
         onSubmit={async (values) => {
-          const success = await createClass(values);
-          if (success) close();
+          let success = false;
+          if (selectedClass) {
+            success = await updateClass(selectedClass.id, values);
+          } else {
+            success = await createClass(values);
+          }
+          if (success) handleModalClose();
         }}
       />
     </Stack>

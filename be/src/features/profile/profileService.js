@@ -33,20 +33,45 @@ export const getProfile = async (userId) => {
     id: profile.id,
     teacherCode: profile.teacherCode,
     fullName: profile.fullName,
+    bankName: profile.bankName,
+    bankAccountNo: profile.bankAccountNo,
+    bankAccountName: profile.bankAccountName,
+    bankBin: profile.bankBin,
+    bio: profile.bio,
+    metadata: profile.metadata,
     account: profile.account,
     specializations: profile.specializations.map((s) => s.subject)
   };
 };
 
 export const updateProfile = async (userId, data) => {
-  const { fullName, phone } = data;
+  const { 
+    fullName, phone, bankName, bankAccountNo, bankAccountName,
+    bankBin, bio, metadata, specializationIds 
+  } = data;
 
   return await prisma.$transaction(async (tx) => {
-    let updatedTeacher = null;
-    if (fullName) {
-      updatedTeacher = await tx.teacher.update({
+    if (
+      fullName || 
+      bankName !== undefined || 
+      bankAccountNo !== undefined || 
+      bankAccountName !== undefined ||
+      bankBin !== undefined ||
+      bio !== undefined ||
+      metadata !== undefined
+    ) {
+      const updateData = {};
+      if (fullName) updateData.fullName = fullName;
+      if (bankName !== undefined) updateData.bankName = bankName;
+      if (bankAccountNo !== undefined) updateData.bankAccountNo = bankAccountNo;
+      if (bankAccountName !== undefined) updateData.bankAccountName = bankAccountName;
+      if (bankBin !== undefined) updateData.bankBin = bankBin;
+      if (bio !== undefined) updateData.bio = bio;
+      if (metadata !== undefined) updateData.metadata = metadata;
+
+      await tx.teacher.update({
         where: { id: userId },
-        data: { fullName }
+        data: updateData
       });
     }
 
@@ -55,6 +80,23 @@ export const updateProfile = async (userId, data) => {
         where: { id: userId },
         data: { phone }
       });
+    }
+
+    if (specializationIds !== undefined) {
+      // Xóa tất cả môn học liên kết cũ
+      await tx.teacherSubject.deleteMany({
+        where: { teacherId: userId }
+      });
+
+      // Tạo các liên kết môn học mới
+      if (specializationIds.length > 0) {
+        await tx.teacherSubject.createMany({
+          data: specializationIds.map((subId) => ({
+            teacherId: userId,
+            subjectId: subId
+          }))
+        });
+      }
     }
 
     return getProfile(userId);

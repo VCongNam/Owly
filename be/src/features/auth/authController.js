@@ -90,7 +90,17 @@ export const registerTeacherProfile = async (req, res) => {
 export const getProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const profile = await authService.getMyProfile(userId);
+    let profile = await authService.getMyProfile(userId);
+
+    if (!profile) {
+      // Tự động đồng bộ/tạo hồ sơ từ metadata của Supabase Auth nếu chưa có (ví dụ cho OAuth Facebook/Google trực tiếp)
+      await authService.ensureTeacherProfile({
+        id: userId,
+        email: req.user.email,
+        user_metadata: req.user.user_metadata || {}
+      });
+      profile = await authService.getMyProfile(userId);
+    }
 
     if (!profile) {
       return res.status(404).json({

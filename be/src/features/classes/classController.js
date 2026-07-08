@@ -8,10 +8,18 @@ export const createClass = async (req, res) => {
 
     const newClass = await classService.createClass(teacherId, data);
 
+    // Format các ngày
+    const formattedClass = {
+      ...newClass,
+      startDate: formatToVietnamTime(newClass.startDate),
+      expectedEndDate: newClass.expectedEndDate ? formatToVietnamTime(newClass.expectedEndDate) : null,
+      createdAt: formatToVietnamTime(newClass.createdAt)
+    };
+
     return res.status(201).json({
       success: true,
       message: 'Tạo lớp học thành công',
-      data: newClass
+      data: formattedClass
     });
   } catch (error) {
     return res.status(500).json({
@@ -24,18 +32,29 @@ export const createClass = async (req, res) => {
 export const getClasses = async (req, res) => {
   try {
     const teacherId = req.user.id;
-    const classes = await classService.getClasses(teacherId);
+    const { page, limit, search, status } = req.query;
 
-    // Format lại ngày tháng theo timezone Việt Nam
-    const formattedClasses = classes.map(c => ({
+    const result = await classService.getClasses(teacherId, {
+      page,
+      limit,
+      search,
+      status
+    });
+
+    // Format lại ngày tháng theo timezone Việt Nam cho từng lớp học
+    const formattedItems = result.items.map(c => ({
       ...c,
       startDate: formatToVietnamTime(c.startDate),
+      expectedEndDate: c.expectedEndDate ? formatToVietnamTime(c.expectedEndDate) : null,
       createdAt: formatToVietnamTime(c.createdAt)
     }));
 
     return res.status(200).json({
       success: true,
-      data: formattedClasses
+      data: {
+        items: formattedItems,
+        pagination: result.pagination
+      }
     });
   } catch (error) {
     return res.status(500).json({
@@ -60,12 +79,16 @@ export const getClassById = async (req, res) => {
     }
 
     // Format ngày
-    classObj.startDate = formatToVietnamTime(classObj.startDate);
-    classObj.createdAt = formatToVietnamTime(classObj.createdAt);
+    const formattedClass = {
+      ...classObj,
+      startDate: formatToVietnamTime(classObj.startDate),
+      expectedEndDate: classObj.expectedEndDate ? formatToVietnamTime(classObj.expectedEndDate) : null,
+      createdAt: formatToVietnamTime(classObj.createdAt)
+    };
 
     return res.status(200).json({
       success: true,
-      data: classObj
+      data: formattedClass
     });
   } catch (error) {
     if (error.message.includes('không có quyền')) {
@@ -93,10 +116,18 @@ export const updateClass = async (req, res) => {
       });
     }
 
+    // Format ngày
+    const formattedClass = {
+      ...updatedClass,
+      startDate: formatToVietnamTime(updatedClass.startDate),
+      expectedEndDate: updatedClass.expectedEndDate ? formatToVietnamTime(updatedClass.expectedEndDate) : null,
+      createdAt: formatToVietnamTime(updatedClass.createdAt)
+    };
+
     return res.status(200).json({
       success: true,
       message: 'Cập nhật lớp học thành công',
-      data: updatedClass
+      data: formattedClass
     });
   } catch (error) {
     if (error.message.includes('không có quyền')) {
@@ -137,3 +168,4 @@ export const deleteClass = async (req, res) => {
     });
   }
 };
+

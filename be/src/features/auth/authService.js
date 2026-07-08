@@ -99,7 +99,7 @@ export const signUpTeacher = async (email, password, fullName, phone, specializa
 };
 
 export const createTeacherProfile = async (userData) => {
-  const { userId, email, fullName, specializationIds } = userData;
+  const { userId, email, fullName, avatarUrl, phone, specializationIds } = userData;
 
   const existingAccount = await prisma.account.findUnique({
     where: { id: userId }
@@ -118,7 +118,9 @@ export const createTeacherProfile = async (userData) => {
         id: userId,
         email: email,
         passwordHash: 'EXTERNAL_SUPABASE_AUTH',
-        isActive: true
+        isActive: true,
+        avatarUrl: avatarUrl || null,
+        phone: phone || null
       }
     });
 
@@ -152,6 +154,8 @@ export const getMyProfile = async (userId) => {
         select: {
           email: true,
           isActive: true,
+          avatarUrl: true,
+          phone: true,
           createdAt: true
         }
       },
@@ -185,8 +189,13 @@ export const signInTeacher = async (email, password) => {
     throw new Error(error.message);
   }
 
+  const profile = await getMyProfile(data.user.id);
+
   return {
-    user: data.user,
+    user: {
+      ...data.user,
+      ...(profile || {})
+    },
     token: data.session?.access_token
   };
 };
@@ -249,19 +258,29 @@ export const exchangeGoogleCode = async (code) => {
   // 3. Tự động tạo hồ sơ giáo viên nếu là lần đăng nhập đầu tiên
   await ensureTeacherProfile(user);
 
+  const profile = await getMyProfile(user.id);
+
   return {
-    user,
+    user: {
+      ...user,
+      ...(profile || {})
+    },
     token: access_token,
   };
 };
 
 /**
- * Kiểm tra và tạo hồ sơ giáo viên cho user Google (nếu chưa tồn tại).
+ * Kiểm tra và tạo/cập nhật hồ sơ giáo viên cho user Google/Facebook (nếu chưa tồn tại).
  */
-const ensureTeacherProfile = async (user) => {
+export const ensureTeacherProfile = async (user) => {
   const existing = await prisma.account.findUnique({
     where: { id: user.id }
   });
+
+  const avatarUrl =
+    user.user_metadata?.avatar_url ||
+    user.user_metadata?.picture ||
+    null;
 
   if (!existing) {
     const fullName =
@@ -273,7 +292,15 @@ const ensureTeacherProfile = async (user) => {
       userId: user.id,
       email: user.email,
       fullName,
+      avatarUrl,
+      phone: user.user_metadata?.phone || null,
       specializationIds: [],
+    });
+  } else if (avatarUrl && !existing.avatarUrl) {
+    // Nếu đã có tài khoản cục bộ nhưng chưa có avatarUrl, tự động đồng bộ từ OAuth mới
+    await prisma.account.update({
+      where: { id: user.id },
+      data: { avatarUrl }
     });
   }
 };

@@ -2,16 +2,33 @@ import { useState, useEffect, useCallback } from 'react';
 import { classService } from '../services/classService';
 import { notifications } from '@mantine/notifications';
 
-export function useClasses() {
+export function useClasses(initialParams = {}) {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    totalItems: 0,
+    totalPages: 0,
+    currentPage: 1,
+    limit: initialParams.limit || 9,
+  });
+
+  const [params, setParams] = useState({
+    page: 1,
+    limit: 9,
+    search: '',
+    status: null,
+    ...initialParams
+  });
 
   const fetchClasses = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await classService.getClasses();
-      console.log('fetchClasses res:', res);
-      setClasses(Array.isArray(res) ? res : res?.data || []);
+      const res = await classService.getClasses(params);
+      const resData = res?.data || res;
+      setClasses(resData?.items || []);
+      if (resData?.pagination) {
+        setPagination(resData.pagination);
+      }
     } catch (error) {
       notifications.show({
         title: 'Lỗi tải danh sách lớp học',
@@ -21,11 +38,23 @@ export function useClasses() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [params]);
 
   useEffect(() => {
     fetchClasses();
   }, [fetchClasses]);
+
+  const setPage = (page) => {
+    setParams(prev => ({ ...prev, page }));
+  };
+
+  const setSearch = (search) => {
+    setParams(prev => ({ ...prev, search, page: 1 }));
+  };
+
+  const setStatus = (status) => {
+    setParams(prev => ({ ...prev, status, page: 1 }));
+  };
 
   const createClass = async (data) => {
     try {
@@ -90,6 +119,11 @@ export function useClasses() {
   return {
     classes,
     loading,
+    pagination,
+    params,
+    setPage,
+    setSearch,
+    setStatus,
     fetchClasses,
     createClass,
     updateClass,
@@ -106,7 +140,8 @@ export function useClassDetails(id) {
     try {
       setLoading(true);
       const res = await classService.getClassById(id);
-      setClassDetail(res);
+      // Backend returns unified format { success: true, data: {...} }
+      setClassDetail(res?.data || res);
     } catch (error) {
       notifications.show({
         title: 'Lỗi lấy thông tin',

@@ -7,28 +7,28 @@ export const theme = createTheme({
   fontFamilyMonospace: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
   colors: {
     copper: [
-      '#fdf2f4', // 0
-      '#fbe5e8', // 1
-      '#f7ccd2', // 2
-      '#f0a3af', // 3
-      '#e6778b', // 4
-      '#d8526d', // 5
-      '#c87a8a', // 6 - Main Light Accent
-      '#b14c62', // 7
-      '#933d50', // 8
-      '#7b3442', // 9
+      '#faf8f2', // 0
+      '#f2ebdb', // 1
+      '#e6d7b8', // 2
+      '#d8c091', // 3
+      '#caa86d', // 4
+      '#C5A880', // 5 - Light Accent
+      '#bfa061', // 6
+      '#D4AF37', // 7 - Dark Accent
+      '#ad8a23', // 8
+      '#856816', // 9
     ],
     prussian: [
-      '#f3f6fa', // 0
-      '#e4ecf3', // 1
-      '#cddbe8', // 2
-      '#a7c1d7', // 3
-      '#7aa1c1', // 4
-      '#5883a9', // 5
-      '#446a8d', // 6
-      '#375573', // 7
-      '#22354a', // 8
-      '#111e2e', // 9 - Main Dark Base
+      '#f1f6f1', // 0
+      '#e0ebe0', // 1
+      '#c2d7c2', // 2
+      '#a0c0a0', // 3
+      '#7aa279', // 4
+      '#4E8F4A', // 5 - Dark Primary
+      '#2D5A27', // 6 - Light Primary
+      '#244b1f', // 7
+      '#1c3b18', // 8
+      '#122710', // 9
     ],
   },
   components: {

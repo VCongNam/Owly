@@ -45,7 +45,7 @@ const NAV_SECTIONS = [
     label: 'TÀI KHOẢN',
     items: [
       { icon: UserCircle, label: 'Hồ sơ cá nhân', to: '/profile' },
-      { icon: LockKey, label: 'Đổi mật khẩu', to: '/change-password' },
+      // { icon: LockKey, label: 'Đổi mật khẩu', to: '/change-password' },
     ],
   },
 ];

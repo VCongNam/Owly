@@ -25,14 +25,14 @@ export function AuthCallback() {
     hasCalled.current = true;
 
     const handleCallback = async () => {
-      // 1. Kiểm tra hash (Supabase gửi link recovery dạng hash #access_token=...&type=recovery)
+      // 1. Kiểm tra hash (Supabase gửi OAuth/Facebook session dạng hash #access_token=... hoặc recovery)
       const hash = window.location.hash;
       if (hash) {
         const hashParams = new URLSearchParams(hash.replace('#', '?'));
         const accessToken = hashParams.get('access_token');
         const type = hashParams.get('type');
 
-        if (accessToken && type === 'recovery') {
+        if (accessToken) {
           try {
             // Thiết lập session tạm với token để gọi API lấy thông tin cá nhân
             setSession({ email: 'loading...' }, accessToken);
@@ -43,19 +43,27 @@ export function AuthCallback() {
             
             setSession(user, accessToken);
 
-            notifications.show({
-              title: 'Xác thực khôi phục mật khẩu',
-              message: 'Vui lòng thiết lập mật khẩu mới của bạn.',
-              color: 'teal',
-            });
-
-            navigate('/change-password', { replace: true });
+            if (type === 'recovery') {
+              notifications.show({
+                title: 'Xác thực khôi phục mật khẩu',
+                message: 'Vui lòng thiết lập mật khẩu mới của bạn.',
+                color: 'teal',
+              });
+              navigate('/change-password', { replace: true });
+            } else {
+              notifications.show({
+                title: 'Đăng nhập thành công',
+                message: `Chào mừng quay trở lại, ${user?.fullName || user?.email || 'Giáo viên'}!`,
+                color: 'teal',
+              });
+              navigate('/', { replace: true });
+            }
             return;
           } catch (err) {
-            console.error('Recovery callback error:', err);
+            console.error('Auth hash callback error:', err);
             notifications.show({
-              title: 'Lỗi khôi phục mật khẩu',
-              message: 'Không thể xác thực liên kết khôi phục. Vui lòng thử lại.',
+              title: 'Lỗi xác thực',
+              message: 'Không thể xác thực tài khoản qua liên kết này. Vui lòng thử lại.',
               color: 'red',
             });
             navigate('/signin', { replace: true });

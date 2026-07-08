@@ -43,6 +43,12 @@ model Teacher {
   teacherCode    String            @unique @map("teacher_code") @db.VarChar(50)
   fullName       String            @map("full_name") @db.VarChar(255)
   account        Account           @relation(fields: [id], references: [id], onDelete: Cascade)
+  bankName       String?           @map("bank_name") @db.VarChar(100)
+  bankAccountNo  String?           @map("bank_account_no") @db.VarChar(50)
+  bankAccountName String?          @map("bank_account_name") @db.VarChar(150)
+  bankBin         String?           @map("bank_bin") @db.VarChar(20)
+  bio             String?           @db.Text
+  metadata        Json?             @map("metadata")
   
   classes              Class[]
   createdStudents      Student[]         @relation("TeacherCreatedStudents")
@@ -82,14 +88,17 @@ model Class {
   classCode       String            @unique @map("class_code") @db.VarChar(50)
   name            String            @db.VarChar(255)
   teacherId       String            @map("teacher_id") @db.Uuid // Giáo viên sở hữu và quản lý lớp này
-  status          String            @default("Active") @db.VarChar(50) // Active, Completed, Archived
+  status          String            @default("OnGoing") @db.VarChar(50) // Scheduled, OnGoing, Completed, Archived
   startDate       DateTime          @map("start_date") @db.Timestamptz
+  expectedEndDate DateTime?         @map("expected_end_date") @db.Timestamptz
+  subjectId       String?           @map("subject_id") @db.Uuid
   createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz
   
   // Cột JSON linh hoạt để lưu các thuộc tính mở rộng phát sinh sau này mà không sợ vỡ DB
   extraProperties Json?             @map("extra_properties")
 
   teacher         Teacher           @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  subject         Subject?          @relation(fields: [subjectId], references: [id], onDelete: SetNull)
   enrollments     ClassEnrollment[]
   schedules       ClassSchedule[]
   sessions        Session[]
@@ -121,7 +130,7 @@ model ClassSchedule {
   dayOfWeek Int    @map("day_of_week") // 2 = Thứ 2, 3 = Thứ 3...
   startTime String @map("start_time") @db.VarChar(5) // Định dạng chuỗi lặp "HH:mm"
   endTime   String @map("end_time") @db.VarChar(5)   // Định dạng chuỗi lặp "HH:mm"
-  room      String @db.VarChar(100)
+  room      String? @db.VarChar(100)
 
   class     Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
 
@@ -288,6 +297,7 @@ model Subject {
   createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz
 
   teachers  TeacherSubject[]
+  classes   Class[]
 
   @@map("subjects")
 }
