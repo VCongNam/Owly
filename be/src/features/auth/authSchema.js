@@ -40,7 +40,12 @@ export const signInSchema = z.object({
   password: z.string({
     required_error: 'Mật khẩu không được để trống'
   })
-  .min(6, 'Mật khẩu phải có ít nhất 6 ký tự')
+  .min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
+
+  role: z.enum(['teacher', 'student'], {
+    required_error: 'Vai trò đăng nhập không được để trống',
+    invalid_type_error: 'Vai trò đăng nhập không hợp lệ'
+  })
 });
 
 export const changePasswordSchema = z.object({

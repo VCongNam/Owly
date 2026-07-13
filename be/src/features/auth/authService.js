@@ -147,39 +147,91 @@ export const createTeacherProfile = async (userData) => {
 };
 
 export const getMyProfile = async (userId) => {
-  const profile = await prisma.teacher.findUnique({
+  const account = await prisma.account.findUnique({
     where: { id: userId },
     include: {
-      account: {
-        select: {
-          email: true,
-          isActive: true,
-          avatarUrl: true,
-          phone: true,
-          createdAt: true
+      teacherProfile: {
+        include: {
+          specializations: {
+            include: {
+              subject: true
+            }
+          }
         }
       },
-      specializations: {
+      studentProfile: {
         include: {
-          subject: true
+          createdBy: {
+            select: {
+              fullName: true
+            }
+          }
         }
-      }
+      },
+      adminProfile: true
     }
   });
 
-  if (!profile) return null;
+  if (!account) return null;
 
-  // Format lại cấu trúc trả về cho gọn gàng (phẳng hóa danh sách chuyên môn)
+  if (account.teacherProfile) {
+    return {
+      id: account.id,
+      role: 'teacher',
+      email: account.email,
+      isActive: account.isActive,
+      packageType: account.packageType,
+      phone: account.phone,
+      avatarUrl: account.avatarUrl,
+      fullName: account.teacherProfile.fullName,
+      teacherCode: account.teacherProfile.teacherCode,
+      bankName: account.teacherProfile.bankName,
+      bankAccountNo: account.teacherProfile.bankAccountNo,
+      bankAccountName: account.teacherProfile.bankAccountName,
+      bankBin: account.teacherProfile.bankBin,
+      bio: account.teacherProfile.bio,
+      specializations: account.teacherProfile.specializations.map(s => s.subject)
+    };
+  }
+
+  if (account.studentProfile) {
+    return {
+      id: account.id,
+      role: 'student',
+      email: account.email,
+      isActive: account.isActive,
+      phone: account.phone,
+      avatarUrl: account.avatarUrl,
+      fullName: account.studentProfile.fullName,
+      studentCode: account.studentProfile.studentCode,
+      dateOfBirth: account.studentProfile.dateOfBirth,
+      parentPhone: account.studentProfile.parentPhone,
+      createdById: account.studentProfile.createdById,
+      createdByTeacherName: account.studentProfile.createdBy?.fullName
+    };
+  }
+
+  if (account.adminProfile) {
+    return {
+      id: account.id,
+      role: 'admin',
+      email: account.email,
+      isActive: account.isActive,
+      fullName: account.adminProfile.fullName
+    };
+  }
+
   return {
-    id: profile.id,
-    teacherCode: profile.teacherCode,
-    fullName: profile.fullName,
-    account: profile.account,
-    specializations: profile.specializations.map((s) => s.subject)
+    id: account.id,
+    role: 'unknown',
+    email: account.email,
+    isActive: account.isActive,
+    avatarUrl: account.avatarUrl,
+    phone: account.phone
   };
 };
 
-export const signInTeacher = async (email, password) => {
+export const signInUser = async (email, password, role) => {
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password
@@ -191,10 +243,18 @@ export const signInTeacher = async (email, password) => {
 
   const profile = await getMyProfile(data.user.id);
 
+  if (!profile) {
+    throw new Error('Tài khoản chưa được tạo hồ sơ');
+  }
+
+  if (role && profile.role !== role) {
+    throw new Error(`Tài khoản này không đăng ký vai trò ${role === 'teacher' ? 'Giáo viên' : 'Học sinh'}`);
+  }
+
   return {
     user: {
       ...data.user,
-      ...(profile || {})
+      ...profile
     },
     token: data.session?.access_token
   };

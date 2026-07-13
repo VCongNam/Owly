@@ -124,9 +124,9 @@ export const getProfile = async (req, res) => {
 // Đăng nhập tài khoản bằng email & password
 export const signIn = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
 
-    const result = await authService.signInTeacher(email, password);
+    const result = await authService.signInUser(email, password, role);
 
     return res.status(200).json({
       success: true,
@@ -138,7 +138,11 @@ export const signIn = async (req, res) => {
     if (msg.includes('Invalid login credentials')) {
       msg = 'Email hoặc mật khẩu không chính xác';
     }
-    return res.status(401).json({
+    
+    // Nếu lỗi về phân quyền vai trò, trả về status 403 Forbidden
+    const status = msg.includes('không đăng ký vai trò') ? 403 : 401;
+    
+    return res.status(status).json({
       success: false,
       message: msg || 'Đăng nhập thất bại'
     });

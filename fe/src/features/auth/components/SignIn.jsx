@@ -1,4 +1,4 @@
-import { Paper, Title, Text, TextInput, PasswordInput, Button, Anchor, Checkbox } from '@mantine/core';
+import { Paper, Title, Text, TextInput, PasswordInput, Button, Anchor, Checkbox, SegmentedControl } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -16,6 +16,7 @@ export function SignIn() {
       email: '',
       password: '',
       rememberMe: false,
+      role: 'teacher',
     },
     validate: {
       email: (value) => (/^\S+@\S+\.\S+$/.test(value) ? null : 'Email không đúng định dạng'),
@@ -24,9 +25,9 @@ export function SignIn() {
   });
 
   const handleSubmit = async (values) => {
-    console.log('Submitting login form', values);
-    const result = await login(values.email, values.password, values.rememberMe);
-    console.log('Login result', result);
+    // console.log('Submitting login form', values);
+    const result = await login(values.email, values.password, values.rememberMe, values.role);
+    // console.log('Login result', result);
     if (result.success) {
       notifications.show({
         title: 'Đăng nhập thành công',
@@ -129,48 +130,66 @@ export function SignIn() {
           </div>
 
           {/* Social Logins */}
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '1.5rem' }}>
-            <Button
-              variant="outline"
-              color="gray"
-              fullWidth
-              onClick={() => handleOAuthLogin('Google')}
-              style={{ borderColor: 'var(--border-color)' }}
-              leftSection={
-                <img
-                  src="https://cdn.simpleicons.org/google/000000"
-                  alt="Google"
-                  style={{ width: '16px', height: '16px' }}
-                />
-              }
-            >
-              Google
-            </Button>
-            <Button
-              variant="outline"
-              color="gray"
-              fullWidth
-              onClick={() => handleOAuthLogin('Facebook')}
-              style={{ borderColor: 'var(--border-color)' }}
-              leftSection={
-                <img
-                  src="https://cdn.simpleicons.org/facebook/1877F2"
-                  alt="Facebook"
-                  style={{ width: '16px', height: '16px' }}
-                />
-              }
-            >
-              Facebook
-            </Button>
-          </div>
+          {form.values.role !== 'student' && (
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '1.5rem' }}>
+              <Button
+                variant="outline"
+                color="gray"
+                fullWidth
+                onClick={() => handleOAuthLogin('Google')}
+                style={{ borderColor: 'var(--border-color)' }}
+                leftSection={
+                  <img
+                    src="https://cdn.simpleicons.org/google/000000"
+                    alt="Google"
+                    style={{ width: '16px', height: '16px' }}
+                  />
+                }
+              >
+                Google
+              </Button>
+              <Button
+                variant="outline"
+                color="gray"
+                fullWidth
+                onClick={() => handleOAuthLogin('Facebook')}
+                style={{ borderColor: 'var(--border-color)' }}
+                leftSection={
+                  <img
+                    src="https://cdn.simpleicons.org/facebook/1877F2"
+                    alt="Facebook"
+                    style={{ width: '16px', height: '16px' }}
+                  />
+                }
+              >
+                Facebook
+              </Button>
+            </div>
+          )}
 
-          <div style={{ display: 'flex', alignItems: 'center', margin: '1rem 0', justifyContent: 'center' }}>
-            <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
-            <Text size="xs" style={{ padding: '0 10px', color: 'var(--text-color)', opacity: 0.5 }}>HOẶC ĐĂNG NHẬP BẰNG EMAIL</Text>
-            <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
-          </div>
+          {form.values.role !== 'student' && (
+            <div style={{ display: 'flex', alignItems: 'center', margin: '1rem 0', justifyContent: 'center' }}>
+              <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
+              <Text size="xs" style={{ padding: '0 10px', color: 'var(--text-color)', opacity: 0.5 }}>HOẶC ĐĂNG NHẬP BẰNG EMAIL</Text>
+              <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }} />
+            </div>
+          )}
 
           <form onSubmit={form.onSubmit(handleSubmit)}>
+            <SegmentedControl
+              fullWidth
+              size="md"
+              radius="md"
+              value={form.values.role}
+              onChange={(value) => form.setFieldValue('role', value)}
+              data={[
+                { label: 'Giáo viên', value: 'teacher' },
+                { label: 'Học sinh', value: 'student' },
+              ]}
+              color="copper"
+              mb="lg"
+            />
+
             <TextInput
               required
               label="Địa chỉ email"
@@ -227,12 +246,14 @@ export function SignIn() {
               Đăng nhập
             </Button>
           </form>
-          <Text ta="center" mt="lg" size="sm" style={{ color: 'var(--text-color)', opacity: 0.8 }}>
-            Chưa có tài khoản?{' '}
-            <Anchor component={Link} to="/signup" fw={600} color="copper">
-              Đăng ký ngay
-            </Anchor>
-          </Text>
+          {form.values.role !== 'student' && (
+            <Text ta="center" mt="lg" size="sm" style={{ color: 'var(--text-color)', opacity: 0.8 }}>
+              Chưa có tài khoản?{' '}
+              <Anchor component={Link} to="/signup" fw={600} color="copper">
+                Đăng ký ngay
+              </Anchor>
+            </Text>
+          )}
         </Paper>
       </div>
     </div>

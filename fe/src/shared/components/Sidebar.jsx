@@ -20,7 +20,7 @@ import classes from './Sidebar.module.css';
 
 const STORAGE_KEY = 'owly_sidebar_collapsed';
 
-const NAV_SECTIONS = [
+const TEACHER_NAV_SECTIONS = [
   {
     label: null,
     items: [
@@ -45,7 +45,28 @@ const NAV_SECTIONS = [
     label: 'TÀI KHOẢN',
     items: [
       { icon: UserCircle, label: 'Hồ sơ cá nhân', to: '/profile' },
-      // { icon: LockKey, label: 'Đổi mật khẩu', to: '/change-password' },
+    ],
+  },
+];
+
+const STUDENT_NAV_SECTIONS = [
+  {
+    label: null,
+    items: [
+      { icon: SquaresFour, label: 'Tổng quan', to: '/', exact: true },
+    ],
+  },
+  {
+    label: 'LỚP HỌC',
+    items: [
+      { icon: GraduationCap, label: 'Lớp học của tôi', to: '/classes' },
+      { icon: CalendarCheck, label: 'Lịch & Điểm danh', to: '/schedule' },
+    ],
+  },
+  {
+    label: 'TÀI KHOẢN',
+    items: [
+      { icon: UserCircle, label: 'Hồ sơ cá nhân', to: '/profile' },
     ],
   },
 ];
@@ -72,8 +93,11 @@ export function Sidebar() {
   }, [collapsed]);
 
   const avatarName = user?.fullName || user?.email || 'GV';
-  const teacherCode = user?.teacherCode || '';
+  const isStudent = user?.role === 'student';
+  const userCode = isStudent ? user?.studentCode : (user?.teacherCode || '');
   const packageType = user?.packageType || 'Free';
+
+  const navSections = isStudent ? STUDENT_NAV_SECTIONS : TEACHER_NAV_SECTIONS;
 
   return (
     <nav className={classes.sidebar} data-collapsed={collapsed}>
@@ -108,15 +132,18 @@ export function Sidebar() {
           <div className={classes.profileText}>
             <div className={classes.profileName}>{user?.fullName || user?.email}</div>
             <div className={classes.profileSub}>
-              {teacherCode && `${teacherCode} · `}
-              <Badge
-                size="xs"
-                variant="light"
-                color={packageType === 'Premium' ? 'yellow' : 'gray'}
-                style={{ verticalAlign: 'middle' }}
-              >
-                {packageType}
-              </Badge>
+              {userCode && `${userCode}`}
+              {!isStudent && ` · `}
+              {!isStudent && (
+                <Badge
+                  size="xs"
+                  variant="light"
+                  color={packageType === 'Premium' ? 'yellow' : 'gray'}
+                  style={{ verticalAlign: 'middle' }}
+                >
+                  {packageType}
+                </Badge>
+              )}
             </div>
           </div>
         </div>
@@ -124,7 +151,7 @@ export function Sidebar() {
 
       {/* ── Navigation ───────────────────────── */}
       <div className={classes.navScroll}>
-        {NAV_SECTIONS.map((section, si) => (
+        {navSections.map((section, si) => (
           <div key={si}>
             {section.label && (
               <div className={classes.sectionLabel}>{section.label}</div>

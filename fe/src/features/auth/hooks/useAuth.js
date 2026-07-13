@@ -50,11 +50,11 @@ export const useAuthStore = create((set) => ({
     set({ user, token });
   },
 
-  login: async (email, password, rememberMe = false) => {
+  login: async (email, password, rememberMe = false, role = 'teacher') => {
     set({ loading: true, error: null });
     try {
       // API call to backend login
-      const response = await apiClient.post('/api/auth/signin', { email, password });
+      const response = await apiClient.post('/api/auth/signin', { email, password, role });
       
       // Assume API returns { token, user } or similar structure
       const { user, token } = response;

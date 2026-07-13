@@ -37,8 +37,11 @@ apiClient.interceptors.response.use(
     if (response) {
       const status = response.status;
       const message = response.data?.message || 'Có lỗi xảy ra, vui lòng thử lại';
+      
+      const isSignIn = error.config?.url?.includes('/api/auth/signin');
+      const isLogout = error.config?.url?.includes('/api/auth/logout');
 
-      if (status === 401) {
+      if (status === 401 && !isSignIn && !isLogout) {
         // Clear token & redirect to signin
         localStorage.removeItem('owly_token');
         localStorage.removeItem('owly_user');
@@ -53,6 +56,8 @@ apiClient.interceptors.response.use(
           message: 'Vui lòng đăng nhập lại để tiếp tục',
           color: 'red',
         });
+      } else if (status === 401 && (isSignIn || isLogout)) {
+        // Do not dispatch event or clear credentials for direct login/logout actions
       } else if (status >= 500) {
         notifications.show({
           title: 'Lỗi hệ thống',
@@ -60,12 +65,14 @@ apiClient.interceptors.response.use(
           color: 'red',
         });
       } else {
-        // Validation/Client errors (e.g. 400 Bad Request)
-        notifications.show({
-          title: 'Yêu cầu không hợp lệ',
-          message: message,
-          color: 'red',
-        });
+        // Validation/Client errors (e.g. 400 Bad Request, 403 Forbidden)
+        if (!isSignIn && !isLogout) {
+          notifications.show({
+            title: 'Yêu cầu không hợp lệ',
+            message: message,
+            color: 'red',
+          });
+        }
       }
     } else {
       // Network issues
