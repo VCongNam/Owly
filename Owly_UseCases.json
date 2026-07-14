@@ -113,6 +113,14 @@
       "Subsystem (Phân hệ)": "Phân hệ 2: Quản trị của Admin"
     },
     {
+      "ID": "UC-14B",
+      "Use Case": "Submit System Feedback",
+      "Actor": "Teacher, Student",
+      "Feature": "Feedback Center",
+      "Use Case Description": "Cho phép người dùng (Giáo viên, Học sinh) gửi ý kiến phản hồi, báo lỗi hoặc đề xuất cải tiến về hệ thống.",
+      "Subsystem (Phân hệ)": "Phân hệ 1: Xác thực & Không gian"
+    },
+    {
       "ID": "UC-15",
       "Use Case": "Broadcast Notification",
       "Actor": "Admin",

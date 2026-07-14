@@ -26,6 +26,7 @@ model Account {
   adminProfile   SystemAdmin?
   teacherProfile Teacher?
   studentProfile Student?
+  systemFeedbacks SystemFeedback[]
 
   @@map("accounts")
 }
@@ -311,4 +312,19 @@ model TeacherSubject {
 
   @@id([teacherId, subjectId])
   @@map("teacher_subjects")
+}
+
+model SystemFeedback {
+  id          String   @id @default(uuid()) @db.Uuid
+  accountId   String   @map("account_id") @db.Uuid
+  type        String   @db.VarChar(50) // "Bug", "FeatureRequest", "GeneralFeedback"
+  title       String   @db.VarChar(255)
+  content     String   @db.Text
+  status      String   @default("Pending") @db.VarChar(50) // "Pending", "Reviewed", "Resolved"
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  account     Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@map("system_feedbacks")
 }

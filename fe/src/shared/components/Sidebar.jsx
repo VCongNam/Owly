@@ -13,6 +13,7 @@ import {
   CaretRight,
   Sun,
   Moon,
+  ChatTeardropText,
 } from '@phosphor-icons/react';
 import { SidebarNavItem } from './SidebarNavItem';
 import { useAuth } from '../../features/auth';
@@ -45,6 +46,7 @@ const TEACHER_NAV_SECTIONS = [
     label: 'TÀI KHOẢN',
     items: [
       { icon: UserCircle, label: 'Hồ sơ cá nhân', to: '/profile' },
+      { icon: ChatTeardropText, label: 'Phản hồi hệ thống', to: '/feedback' },
     ],
   },
 ];
@@ -67,6 +69,7 @@ const STUDENT_NAV_SECTIONS = [
     label: 'TÀI KHOẢN',
     items: [
       { icon: UserCircle, label: 'Hồ sơ cá nhân', to: '/profile' },
+      { icon: ChatTeardropText, label: 'Phản hồi hệ thống', to: '/feedback' },
     ],
   },
 ];

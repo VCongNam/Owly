@@ -6,6 +6,7 @@ import { StudentListPage } from '../features/students';
 import { DashboardLayout, ProtectedRoute } from '../shared';
 
 import { ProfilePage } from '../features/profile/components/ProfilePage';
+import { FeedbackPage } from '../features/feedback';
 
 export function AppRoutes() {
   return (
@@ -40,6 +41,7 @@ export function AppRoutes() {
         {/* Profile & settings */}
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/change-password" element={<ChangePassword />} />
+        <Route path="/feedback" element={<FeedbackPage />} />
       </Route>
 
       {/* ── Catch-all ────────────────────────── */}
