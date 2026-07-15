@@ -46,7 +46,7 @@ const TEACHER_NAV_SECTIONS = [
     label: 'TÀI KHOẢN',
     items: [
       { icon: UserCircle, label: 'Hồ sơ cá nhân', to: '/profile' },
-      { icon: ChatTeardropText, label: 'Phản hồi hệ thống', to: '/feedback' },
+      { icon: ChatTeardropText, label: 'Phản hồi hệ thống', action: 'feedback' },
     ],
   },
 ];
@@ -69,12 +69,12 @@ const STUDENT_NAV_SECTIONS = [
     label: 'TÀI KHOẢN',
     items: [
       { icon: UserCircle, label: 'Hồ sơ cá nhân', to: '/profile' },
-      { icon: ChatTeardropText, label: 'Phản hồi hệ thống', to: '/feedback' },
+      { icon: ChatTeardropText, label: 'Phản hồi hệ thống', action: 'feedback' },
     ],
   },
 ];
 
-export function Sidebar() {
+export function Sidebar({ onOpenFeedback }) {
   const { user, logout } = useAuth();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
@@ -161,12 +161,13 @@ export function Sidebar() {
             )}
             {section.items.map((item) => (
               <SidebarNavItem
-                key={item.to}
+                key={item.label}
                 icon={item.icon}
                 label={item.label}
                 to={item.to}
                 exact={item.exact}
                 collapsed={collapsed}
+                onClick={item.action === 'feedback' ? onOpenFeedback : item.onClick}
               />
             ))}
           </div>

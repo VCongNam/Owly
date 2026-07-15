@@ -1,8 +1,9 @@
 import { prisma } from '../../config/db.js';
+import { supabase } from '../../config/supabase.js';
 
 export const createFeedback = async (req, res, next) => {
   try {
-    const { type, title, content } = req.body;
+    const { type, title, content, attachmentUrls } = req.body;
     const accountId = req.user.id; // From authMiddleware
 
     const feedback = await prisma.systemFeedback.create({
@@ -11,6 +12,7 @@ export const createFeedback = async (req, res, next) => {
         type,
         title,
         content,
+        attachmentUrls: attachmentUrls || [],
         status: 'Pending'
       }
     });
@@ -41,6 +43,46 @@ export const getMyFeedbacks = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       data: feedbacks
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const uploadImage = async (req, res, next) => {
+  try {
+    const files = req.files;
+    const userId = req.user.id;
+    if (!files || files.length === 0) throw new Error('Không tìm thấy file ảnh');
+
+    const attachmentUrls = [];
+
+    for (const file of files) {
+      const fileExt = file.originalname.split('.').pop();
+      const fileName = `feedback-${userId}-${Date.now()}-${Math.floor(Math.random() * 1000)}.${fileExt}`;
+      const filePath = `feedbacks/${fileName}`; 
+
+      const { error } = await supabase
+        .storage
+        .from('Owly')
+        .upload(filePath, file.buffer, {
+          contentType: file.mimetype,
+          upsert: true
+        });
+
+      if (error) throw new Error(`Upload lỗi: ${error.message}`);
+
+      const { data: publicUrlData } = supabase
+        .storage
+        .from('Owly')
+        .getPublicUrl(filePath);
+
+      attachmentUrls.push(publicUrlData.publicUrl);
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: { attachmentUrls }
     });
   } catch (error) {
     next(error);

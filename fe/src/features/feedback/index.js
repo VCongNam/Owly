@@ -1,1 +1,1 @@
-export { FeedbackPage } from './components/FeedbackPage';
+export { FeedbackDrawer } from './components/FeedbackDrawer';

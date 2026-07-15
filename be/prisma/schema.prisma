@@ -320,6 +320,7 @@ model SystemFeedback {
   type        String   @db.VarChar(50) // "Bug", "FeatureRequest", "GeneralFeedback"
   title       String   @db.VarChar(255)
   content     String   @db.Text
+  attachmentUrls String[] @map("attachment_urls")
   status      String   @default("Pending") @db.VarChar(50) // "Pending", "Reviewed", "Resolved"
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz

@@ -1,0 +1,19 @@
+meta {
+  name: Upload Image
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/feedbacks/upload-image
+  body: multipartForm
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+body:multipartForm {
+  images: @file()
+}

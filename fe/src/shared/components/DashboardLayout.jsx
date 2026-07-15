@@ -3,17 +3,19 @@ import { Outlet } from 'react-router-dom';
 import { Drawer, ActionIcon, Burger } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import { Sidebar } from './Sidebar';
+import { FeedbackDrawer } from '../../features/feedback/components/FeedbackDrawer';
 import classes from './DashboardLayout.module.css';
 
 export function DashboardLayout() {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   return (
     <div className={classes.shell}>
       {/* Desktop Sidebar */}
       {!isMobile && (
-        <Sidebar />
+        <Sidebar onOpenFeedback={() => setFeedbackOpen(true)} />
       )}
 
       {/* Mobile Drawer */}
@@ -29,7 +31,10 @@ export function DashboardLayout() {
             content: { borderRadius: 0 },
           }}
         >
-          <Sidebar />
+          <Sidebar onOpenFeedback={() => {
+            setFeedbackOpen(true);
+            setDrawerOpen(false); // Đóng sidebar mobile khi mở feedback
+          }} />
         </Drawer>
       )}
 
@@ -51,6 +56,8 @@ export function DashboardLayout() {
           <Outlet />
         </div>
       </div>
+
+      <FeedbackDrawer opened={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </div>
   );
 }

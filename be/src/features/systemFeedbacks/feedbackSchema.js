@@ -13,5 +13,6 @@ export const createFeedbackSchema = z.object({
   content: z.string({
     required_error: 'Nội dung phản hồi không được để trống'
   })
-  .min(10, 'Nội dung phản hồi phải dài ít nhất 10 ký tự')
+  .min(10, 'Nội dung phản hồi phải dài ít nhất 10 ký tự'),
+  attachmentUrls: z.array(z.string()).optional()
 });
