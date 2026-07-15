@@ -303,6 +303,7 @@ export function ProfilePage() {
   }
 
   const { account } = profile;
+  const isStudent = profile?.role === 'student';
   const isPremium = account?.packageType !== 'Free';
   const strength = getPasswordStrength(passwordValue);
 

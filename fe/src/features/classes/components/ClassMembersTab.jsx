@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import {
   Stack, Group, Title, Text, Button, Table, Avatar, ActionIcon,
   Tooltip, Center, ThemeIcon, Loader, Modal, SegmentedControl,
-  TextInput, Card, Alert, Divider
+  TextInput, Card, Alert, Divider, Badge
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
@@ -111,7 +111,7 @@ export function ClassMembersTab() {
     try {
       const payload = {
         fullName: values.fullName,
-        dateOfBirth: values.dateOfBirth.toISOString(),
+        dateOfBirth: values.dateOfBirth ? new Date(values.dateOfBirth).toISOString() : null,
         parentPhone: values.parentPhone
       };
       await studentService.createAndEnrollNew(classId, payload);
