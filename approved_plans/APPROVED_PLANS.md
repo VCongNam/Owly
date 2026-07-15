@@ -49,3 +49,25 @@ Tài liệu này lưu trữ tất cả các Kế hoạch Thực thi (Implementat
 ### 3. Nâng cấp Giao diện Frontend
 - Cho phép chọn nhiều file, hiển thị danh sách các file (Hover tooltip).
 - Thêm Modal Lightbox bật lên khi click vào ảnh thu nhỏ để xem full HD.
+
+---
+
+## 4. Phân hệ Quản lý Học viên (Student Management) (Ngày 15/07/2026)
+
+### 1. Đăng nhập bằng Tên đăng nhập (Mã học sinh)
+- Cho phép học sinh đăng nhập bằng mã học sinh (dạng `HSxxx`, ví dụ `HS001`) thay vì bắt buộc dùng email. 
+- Backend tự động tra cứu để đổi tên đăng nhập thành email đăng ký thật trong Supabase Auth trước khi thực hiện xác thực.
+
+### 2. Giao diện quản lý Thành viên lớp học (`/classes/{classId}/members`)
+- Chuyển toàn bộ luồng thêm học viên mới và thêm học viên đã có vào trang thành viên lớp học.
+- Modal "Thêm học viên vào lớp" gồm 2 tab: Chọn học sinh đã có sẵn (tìm kiếm theo tên hoặc SĐT phụ huynh) và Tạo học sinh mới (khởi tạo tên, ngày sinh, SĐT phụ huynh - hệ thống tự cấp tên đăng nhập và mật khẩu mặc định).
+- Cho phép "Hủy học" (hủy ghi danh khỏi lớp hiện tại, không xóa tài khoản).
+
+### 3. Tự cập nhật thông tin (Học sinh self-update)
+- Học sinh đăng nhập lần đầu tiên sẽ tự cập nhật thông tin cá nhân (Email thật, SĐT cá nhân, Ngày sinh, Mật khẩu mới) trên trang cá nhân.
+- Khi cập nhật email thật, hệ thống đồng bộ email đó sang Supabase Auth để đăng nhập cho các lần tiếp theo.
+- Giáo viên chỉ có quyền read-only đối với thông tin cá nhân của học sinh.
+
+### 4. Giao diện Danh sách Học viên chung (`/students`)
+- Chuyển thành trang Chỉ đọc (Read-only), hiển thị danh bạ học sinh đang học các lớp của giáo viên đăng nhập.
+

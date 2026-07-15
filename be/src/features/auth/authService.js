@@ -232,13 +232,41 @@ export const getMyProfile = async (userId) => {
 };
 
 export const signInUser = async (email, password, role) => {
+  let resolvedEmail = email;
+
+  // Nếu vai trò là học sinh hoặc thông tin đăng nhập không chứa ký tự '@'
+  if (role === 'student' || !email.includes('@')) {
+    const student = await prisma.student.findFirst({
+      where: {
+        OR: [
+          { studentCode: { equals: email, mode: 'insensitive' } },
+          { account: { email: { equals: email, mode: 'insensitive' } } }
+        ]
+      },
+      include: {
+        account: true
+      }
+    });
+
+    if (student && student.account) {
+      resolvedEmail = student.account.email;
+    } else if (role === 'student') {
+      throw new Error('Tên đăng nhập hoặc mật khẩu không chính xác');
+    }
+  }
+
   const { data, error } = await supabase.auth.signInWithPassword({
-    email,
+    email: resolvedEmail,
     password
   });
 
   if (error) {
-    throw new Error(error.message);
+    // Chuyển đổi thông báo lỗi của Supabase sang Tiếng Việt thân thiện
+    let userFriendlyMessage = error.message;
+    if (error.message.includes('Invalid login credentials')) {
+      userFriendlyMessage = 'Tên đăng nhập hoặc mật khẩu không chính xác';
+    }
+    throw new Error(userFriendlyMessage);
   }
 
   const profile = await getMyProfile(data.user.id);

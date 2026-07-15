@@ -7,6 +7,7 @@ import subjectRoutes from './features/subjects/subjectRoutes.js';
 import classRoutes from './features/classes/classRoutes.js';
 import profileRoutes from './features/profile/profileRoutes.js';
 import feedbackRoutes from './features/systemFeedbacks/feedbackRoutes.js';
+import studentRoutes from './features/students/studentRoutes.js';
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ app.use('/api/subjects', subjectRoutes);
 app.use('/api/classes', classRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/feedbacks', feedbackRoutes);
+app.use('/api/students', studentRoutes);
 
 // Test route
 app.get('/', (req, res) => {

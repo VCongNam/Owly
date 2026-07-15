@@ -1,0 +1,30 @@
+.tableWrapper {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--card-bg);
+}
+
+.table {
+  background: var(--card-bg);
+}
+
+.tableRow {
+  transition: background 0.15s ease;
+}
+
+.tableRow:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.studentSearchCard {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.studentSearchCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}

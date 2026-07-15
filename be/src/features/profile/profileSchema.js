@@ -9,5 +9,9 @@ export const updateProfileSchema = z.object({
   bankBin: z.string().max(20, 'Mã BIN ngân hàng quá dài').optional().nullable(),
   bio: z.string().optional().nullable(),
   metadata: z.any().optional(),
-  specializationIds: z.array(z.string().uuid()).optional()
+  specializationIds: z.array(z.string().uuid()).optional(),
+  // Học sinh
+  dateOfBirth: z.string().optional().nullable(),
+  parentPhone: z.string().max(50, 'Số điện thoại phụ huynh quá dài').optional().nullable(),
+  email: z.string().email('Email không đúng định dạng').optional().nullable()
 });

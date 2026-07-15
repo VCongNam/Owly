@@ -11,6 +11,7 @@ import {
 } from '@phosphor-icons/react';
 import { Link } from 'react-router-dom';
 import { useClassDetails } from '../hooks/useClasses';
+import { ClassMembersTab } from './ClassMembersTab';
 import classes from './ClassDetailPage.module.css';
 
 // ── Tab configuration ────────────────────────────────────────────────────────
@@ -108,7 +109,8 @@ export function ClassDetailPage() {
       <div className={classes.tabContent}>
         <Routes>
           <Route index element={<Navigate to="stream" replace />} />
-          {TABS.map((tab) => (
+          <Route path="members" element={<ClassMembersTab />} />
+          {TABS.filter(tab => tab.key !== 'members').map((tab) => (
             <Route
               key={tab.key}
               path={tab.key}

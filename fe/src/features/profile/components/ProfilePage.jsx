@@ -11,6 +11,7 @@ import {
   GraduationCap, Plus, Trash, Eye
 } from '@phosphor-icons/react';
 import { useForm } from '@mantine/form';
+import { DateInput } from '@mantine/dates';
 import { useProfile } from '../hooks/useProfile';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { notifications } from '@mantine/notifications';
@@ -89,6 +90,10 @@ export function ProfilePage() {
       fullName: '',
       phone: '',
       specializationIds: [],
+      // Học sinh
+      dateOfBirth: null,
+      parentPhone: '',
+      email: '',
     },
     validate: {
       fullName: (value) => (value.trim().length > 0 ? null : 'Họ và tên không được để trống'),
@@ -123,8 +128,11 @@ export function ProfilePage() {
     if (profile) {
       generalForm.setValues({
         fullName: profile.fullName || '',
-        phone: profile.account?.phone || '',
+        phone: profile.phone || profile.account?.phone || '',
         specializationIds: profile.specializations?.map(s => s.id) || [],
+        dateOfBirth: profile.dateOfBirth ? new Date(profile.dateOfBirth) : null,
+        parentPhone: profile.parentPhone || '',
+        email: profile.email || profile.account?.email || '',
       });
       billingForm.setValues({
         bankName: profile.bankName || '',
@@ -142,21 +150,32 @@ export function ProfilePage() {
   }, [profile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleUpdateGeneral = async (values) => {
-    await updateProfile({
-      fullName: values.fullName,
-      phone: values.phone,
-      specializationIds: values.specializationIds,
-      bankName: billingForm.values.bankName || profile.bankName || null,
-      bankAccountNo: billingForm.values.bankAccountNo || profile.bankAccountNo || null,
-      bankAccountName: billingForm.values.bankAccountName || profile.bankAccountName || null,
-      bankBin: billingForm.values.bankBin || profile.bankBin || null,
-      bio: bioValue || null,
-      metadata: {
-        experience,
-        certificates,
-        awards
-      }
-    });
+    const isStudent = profile.role === 'student';
+    if (isStudent) {
+      await updateProfile({
+        fullName: values.fullName,
+        phone: values.phone || null,
+        dateOfBirth: values.dateOfBirth ? values.dateOfBirth.toISOString() : null,
+        parentPhone: values.parentPhone,
+        email: values.email || null,
+      });
+    } else {
+      await updateProfile({
+        fullName: values.fullName,
+        phone: values.phone,
+        specializationIds: values.specializationIds,
+        bankName: billingForm.values.bankName || profile.bankName || null,
+        bankAccountNo: billingForm.values.bankAccountNo || profile.bankAccountNo || null,
+        bankAccountName: billingForm.values.bankAccountName || profile.bankAccountName || null,
+        bankBin: billingForm.values.bankBin || profile.bankBin || null,
+        bio: bioValue || null,
+        metadata: {
+          experience,
+          certificates,
+          awards
+        }
+      });
+    }
   };
 
   const handleUpdateBilling = async (values) => {
@@ -316,29 +335,39 @@ export function ProfilePage() {
 
             <Stack gap={2} align="center">
               <Title order={3} ta="center">{profile.fullName}</Title>
-              <Text c="dimmed" size="sm">{account?.email}</Text>
-              <Badge 
-                size="md" 
-                variant="light" 
-                color={isPremium ? 'copper' : 'gray'}
-                leftSection={isPremium && <Crown size={12} weight="fill" />}
-                mt="xs"
-              >
-                Gói {account?.packageType}
-              </Badge>
+              <Text c="dimmed" size="sm">{account?.email || profile.email}</Text>
+              {!isStudent && (
+                <Badge 
+                  size="md" 
+                  variant="light" 
+                  color={isPremium ? 'copper' : 'gray'}
+                  leftSection={isPremium && <Crown size={12} weight="fill" />}
+                  mt="xs"
+                >
+                  Gói {account?.packageType}
+                </Badge>
+              )}
             </Stack>
 
             <Divider width="100%" />
 
             <div className={classes.detailsList}>
               <div className={classes.detailItem}>
-                <span className={classes.detailLabel}>Mã định danh</span>
-                <span className={classes.detailValue}>{profile.teacherCode}</span>
+                <span className={classes.detailLabel}>{isStudent ? "Tên đăng nhập" : "Mã định danh"}</span>
+                <span className={classes.detailValue}>{isStudent ? profile.studentCode : profile.teacherCode}</span>
               </div>
-              <div className={classes.detailItem}>
-                <span className={classes.detailLabel}>Trạng thái gói</span>
-                <span className={classes.detailValue}>{account?.isActive ? 'Đang hoạt động' : 'Tạm khóa'}</span>
-              </div>
+              {!isStudent && (
+                <div className={classes.detailItem}>
+                  <span className={classes.detailLabel}>Trạng thái gói</span>
+                  <span className={classes.detailValue}>{account?.isActive ? 'Đang hoạt động' : 'Tạm khóa'}</span>
+                </div>
+              )}
+              {isStudent && (
+                <div className={classes.detailItem}>
+                  <span className={classes.detailLabel}>SĐT Phụ huynh</span>
+                  <span className={classes.detailValue}>{profile.parentPhone || 'N/A'}</span>
+                </div>
+              )}
               <div className={classes.detailItem}>
                 <span className={classes.detailLabel}>Ngày tham gia</span>
                 <span className={classes.detailValue}>
@@ -347,16 +376,18 @@ export function ProfilePage() {
               </div>
             </div>
 
-            <Button 
-              variant="outline" 
-              color="copper" 
-              fullWidth 
-              leftSection={<Eye size={16} />}
-              onClick={() => setPreviewOpened(true)}
-              mt="xs"
-            >
-              Xem hồ sơ công khai
-            </Button>
+            {!isStudent && (
+              <Button 
+                variant="outline" 
+                color="copper" 
+                fullWidth 
+                leftSection={<Eye size={16} />}
+                onClick={() => setPreviewOpened(true)}
+                mt="xs"
+              >
+                Xem hồ sơ công khai
+              </Button>
+            )}
           </Stack>
         </div>
 
@@ -367,15 +398,19 @@ export function ProfilePage() {
               <Tabs.Tab value="general" leftSection={<User size={16} />}>
                 Thông tin chung
               </Tabs.Tab>
-              <Tabs.Tab value="teaching" leftSection={<GraduationCap size={16} />}>
-                Hồ sơ giảng dạy
-              </Tabs.Tab>
+              {!isStudent && (
+                <Tabs.Tab value="teaching" leftSection={<GraduationCap size={16} />}>
+                  Hồ sơ giảng dạy
+                </Tabs.Tab>
+              )}
               <Tabs.Tab value="security" leftSection={<Lock size={16} />}>
                 Bảo mật
               </Tabs.Tab>
-              <Tabs.Tab value="billing" leftSection={<CreditCard size={16} />}>
-                Cấu hình thanh toán
-              </Tabs.Tab>
+              {!isStudent && (
+                <Tabs.Tab value="billing" leftSection={<CreditCard size={16} />}>
+                  Cấu hình thanh toán
+                </Tabs.Tab>
+              )}
             </Tabs.List>
 
             {/* TAB 1: THÔNG TIN CHUNG */}
@@ -384,34 +419,72 @@ export function ProfilePage() {
                 <Stack gap="lg">
                   <Title order={4}>Hồ sơ cá nhân</Title>
                   
-                  <SimpleGrid cols={{ base: 1, sm: 2 }} gap="md">
-                    <TextInput
-                      label="Họ và tên"
-                      placeholder="Nhập họ và tên..."
-                      required
-                      {...generalForm.getInputProps('fullName')}
-                    />
-                    <TextInput
-                      label="Số điện thoại"
-                      placeholder="Nhập số điện thoại..."
-                      {...generalForm.getInputProps('phone')}
-                    />
-                  </SimpleGrid>
-
-                  <MultiSelect
-                    label="Môn học chuyên môn phụ trách"
-                    placeholder={loadingSubjects ? "Đang tải danh sách..." : "Chọn các môn học chuyên môn..."}
-                    data={allSubjects.map((sub) => ({
-                      value: sub.id,
-                      label: `${sub.name} (${sub.code})`
-                    }))}
-                    searchable
-                    clearable
-                    hidePickedOptions
-                    disabled={loadingSubjects}
-                    nothingFoundMessage="Không tìm thấy môn học"
-                    {...generalForm.getInputProps('specializationIds')}
-                  />
+                  {isStudent ? (
+                    <>
+                      <SimpleGrid cols={{ base: 1, sm: 2 }} gap="md">
+                        <TextInput
+                          label="Họ và tên"
+                          placeholder="Nhập họ và tên..."
+                          required
+                          {...generalForm.getInputProps('fullName')}
+                        />
+                        <DateInput
+                          label="Ngày sinh"
+                          placeholder="Chọn ngày sinh"
+                          valueFormat="DD/MM/YYYY"
+                          required
+                          {...generalForm.getInputProps('dateOfBirth')}
+                        />
+                        <TextInput
+                          label="Số điện thoại cá nhân (nếu có)"
+                          placeholder="Nhập số điện thoại của bạn..."
+                          {...generalForm.getInputProps('phone')}
+                        />
+                        <TextInput
+                          label="Số điện thoại phụ huynh"
+                          placeholder="Nhập số điện thoại phụ huynh..."
+                          required
+                          {...generalForm.getInputProps('parentPhone')}
+                        />
+                      </SimpleGrid>
+                      <TextInput
+                        label="Địa chỉ email cá nhân"
+                        placeholder="Nhập email của bạn (Ví dụ: nguyenvana@gmail.com)"
+                        description="Nhập email cá nhân giúp bạn có thể dùng email thật để đăng nhập thay cho tên đăng nhập."
+                        {...generalForm.getInputProps('email')}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <SimpleGrid cols={{ base: 1, sm: 2 }} gap="md">
+                        <TextInput
+                          label="Họ và tên"
+                          placeholder="Nhập họ và tên..."
+                          required
+                          {...generalForm.getInputProps('fullName')}
+                        />
+                        <TextInput
+                          label="Số điện thoại"
+                          placeholder="Nhập số điện thoại..."
+                          {...generalForm.getInputProps('phone')}
+                        />
+                      </SimpleGrid>
+                      <MultiSelect
+                        label="Môn học chuyên môn phụ trách"
+                        placeholder={loadingSubjects ? "Đang tải danh sách..." : "Chọn các môn học chuyên môn..."}
+                        data={allSubjects.map((sub) => ({
+                          value: sub.id,
+                          label: `${sub.name} (${sub.code})`
+                        }))}
+                        searchable
+                        clearable
+                        hidePickedOptions
+                        disabled={loadingSubjects}
+                        nothingFoundMessage="Không tìm thấy môn học"
+                        {...generalForm.getInputProps('specializationIds')}
+                      />
+                    </>
+                  )}
 
                   <Group justify="flex-end" mt="xl">
                     <Button type="submit" color="copper">

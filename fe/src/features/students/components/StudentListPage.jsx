@@ -1,69 +1,119 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
-  Stack, Title, Text, Group, Button, TextInput,
-  Table, Badge, Avatar, ActionIcon, Tooltip, Center, ThemeIcon
+  Stack, Title, Text, Group, TextInput,
+  Table, Badge, Avatar, Center, ThemeIcon, Loader, Pagination, Select
 } from '@mantine/core';
-import { Plus, MagnifyingGlass, Users, Phone, PencilSimple, Trash } from '@phosphor-icons/react';
+import { MagnifyingGlass, Users, Phone } from '@phosphor-icons/react';
+import { studentService } from '../services/studentService';
+import apiClient from '../../../services/apiClient';
 import classes from './StudentListPage.module.css';
 
-// ── Mock data ────────────────────────────────────────────────────────────────
-const MOCK_STUDENTS = [
-  { id: 's1', fullName: 'Nguyễn Thị Lan', studentCode: 'HS001', email: 'lan.nguyen@student.owly.vn', parentPhone: '0912345678', classes: ['Toán 12A1', 'Lý 11B'] },
-  { id: 's2', fullName: 'Trần Văn Minh', studentCode: 'HS002', email: 'minh.tran@student.owly.vn', parentPhone: '0987654321', classes: ['Toán 12A1'] },
-  { id: 's3', fullName: 'Lê Thị Hoa', studentCode: 'HS003', email: 'hoa.le@student.owly.vn', parentPhone: '0901234567', classes: ['Hóa 10C'] },
-  { id: 's4', fullName: 'Phạm Văn An', studentCode: 'HS004', email: 'an.pham@student.owly.vn', parentPhone: '0934567890', classes: ['Toán 12A1', 'Hóa 10C'] },
-];
-// ────────────────────────────────────────────────────────────────────────────
-
 export function StudentListPage() {
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
+  const [classId, setClassId] = useState(null);
+  const [classesList, setClassesList] = useState([]);
+  
+  // Phân trang
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
 
-  const filtered = MOCK_STUDENTS.filter(
-    (s) =>
-      s.fullName.toLowerCase().includes(search.toLowerCase()) ||
-      s.studentCode.toLowerCase().includes(search.toLowerCase()) ||
-      s.email.toLowerCase().includes(search.toLowerCase())
-  );
+  // Tải danh sách lớp để đưa vào bộ lọc Select
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        const res = await apiClient.get('/api/classes', { params: { limit: 100 } });
+        const items = res.items || res.data?.items || res || [];
+        setClassesList(items);
+      } catch (error) {
+        console.error('Lỗi tải danh sách lớp học để lọc:', error);
+      }
+    };
+    fetchClasses();
+  }, []);
 
-  const rows = filtered.map((student) => (
+  // Tải danh sách học sinh dựa trên search, classId và phân trang (có debounce)
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        setLoading(true);
+        const res = await studentService.getStudents({
+          page,
+          limit: 10,
+          search: search || undefined,
+          classId: classId || undefined
+        });
+        
+        // Response format từ backend: { success: true, data: { items: [...], pagination: {...} } }
+        // axios response interceptor đã giải nén data thành { items, pagination }
+        const items = res?.items || [];
+        const pagination = res?.pagination || { totalItems: 0, totalPages: 1 };
+        
+        setStudents(items);
+        setTotalPages(pagination.totalPages || 1);
+        setTotalItems(pagination.totalItems || 0);
+      } catch (error) {
+        console.error('Lỗi tải danh sách học sinh:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const debounceHandler = setTimeout(() => {
+      fetchStudents();
+    }, 300);
+
+    return () => clearTimeout(debounceHandler);
+  }, [search, classId, page]);
+
+  // Trở lại trang 1 khi thay đổi điều kiện tìm kiếm/lọc
+  useEffect(() => {
+    setPage(1);
+  }, [search, classId]);
+
+  const rows = students.map((student) => (
     <Table.Tr key={student.id} className={classes.tableRow}>
       <Table.Td>
         <Group gap={10} wrap="nowrap">
-          <Avatar name={student.fullName} size={36} radius="xl" color="copper" />
+          <Avatar 
+            name={student.fullName} 
+            size={36} 
+            radius="xl" 
+            color="copper" 
+            src={student.account?.avatarUrl}
+          >
+            {student.fullName?.charAt(0)?.toUpperCase()}
+          </Avatar>
           <div>
             <Text size="sm" fw={600}>{student.fullName}</Text>
-            <Text size="xs" c="dimmed">{student.studentCode}</Text>
+            <Text size="xs" c="dimmed">
+              Ngày sinh: {student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString('vi-VN') : 'Chưa rõ'}
+            </Text>
           </div>
         </Group>
       </Table.Td>
       <Table.Td>
-        <Text size="sm" c="dimmed">{student.email}</Text>
+        {/* Email cá nhân (tài khoản email phụ huynh/học sinh tự nhập sau khi login) */}
+        <Text size="sm" c="dimmed">{student.account?.email || 'Chưa cập nhật'}</Text>
       </Table.Td>
       <Table.Td>
         <Group gap={4}>
           <Phone size={13} color="var(--accent-color)" />
-          <Text size="sm">{student.parentPhone}</Text>
+          <Text size="sm">{student.parentPhone || 'Chưa cập nhật'}</Text>
         </Group>
       </Table.Td>
       <Table.Td>
         <Group gap={4} wrap="wrap">
-          {student.classes.map((cls) => (
-            <Badge key={cls} size="xs" variant="light" color="copper">{cls}</Badge>
+          {student.enrollments && student.enrollments.map((enr) => (
+            <Badge key={enr.class.id} size="xs" variant="light" color="copper">
+              {enr.class.name}
+            </Badge>
           ))}
-        </Group>
-      </Table.Td>
-      <Table.Td>
-        <Group gap={4} justify="flex-end">
-          <Tooltip label="Chỉnh sửa" withArrow>
-            <ActionIcon variant="subtle" color="gray" size="sm">
-              <PencilSimple size={15} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="Xóa" withArrow>
-            <ActionIcon variant="subtle" color="red" size="sm">
-              <Trash size={15} />
-            </ActionIcon>
-          </Tooltip>
+          {(!student.enrollments || student.enrollments.length === 0) && (
+            <Text size="xs" c="dimmed" fs="italic">Chưa tham gia lớp nào</Text>
+          )}
         </Group>
       </Table.Td>
     </Table.Tr>
@@ -74,39 +124,61 @@ export function StudentListPage() {
       {/* ── Header ──────────────────────────────── */}
       <Group justify="space-between" align="flex-end" wrap="wrap" gap="sm">
         <div>
-          <Title order={2} className={classes.pageTitle}>Học viên</Title>
-          <Text size="sm" c="dimmed">{MOCK_STUDENTS.length} học viên trong workspace</Text>
+          <Title order={2} className={classes.pageTitle}>Danh bạ Học viên</Title>
+          <Text size="sm" c="dimmed">Hiển thị {totalItems} học viên trong các lớp của bạn</Text>
         </div>
-        <Button leftSection={<Plus size={16} weight="bold" />} color="copper">
-          Thêm học viên
-        </Button>
       </Group>
 
-      {/* ── Search ──────────────────────────────── */}
-      <TextInput
-        placeholder="Tìm học viên theo tên, mã số..."
-        leftSection={<MagnifyingGlass size={16} />}
-        value={search}
-        onChange={(e) => setSearch(e.currentTarget.value)}
-        style={{ maxWidth: 360 }}
-      />
+      {/* ── Search & Filter ─────────────────────── */}
+      <Group gap="md" wrap="wrap">
+        <TextInput
+          placeholder="Tìm học viên theo họ tên, sđt phụ huynh..."
+          leftSection={<MagnifyingGlass size={16} />}
+          value={search}
+          onChange={(e) => setSearch(e.currentTarget.value)}
+          style={{ flex: 1, minWidth: 260, maxWidth: 360 }}
+        />
+        <Select
+          placeholder="Lọc theo lớp học"
+          data={classesList.map(c => ({ value: c.id, label: c.name }))}
+          value={classId}
+          onChange={setClassId}
+          clearable
+          style={{ width: 220 }}
+        />
+      </Group>
 
-      {/* ── Table ───────────────────────────────── */}
-      {filtered.length > 0 ? (
-        <div className={classes.tableWrapper}>
-          <Table highlightOnHover verticalSpacing="md" className={classes.table}>
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>Học viên</Table.Th>
-                <Table.Th>Email</Table.Th>
-                <Table.Th>SĐT Phụ huynh</Table.Th>
-                <Table.Th>Lớp học</Table.Th>
-                <Table.Th />
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>{rows}</Table.Tbody>
-          </Table>
-        </div>
+      {/* ── Table / Loader ──────────────────────── */}
+      {loading ? (
+        <Center py={80}>
+          <Loader color="copper" size="md" />
+        </Center>
+      ) : students.length > 0 ? (
+        <Stack gap="md" align="center">
+          <div className={classes.tableWrapper} style={{ width: '100%' }}>
+            <Table highlightOnHover verticalSpacing="md" className={classes.table}>
+              <Table.Thead>
+                <Table.Tr>
+                  <Table.Th>Học viên</Table.Th>
+                  <Table.Th>Email liên hệ</Table.Th>
+                  <Table.Th>SĐT Phụ huynh</Table.Th>
+                  <Table.Th>Lớp đang học</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>{rows}</Table.Tbody>
+            </Table>
+          </div>
+
+          {totalPages > 1 && (
+            <Pagination
+              value={page}
+              onChange={setPage}
+              total={totalPages}
+              color="copper"
+              mt="md"
+            />
+          )}
+        </Stack>
       ) : (
         <Center py={80}>
           <Stack align="center" gap="md">
@@ -114,13 +186,10 @@ export function StudentListPage() {
               <Users size={32} weight="duotone" />
             </ThemeIcon>
             <Text c="dimmed">
-              {search ? `Không tìm thấy học viên với "${search}"` : 'Chưa có học viên nào.'}
+              {search || classId 
+                ? 'Không tìm thấy học viên phù hợp bộ lọc.' 
+                : 'Chưa có học viên nào thuộc quyền quản lý của bạn.'}
             </Text>
-            {!search && (
-              <Button leftSection={<Plus size={16} />} variant="light" color="copper">
-                Thêm học viên đầu tiên
-              </Button>
-            )}
           </Stack>
         </Center>
       )}

@@ -19,7 +19,13 @@ export function SignIn() {
       role: 'teacher',
     },
     validate: {
-      email: (value) => (/^\S+@\S+\.\S+$/.test(value) ? null : 'Email không đúng định dạng'),
+      email: (value, values) => {
+        if (!value || value.trim() === '') {
+          return values.role === 'student' ? 'Vui lòng nhập tên đăng nhập hoặc email' : 'Vui lòng nhập địa chỉ email';
+        }
+        if (values.role === 'student') return null; // Cho phép mã học sinh như HS001
+        return /^\S+@\S+\.\S+$/.test(value) ? null : 'Email không đúng định dạng';
+      },
       password: (value) => (value.length >= 6 ? null : 'Mật khẩu phải có ít nhất 6 ký tự'),
     },
   });
@@ -192,8 +198,8 @@ export function SignIn() {
 
             <TextInput
               required
-              label="Địa chỉ email"
-              placeholder="Nhập email của bạn"
+              label={form.values.role === 'student' ? "Tên đăng nhập" : "Địa chỉ email"}
+              placeholder={form.values.role === 'student' ? "Nhập mã học sinh hoặc email..." : "Nhập email của bạn"}
               size="md"
               radius="md"
               {...form.getInputProps('email')}

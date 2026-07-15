@@ -1,0 +1,21 @@
+meta {
+  name: Enroll Existing Student
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/classes/replace-with-class-uuid/members/enroll-existing
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "studentId": "replace-with-student-uuid"
+  }
+}
