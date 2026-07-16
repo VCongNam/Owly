@@ -97,6 +97,8 @@ graph TD
     Khi nhận tham số phân trang từ Query parameters (`page`, `limit`), bắt buộc phải validate bằng Zod schema:
     - `page`: Mặc định là `1`, giá trị nhỏ nhất là `1`, ép kiểu số nguyên (`z.coerce.number().int().min(1).default(1)`).
     - `limit`: Mặc định phù hợp tùy màn hình (thường là `10` hoặc `12`), tối đa `100` để tránh query quá tải DB (`z.coerce.number().int().min(1).max(100).default(10)`).
+*   **Bắt buộc Phân trang (Mandatory Pagination):**
+    Tất cả các API lấy danh sách dữ liệu (mảng) đều **bắt buộc phải thực hiện phân trang** ở cả phía backend (dùng Prisma `skip` và `take`) và hiển thị phân trang ở frontend. Không thiết kế các endpoint trả về mảng dữ liệu không giới hạn kích thước (ngoại trừ các danh mục cực nhỏ và cố định như Môn học).
 *   **Failed Response Format (HTTP 4xx, 5xx):**
     Never expose stack traces to the client in Production.
     ```json
@@ -145,6 +147,10 @@ graph TD
 *   **State Synchronization (Zustand Stores):**
     *   Separate global states (such as logged-in User info, application Theme) into Zustand stores.
     *   Keep local states (like form inputs or UI modal states) within the local component using `useState`.
+
+### 4. Thiết kế & Quy chuẩn Màu sắc (Color Scheme & Aesthetics)
+*   **Tuân thủ hệ thống màu sắc:** Không sử dụng các mã màu cứng cố định hoặc các lớp màu sắc mặc định (như `#ffffff`, `#000000`, `gray-0`, `bg="white"`) trực tiếp trong mã nguồn CSS hoặc thuộc tính inline của components.
+*   **Hỗ trợ Light/Dark Mode:** Bắt buộc sử dụng các biến CSS toàn cục được khai báo tại [index.css](file:///e:/Data/Owly/fe/src/index.css) (ví dụ: `var(--bg-color)`, `var(--text-color)`, `var(--accent-color)`, `var(--card-bg)`, `var(--border-color)`) để các modal, panel, card tự động chuyển đổi tương thích khi người dùng chuyển đổi giao diện sáng/tối.
 
 ---
 

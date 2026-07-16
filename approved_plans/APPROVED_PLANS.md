@@ -71,3 +71,18 @@ Tài liệu này lưu trữ tất cả các Kế hoạch Thực thi (Implementat
 ### 4. Giao diện Danh sách Học viên chung (`/students`)
 - Chuyển thành trang Chỉ đọc (Read-only), hiển thị danh bạ học sinh đang học các lớp của giáo viên đăng nhập.
 
+---
+
+## 5. Phân hệ Lịch học & Điểm danh (Giáo viên) (Ngày 16/07/2026)
+
+### 1. Đồng bộ API & Cơ sở dữ liệu (Backend)
+- Định nghĩa schemas kiểm tra đầu vào Zod cho lịch lặp lại, tạo/sửa buổi học lẻ.
+- Viết các service tương tác Prisma: tự động tính toán sinh hàng loạt buổi học từ lịch tuần lặp lại, bảo vệ các buổi học tương lai đã có điểm danh/nhận xét không bị xóa.
+- Xử lý đồng bộ múi giờ UTC+7 giữa client, server và Postgres (lưu UTC).
+
+### 2. Giao diện Người dùng (Frontend)
+- Xây dựng trang Lịch biểu cá nhân `SchedulePage` hỗ trợ xem dạng tháng (Calendar Grid) và dạng danh sách tuần (Timeline).
+- Thiết lập tab "Buổi học" trong chi tiết lớp học giúp cấu hình lịch tuần lặp lại (`ScheduleSetupModal`) và thêm buổi học lẻ/học bù (`SessionFormModal`).
+- Tự động hóa kết nối qua custom Hook `useSchedule` và Axios client.
+
+

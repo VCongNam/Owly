@@ -3,13 +3,14 @@ import { useParams } from 'react-router-dom';
 import {
   Stack, Group, Title, Text, Button, Table, Avatar, ActionIcon,
   Tooltip, Center, ThemeIcon, Loader, Modal, SegmentedControl,
-  TextInput, Card, Alert, Divider, Badge
+  TextInput, Card, Alert, Divider, Badge, Box
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
-import { Plus, Trash, MagnifyingGlass, UserPlus, Users, Phone, CalendarBlank, Warning } from '@phosphor-icons/react';
+import { Plus, Trash, MagnifyingGlass, UserPlus, Users, Phone, CalendarBlank, Warning, Copy, Check } from '@phosphor-icons/react';
 import { notifications } from '@mantine/notifications';
 import { studentService } from '../../students/services/studentService';
+import { ConfirmModal } from '../../../shared';
 import classes from './ClassMembersTab.module.css';
 
 export function ClassMembersTab() {
@@ -20,6 +21,11 @@ export function ClassMembersTab() {
   // Modal states
   const [modalOpened, setModalOpened] = useState(false);
   const [activeTab, setActiveTab] = useState('existing'); // existing | new
+  const [createdStudent, setCreatedStudent] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const [unenrollConfirmOpened, setUnenrollConfirmOpened] = useState(false);
+  const [studentToUnenroll, setStudentToUnenroll] = useState(null);
+  const [unenrolling, setUnenrolling] = useState(false);
   
   // Search existing student states
   const [searchQuery, setSearchQuery] = useState('');
@@ -114,7 +120,11 @@ export function ClassMembersTab() {
         dateOfBirth: values.dateOfBirth ? new Date(values.dateOfBirth).toISOString() : null,
         parentPhone: values.parentPhone
       };
-      await studentService.createAndEnrollNew(classId, payload);
+      const result = await studentService.createAndEnrollNew(classId, payload);
+      
+      // Lưu lại thông tin học sinh vừa tạo để hiển thị ở modal hướng dẫn
+      setCreatedStudent(result);
+
       notifications.show({
         title: 'Thành công',
         message: 'Tạo tài khoản học viên và ghi danh thành công',
@@ -128,20 +138,49 @@ export function ClassMembersTab() {
     }
   };
 
-  // Hủy ghi danh khỏi lớp (Unenroll)
-  const handleUnenroll = async (studentId, studentName) => {
-    if (window.confirm(`Bạn có chắc chắn muốn hủy học (hủy liên kết lớp) cho học viên ${studentName} khỏi lớp học này?`)) {
-      try {
-        await studentService.unenrollStudent(classId, studentId);
-        notifications.show({
-          title: 'Thành công',
-          message: 'Đã hủy liên kết học viên khỏi lớp học',
-          color: 'green'
-        });
-        fetchMembers();
-      } catch (error) {
-        console.error(error);
-      }
+  // Sao chép thông tin tài khoản học viên
+  const handleCopyInfo = () => {
+    if (!createdStudent) return;
+    const infoText = `THÔNG TIN TÀI KHOẢN HỌC VIÊN OWLY:
+- Họ và tên: ${createdStudent.fullName}
+- Tên đăng nhập (Mã HS): ${createdStudent.studentCode}
+- Mật khẩu mặc định: Owly@123456
+- Số điện thoại phụ huynh: ${createdStudent.parentPhone}
+
+HƯỚNG DẪN ĐĂNG NHẬP:
+1. Truy cập vào trang web hệ thống Owly.
+2. Tại màn hình Đăng nhập, chọn vai trò "Học sinh".
+3. Nhập Tên đăng nhập và Mật khẩu ở trên để đăng nhập.
+4. Trong lần đăng nhập đầu tiên, vui lòng vào phần hồ sơ cá nhân để cập nhật Email cá nhân thật, số điện thoại cá nhân và đổi mật khẩu mới để bảo mật tài khoản.`;
+
+    navigator.clipboard.writeText(infoText);
+    setCopied(true);
+    notifications.show({
+      title: 'Đã sao chép',
+      message: 'Đã sao chép thông tin tài khoản học viên vào bộ nhớ tạm',
+      color: 'teal'
+    });
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Xác nhận và thực hiện hủy liên kết học viên
+  const handleConfirmUnenroll = async () => {
+    if (!studentToUnenroll) return;
+    try {
+      setUnenrolling(true);
+      await studentService.unenrollStudent(classId, studentToUnenroll.id);
+      notifications.show({
+        title: 'Thành công',
+        message: 'Đã hủy liên kết học viên khỏi lớp học',
+        color: 'green'
+      });
+      fetchMembers();
+      setUnenrollConfirmOpened(false);
+      setStudentToUnenroll(null);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setUnenrolling(false);
     }
   };
 
@@ -182,7 +221,10 @@ export function ClassMembersTab() {
               variant="subtle" 
               color="red" 
               size="sm"
-              onClick={() => handleUnenroll(student.id, student.fullName)}
+              onClick={() => {
+                setStudentToUnenroll(student);
+                setUnenrollConfirmOpened(true);
+              }}
             >
               <Trash size={15} />
             </ActionIcon>
@@ -370,6 +412,94 @@ export function ClassMembersTab() {
           )}
         </Stack>
       </Modal>
+
+      {/* ── Modal Hiển thị Thông tin Tài khoản vừa tạo ── */}
+      <Modal
+        opened={createdStudent !== null}
+        onClose={() => setCreatedStudent(null)}
+        title="Thông tin tài khoản học viên mới"
+        size="md"
+        centered
+        styles={{
+          header: {
+            borderBottom: '1px solid var(--border-color)',
+            paddingBottom: '12px',
+          },
+          title: {
+            fontWeight: 700,
+            color: 'var(--accent-color)'
+          }
+        }}
+      >
+        {createdStudent && (
+          <Stack gap="md" pt="sm">
+            <Alert color="teal" variant="light">
+              <Text size="sm" fw={500} ta="center">Tài khoản học viên đã được tạo thành công!</Text>
+            </Alert>
+            
+            <Card withBorder p="md" bg="var(--card-bg)" radius="md">
+              <Stack gap="xs">
+                <Group justify="space-between">
+                  <Text size="sm" fw={500} c="dimmed">Họ và tên:</Text>
+                  <Text size="sm" fw={700}>{createdStudent.fullName}</Text>
+                </Group>
+                <Divider />
+                <Group justify="space-between">
+                  <Text size="sm" fw={500} c="dimmed">Tên đăng nhập (Mã học sinh):</Text>
+                  <Badge color="copper" variant="filled" size="md">{createdStudent.studentCode}</Badge>
+                </Group>
+                <Divider />
+                <Group justify="space-between">
+                  <Text size="sm" fw={500} c="dimmed">Mật khẩu mặc định:</Text>
+                  <Text size="sm" fw={700} style={{ fontFamily: 'monospace' }}>Owly@123456</Text>
+                </Group>
+                <Divider />
+                <Group justify="space-between">
+                  <Text size="sm" fw={500} c="dimmed">SĐT Phụ huynh:</Text>
+                  <Text size="sm" fw={600}>{createdStudent.parentPhone}</Text>
+                </Group>
+              </Stack>
+            </Card>
+
+            <Box>
+              <Text size="sm" fw={600} mb={6}>Hướng dẫn đăng nhập cho học viên / phụ huynh:</Text>
+              <Text size="xs" c="dimmed" style={{ lineHeight: 1.6 }}>
+                1. Sử dụng Mã học sinh làm Tên đăng nhập.<br />
+                2. Đăng nhập bằng mật khẩu mặc định <strong>Owly@123456</strong>.<br />
+                3. Trong lần đăng nhập đầu tiên, học sinh/phụ huynh cần cập nhật Email thật của họ và đổi mật khẩu mới để bảo mật tài khoản.
+              </Text>
+            </Box>
+
+            <Group justify="flex-end" mt="md">
+              <Button 
+                variant="outline" 
+                color="copper" 
+                leftSection={copied ? <Check size={16} /> : <Copy size={16} />}
+                onClick={handleCopyInfo}
+              >
+                {copied ? 'Đã sao chép' : 'Sao chép thông tin'}
+              </Button>
+              <Button color="copper" onClick={() => setCreatedStudent(null)}>Đóng</Button>
+            </Group>
+          </Stack>
+        )}
+      </Modal>
+
+      {/* ── Modal Xác nhận Hủy ghi danh (Unenroll Confirm) ── */}
+      <ConfirmModal
+        opened={unenrollConfirmOpened}
+        onClose={() => {
+          setUnenrollConfirmOpened(false);
+          setStudentToUnenroll(null);
+        }}
+        onConfirm={handleConfirmUnenroll}
+        title="Hủy liên kết lớp học"
+        message={`Bạn có chắc chắn muốn hủy học (hủy liên kết lớp) cho học viên ${studentToUnenroll?.fullName} khỏi lớp học này không?`}
+        confirmLabel="Hủy liên kết"
+        cancelLabel="Hủy bỏ"
+        color="red"
+        loading={unenrolling}
+      />
     </Stack>
   );
 }

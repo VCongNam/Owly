@@ -1,0 +1,15 @@
+meta {
+  name: Get Personal Schedule
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/schedule?startDate=2026-07-01T00:00:00Z&endDate=2026-08-01T00:00:00Z
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}

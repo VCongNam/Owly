@@ -1,0 +1,26 @@
+meta {
+  name: Create Manual Session
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/classes/:classId/sessions
+  body: json
+  auth: bearer
+}
+
+params:path {
+  classId: replace-with-class-id
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "title": "Buổi học bù Đại số",
+    "date": "2026-07-25T09:00:00+07:00"
+  }
+}

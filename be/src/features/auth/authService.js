@@ -93,7 +93,9 @@ export const signUpTeacher = async (email, password, fullName, phone, specializa
       teacherCode: savedTeacher.teacherCode,
       phone: phone,
       specializations: savedTeacher.specializations.map(s => s.subject),
-      token: authData.session?.access_token
+      token: authData.session?.access_token,
+      refreshToken: authData.session?.refresh_token,
+      expiresAt: authData.session?.expires_at
     };
   });
 };
@@ -284,7 +286,9 @@ export const signInUser = async (email, password, role) => {
       ...data.user,
       ...profile
     },
-    token: data.session?.access_token
+    token: data.session?.access_token,
+    refreshToken: data.session?.refresh_token,
+    expiresAt: data.session?.expires_at
   };
 };
 
@@ -391,6 +395,22 @@ export const ensureTeacherProfile = async (user) => {
       data: { avatarUrl }
     });
   }
+};
+
+export const refreshSession = async (refreshToken) => {
+  const { data, error } = await supabase.auth.refreshSession({
+    refresh_token: refreshToken
+  });
+
+  if (error || !data.session) {
+    throw new Error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
+  }
+
+  return {
+    token: data.session.access_token,
+    refreshToken: data.session.refresh_token,
+    expiresAt: data.session.expires_at
+  };
 };
 
 export const signOutTeacher = async (token) => {

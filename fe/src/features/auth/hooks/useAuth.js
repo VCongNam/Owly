@@ -1,43 +1,100 @@
 import { create } from 'zustand';
 import { apiClient } from '../../../services/apiClient';
+import { notifications } from '@mantine/notifications';
+
+// ── Hằng số thời gian session ──────────────────────────────────────────────
+const SESSION_DURATION_DEFAULT = 24 * 60 * 60 * 1000;      // 1 ngày (không "duy trì")
+const SESSION_DURATION_REMEMBER = 30 * 24 * 60 * 60 * 1000; // 30 ngày (có "duy trì")
+
+// ── Helpers để đọc dữ liệu từ storage ─────────────────────────────────────
+const getFromStorage = (key) => {
+  try {
+    const val = localStorage.getItem(key) || sessionStorage.getItem(key);
+    if (!val || val === 'undefined' || val === 'null') return null;
+    return val;
+  } catch {
+    return null;
+  }
+};
 
 const getInitialUser = () => {
   try {
     const userStr = localStorage.getItem('owly_user') || sessionStorage.getItem('owly_user');
-    return userStr && userStr !== 'undefined' ? JSON.parse(userStr) : null;
+    if (!userStr || userStr === 'undefined' || userStr === 'null') return null;
+    return JSON.parse(userStr);
   } catch {
     return null;
   }
 };
 
 const getInitialToken = () => {
-  const token = localStorage.getItem('owly_token') || sessionStorage.getItem('owly_token');
-  if (token === 'undefined' || token === 'null') {
-    localStorage.removeItem('owly_token');
-    sessionStorage.removeItem('owly_token');
-    return null;
-  }
-  return token || null;
+  const token = getFromStorage('owly_token');
+  return token;
 };
 
-export const useAuthStore = create((set) => ({
+/**
+ * Kiểm tra xem session hiện tại có còn hợp lệ không dựa vào owly_session_expires_at.
+ * Nếu đã quá hạn → trả về false, yêu cầu đăng nhập lại.
+ */
+const isSessionExpired = () => {
+  const expiresAt = getFromStorage('owly_session_expires_at');
+  if (!expiresAt) return false; // Không có giới hạn → còn hợp lệ (backward-compat)
+  return Date.now() > parseInt(expiresAt, 10);
+};
+
+/**
+ * Xác định storage phù hợp (localStorage nếu "duy trì", sessionStorage nếu không).
+ */
+const resolveStorage = () => {
+  const inLocal = !!localStorage.getItem('owly_token');
+  return inLocal ? localStorage : sessionStorage;
+};
+
+// ── Hàm ghi/xóa session vào storage ──────────────────────────────────────
+const saveSession = (user, token, refreshToken, expiresAt, rememberMe) => {
+  const storage = rememberMe ? localStorage : sessionStorage;
+
+  storage.setItem('owly_token', token);
+  storage.setItem('owly_user', JSON.stringify(user));
+  if (refreshToken) storage.setItem('owly_refresh_token', refreshToken);
+
+  // Ghi thời điểm hết hạn session (giới hạn FE tự quản lý thêm)
+  const duration = rememberMe ? SESSION_DURATION_REMEMBER : SESSION_DURATION_DEFAULT;
+  storage.setItem('owly_session_expires_at', String(Date.now() + duration));
+  // Ghi flag để biết "duy trì" hay không
+  storage.setItem('owly_remember_me', rememberMe ? '1' : '0');
+};
+
+const clearSession = () => {
+  ['owly_token', 'owly_user', 'owly_refresh_token', 'owly_session_expires_at', 'owly_remember_me'].forEach(key => {
+    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
+  });
+  delete apiClient.defaults.headers.common['Authorization'];
+};
+
+// ── Kiểm tra khi khởi động app: session đã hết hạn? ──────────────────────
+if (isSessionExpired()) {
+  clearSession();
+}
+
+export const useAuthStore = create((set, get) => ({
   user: getInitialUser(),
   token: getInitialToken(),
   loading: false,
   error: null,
 
+  /**
+   * Cập nhật token mới sau khi refresh (ghi đè lên đúng storage cũ).
+   */
   setSession: (user, token) => {
-    // Save to wherever it was previously saved, or fallback to localStorage
-    const useSession = !!sessionStorage.getItem('owly_token');
-    const storage = useSession ? sessionStorage : localStorage;
-    
+    const storage = resolveStorage();
+
     if (token) {
       storage.setItem('owly_token', token);
       apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     } else {
-      localStorage.removeItem('owly_token');
-      sessionStorage.removeItem('owly_token');
-      delete apiClient.defaults.headers.common['Authorization'];
+      clearSession();
     }
 
     if (user) {
@@ -50,27 +107,60 @@ export const useAuthStore = create((set) => ({
     set({ user, token });
   },
 
+  /**
+   * Làm mới access_token bằng refresh_token.
+   * Trả về true nếu thành công, false nếu thất bại (cần login lại).
+   */
+  refreshAccessToken: async () => {
+    const refreshToken = getFromStorage('owly_refresh_token');
+    if (!refreshToken) return false;
+
+    try {
+      // Gọi trực tiếp bằng fetch để tránh vòng lặp interceptor
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken })
+      });
+
+      if (!response.ok) return false;
+
+      const json = await response.json();
+      if (!json.success || !json.data?.token) return false;
+
+      const { token, refreshToken: newRefreshToken } = json.data;
+      const storage = resolveStorage();
+
+      storage.setItem('owly_token', token);
+      if (newRefreshToken) storage.setItem('owly_refresh_token', newRefreshToken);
+
+      // Gia hạn thêm thời gian session (giữ nguyên loại duration)
+      const rememberMe = storage.getItem('owly_remember_me') === '1';
+      const duration = rememberMe ? SESSION_DURATION_REMEMBER : SESSION_DURATION_DEFAULT;
+      storage.setItem('owly_session_expires_at', String(Date.now() + duration));
+
+      apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      set({ token });
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
   login: async (email, password, rememberMe = false, role = 'teacher') => {
     set({ loading: true, error: null });
     try {
-      // API call to backend login
       const response = await apiClient.post('/api/auth/signin', { email, password, role });
-      
-      // Assume API returns { token, user } or similar structure
-      const { user, token } = response;
-      
-      const storage = rememberMe ? localStorage : sessionStorage;
 
-      if (token) {
-        storage.setItem('owly_token', token);
-      } else {
-        console.error('Token is missing in login response!');
+      const { user, token, refreshToken, expiresAt } = response;
+
+      if (!token) {
+        throw new Error('Token không tồn tại trong phản hồi đăng nhập');
       }
 
-      if (user) {
-        storage.setItem('owly_user', JSON.stringify(user));
-      }
-      
+      saveSession(user, token, refreshToken, expiresAt, rememberMe);
+      apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
       set({ user, token, loading: false });
       return { success: true, user };
     } catch (err) {
@@ -83,15 +173,13 @@ export const useAuthStore = create((set) => ({
   signUp: async (payload) => {
     set({ loading: true, error: null });
     try {
-      // payload matches { email, password, fullName, phone, specializationIds }
       const response = await apiClient.post('/api/auth/signup', payload);
-      
-      const { user, token } = response;
+
+      const { user, token, refreshToken, expiresAt } = response;
       if (token) {
-        localStorage.setItem('owly_token', token);
-      }
-      if (user) {
-        localStorage.setItem('owly_user', JSON.stringify(user));
+        // Đăng ký mặc định duy trì đăng nhập 30 ngày
+        saveSession(user, token, refreshToken, expiresAt, true);
+        apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       }
 
       set({ user, token, loading: false });
@@ -112,8 +200,9 @@ export const useAuthStore = create((set) => ({
       });
 
       const updatedUser = response.user || response;
-      localStorage.setItem('owly_user', JSON.stringify(updatedUser));
-      
+      const storage = resolveStorage();
+      storage.setItem('owly_user', JSON.stringify(updatedUser));
+
       set({ user: updatedUser, loading: false });
       return { success: true, user: updatedUser };
     } catch (err) {
@@ -155,20 +244,30 @@ export const useAuthStore = create((set) => ({
     } catch (err) {
       console.warn('Logout request failed', err);
     } finally {
-      localStorage.removeItem('owly_token');
-      localStorage.removeItem('owly_user');
-      sessionStorage.removeItem('owly_token');
-      sessionStorage.removeItem('owly_user');
-      delete apiClient.defaults.headers.common['Authorization'];
+      clearSession();
       set({ user: null, token: null, error: null });
     }
   },
 }));
 
-// Listen to global 401 events from apiClient
+// ── Tự động xử lý 401: thử refresh trước khi logout ──────────────────────
 if (typeof window !== 'undefined') {
-  window.addEventListener('owly_unauthorized', () => {
+  window.addEventListener('owly_unauthorized', async () => {
+    const store = useAuthStore.getState();
+    const refreshed = await store.refreshAccessToken();
+    if (!refreshed) {
+      store.logout();
+    }
+  });
+
+  // Khi apiClient interceptor đã thử refresh nhưng vẫn thất bại
+  window.addEventListener('owly_session_expired', () => {
     useAuthStore.getState().logout();
+    notifications.show({
+      title: 'Phiên đăng nhập hết hạn',
+      message: 'Vui lòng đăng nhập lại để tiếp tục',
+      color: 'orange',
+    });
   });
 }
 

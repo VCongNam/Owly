@@ -3,7 +3,9 @@
    ============================================= */
 .sidebar {
   width: 260px;
-  min-height: 100vh;
+  height: 100dvh;
+  position: sticky;
+  top: 0;
   background: var(--card-bg);
   border-right: 1px solid var(--border-color);
   display: flex;
@@ -11,9 +13,9 @@
   flex-shrink: 0;
   transition: width 0.25s ease;
   overflow: hidden;
-  position: relative;
   z-index: 100;
 }
+
 
 .sidebar[data-collapsed='true'] {
   width: 72px;

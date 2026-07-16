@@ -106,7 +106,12 @@ export const createClass = async (teacherId, data) => {
       include: {
         subject: true,
         schedules: true,
-        tuitionConfig: true
+        tuitionConfig: true,
+        _count: {
+          select: {
+            enrollments: true
+          }
+        }
       }
     });
 
@@ -157,7 +162,12 @@ export const getClasses = async (teacherId, options = {}) => {
     include: {
       subject: true,
       schedules: true,
-      tuitionConfig: true
+      tuitionConfig: true,
+      _count: {
+        select: {
+          enrollments: true
+        }
+      }
     },
     orderBy: { createdAt: 'desc' },
     skip,
@@ -194,7 +204,12 @@ export const getClassById = async (id, teacherId) => {
       },
       subject: true,
       schedules: true,
-      tuitionConfig: true
+      tuitionConfig: true,
+      _count: {
+        select: {
+          enrollments: true
+        }
+      }
     }
   });
 
@@ -289,7 +304,12 @@ export const updateClass = async (id, teacherId, data) => {
       include: {
         subject: true,
         schedules: true,
-        tuitionConfig: true
+        tuitionConfig: true,
+        _count: {
+          select: {
+            enrollments: true
+          }
+        }
       }
     });
 

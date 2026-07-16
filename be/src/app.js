@@ -8,6 +8,8 @@ import classRoutes from './features/classes/classRoutes.js';
 import profileRoutes from './features/profile/profileRoutes.js';
 import feedbackRoutes from './features/systemFeedbacks/feedbackRoutes.js';
 import studentRoutes from './features/students/studentRoutes.js';
+import scheduleRoutes from './features/schedule/scheduleRoutes.js';
+
 
 dotenv.config();
 
@@ -24,6 +26,8 @@ app.use('/api/classes', classRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/feedbacks', feedbackRoutes);
 app.use('/api/students', studentRoutes);
+app.use('/api', scheduleRoutes);
+
 
 // Test route
 app.get('/', (req, res) => {

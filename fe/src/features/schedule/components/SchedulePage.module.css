@@ -1,0 +1,203 @@
+.root {
+  display: flex;
+  flex-direction: column;
+}
+
+
+.header {
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 20px;
+}
+
+.title {
+  font-family: var(--font-display);
+  color: var(--text-color);
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.navBar {
+  margin-top: 16px;
+  background-color: var(--card-bg);
+  padding: 12px 20px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+/* ── Calendar Grid ── */
+.calendarCard {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 4px 16px var(--shadow-color);
+  overflow: hidden;
+  margin-top: 16px;
+}
+
+.weekdayGrid {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dateGrid {
+  min-height: 480px;
+}
+
+.dateCell {
+  min-height: 100px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-color);
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  position: relative;
+}
+
+.dateCell:hover {
+  border-color: var(--accent-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px var(--shadow-color);
+}
+
+.otherMonthCell {
+  opacity: 0.45;
+  background-color: transparent;
+}
+
+.todayCell {
+  background-color: rgba(197, 168, 128, 0.08); /* accent-color with low opacity */
+  border-color: var(--accent-color);
+}
+
+.todayNum {
+  color: var(--accent-color);
+}
+
+.todayCell .todayNum {
+  background-color: var(--accent-color);
+  color: var(--bg-color);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.cellSessionsContainer {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 8px 8px 8px;
+  overflow-y: auto;
+  max-height: 80px;
+}
+
+/* ── Sessions Badges ── */
+.sessionBadge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 6px;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: opacity 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sessionBadge:hover {
+  opacity: 0.85;
+}
+
+.sessionScheduled {
+  background-color: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+  border-left: 3px solid #3b82f6;
+}
+
+.sessionCompleted {
+  background-color: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border-left: 3px solid #10b981;
+}
+
+.sessionCancelled {
+  background-color: rgba(239, 68, 68, 0.08);
+  color: #dc2626;
+  border-left: 3px solid #ef4444;
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.sessionPending {
+  background-color: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+  border-left: 3px solid #f59e0b;
+}
+
+.sessionTimeStr {
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.sessionTitleStr {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Timeline List View ── */
+.timelineContainer {
+  margin-top: 16px;
+}
+
+.timelineDayCard {
+  border-radius: 12px;
+  box-shadow: 0 2px 10px var(--shadow-color);
+}
+
+.timelineSessionRow {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.timelineSessionRow:last-child {
+  border-bottom: none;
+}
+
+.timeBlock {
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  padding: 6px 12px;
+  border-radius: 8px;
+  text-align: center;
+  min-width: 90px;
+}
+
+/* Dark mode overrides if needed */
+html[data-mantine-color-scheme="dark"] .sessionScheduled {
+  background-color: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+}
+
+html[data-mantine-color-scheme="dark"] .sessionCompleted {
+  background-color: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+html[data-mantine-color-scheme="dark"] .sessionCancelled {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+html[data-mantine-color-scheme="dark"] .sessionPending {
+  background-color: rgba(245, 158, 11, 0.25);
+  color: #fbbf24;
+}

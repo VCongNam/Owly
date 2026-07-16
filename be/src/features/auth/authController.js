@@ -1,5 +1,30 @@
 import * as authService from './authService.js';
 
+export const refreshToken = async (req, res) => {
+  try {
+    const { refreshToken: token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Refresh token không được để trống'
+      });
+    }
+
+    const result = await authService.refreshSession(token);
+
+    return res.status(200).json({
+      success: true,
+      data: result
+    });
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      message: error.message || 'Phiên đăng nhập đã hết hạn'
+    });
+  }
+};
+
 // Đăng ký tài khoản mới trên Supabase Auth + Tự động sinh hồ sơ Giáo viên
 export const signUp = async (req, res) => {
   try {

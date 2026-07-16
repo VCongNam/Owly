@@ -12,6 +12,9 @@ router.post('/signup', validate(signUpSchema), authController.signUp);
 // Route đăng nhập lấy token (Công khai, đã gắn validate bằng Tiếng Việt)
 router.post('/signin', validate(signInSchema), authController.signIn);
 
+// Route làm mới access_token bằng refresh_token (Công khai, không cần access_token cũ)
+router.post('/refresh', authController.refreshToken);
+
 // Route đồng bộ hồ sơ Giáo viên (Cần gửi kèm Token để xác thực danh tính)
 router.post('/register-profile', authMiddleware, authController.registerTeacherProfile);
 

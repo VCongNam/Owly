@@ -96,7 +96,7 @@ export function ClassCard({ cls, onEdit, onArchive }) {
           <Group gap={16}>
             <Group gap={4}>
               <Users size={14} color="var(--accent-color)" />
-              <Text size="xs" c="dimmed">0 học viên</Text>
+              <Text size="xs" c="dimmed">{cls._count?.enrollments ?? 0} học viên</Text>
             </Group>
             {cls.startDate && (
               <Text size="xs" c="dimmed">

@@ -3,7 +3,9 @@ import { SignIn, SignUp, AuthCallback, ForgotPassword, ChangePassword } from '..
 import { DashboardPage } from '../features/dashboard';
 import { ClassListPage, ClassDetailPage, ArchivedClassesPage } from '../features/classes';
 import { StudentListPage } from '../features/students';
+import { SchedulePage } from '../features/schedule';
 import { DashboardLayout, ProtectedRoute } from '../shared';
+
 
 import { ProfilePage } from '../features/profile/components/ProfilePage';
 
@@ -34,8 +36,9 @@ export function AppRoutes() {
         {/* Students */}
         <Route path="/students" element={<StudentListPage />} />
 
-        {/* Schedule (placeholder) */}
-        <Route path="/schedule" element={<div style={{ padding: 40, opacity: 0.5 }}>📅 Lịch học — đang phát triển</div>} />
+        {/* Schedule */}
+        <Route path="/schedule" element={<SchedulePage />} />
+
 
         {/* Profile & settings */}
         <Route path="/profile" element={<ProfilePage />} />

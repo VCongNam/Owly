@@ -12,7 +12,9 @@ import {
 import { Link } from 'react-router-dom';
 import { useClassDetails } from '../hooks/useClasses';
 import { ClassMembersTab } from './ClassMembersTab';
+import { ClassSessionsTab } from './ClassSessionsTab';
 import classes from './ClassDetailPage.module.css';
+
 
 // ── Tab configuration ────────────────────────────────────────────────────────
 const TABS = [
@@ -82,7 +84,7 @@ export function ClassDetailPage() {
                 <Badge size="sm" variant="light" color={statusConfig.color}>
                   {statusConfig.label}
                 </Badge>
-                <Badge size="sm" variant="dot" color="teal">0 học viên</Badge>
+                <Badge size="sm" variant="dot" color="teal">{cls._count?.enrollments ?? 0} học viên</Badge>
               </Group>
             </div>
           </Group>
@@ -110,7 +112,8 @@ export function ClassDetailPage() {
         <Routes>
           <Route index element={<Navigate to="stream" replace />} />
           <Route path="members" element={<ClassMembersTab />} />
-          {TABS.filter(tab => tab.key !== 'members').map((tab) => (
+          <Route path="sessions" element={<ClassSessionsTab classDetail={cls} />} />
+          {TABS.filter(tab => tab.key !== 'members' && tab.key !== 'sessions').map((tab) => (
             <Route
               key={tab.key}
               path={tab.key}

@@ -4,3 +4,4 @@ export { ProtectedRoute } from './components/ProtectedRoute';
 export { DashboardLayout } from './components/DashboardLayout';
 export { Sidebar } from './components/Sidebar';
 export { SidebarNavItem } from './components/SidebarNavItem';
+export { ConfirmModal } from './components/ConfirmModal';
