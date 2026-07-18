@@ -40,4 +40,7 @@ router.post('/:classId/members/create-new', validate(createAndEnrollStudentSchem
 // Giáo viên hủy ghi danh (unenroll) học viên khỏi lớp
 router.delete('/:classId/members/:studentId', studentController.unenrollStudent);
 
+// UC-35: Giáo viên xem nhật ký điểm danh tổng hợp của một học sinh trong lớp
+router.get('/:classId/members/:studentId/attendance-log', studentController.getStudentAttendanceLog);
+
 export default router;

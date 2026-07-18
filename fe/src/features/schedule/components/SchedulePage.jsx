@@ -6,6 +6,8 @@ import { SessionFormModal } from './SessionFormModal';
 import { classService } from '../../classes/services/classService';
 import { notifications } from '@mantine/notifications';
 import { ConfirmModal } from '../../../shared';
+import AttendanceModal from '../../attendance/components/AttendanceModal';
+import SessionFeedbackModal from './SessionFeedbackModal';
 import classes from './SchedulePage.module.css';
 
 // Helper quy đổi JS Date sang định dạng Thứ và Ngày Giờ Tiếng Việt
@@ -45,6 +47,13 @@ export function SchedulePage() {
   const [isEditSession, setIsEditSession] = useState(false);
   const [confirmOpened, setConfirmOpened] = useState(false);
   const [sessionToCancel, setSessionToCancel] = useState(null);
+  const [attendanceOpened, setAttendanceOpened] = useState(false);
+  const [attendanceSessionId, setAttendanceSessionId] = useState(null);
+
+  // States cho Nhận xét buổi học
+  const [feedbackOpened, setFeedbackOpened] = useState(false);
+  const [feedbackSessionId, setFeedbackSessionId] = useState(null);
+  const [feedbackSessionTitle, setFeedbackSessionTitle] = useState('');
 
 
   // Load danh sách lớp học để lọc
@@ -444,12 +453,27 @@ export function SchedulePage() {
                                         size="xs"
                                         variant={session.hasAttendance ? "light" : (isPendingAttendance ? "filled" : "outline")}
                                         color={session.hasAttendance ? "green" : (isPendingAttendance ? "orange" : "gray")}
-                                        onClick={() => handlePlaceholderAction('Điểm danh')}
+                                        onClick={() => {
+                                          setAttendanceSessionId(session.id);
+                                          setAttendanceOpened(true);
+                                        }}
                                       >
                                         Điểm danh
                                       </Button>
                                     );
                                   })()}
+                                  <Button
+                                    size="xs"
+                                    variant={session.hasFeedback ? "light" : "outline"}
+                                    color={session.hasFeedback ? "green" : "gray"}
+                                    onClick={() => {
+                                      setFeedbackSessionId(session.id);
+                                      setFeedbackSessionTitle(session.title || 'Buổi học');
+                                      setFeedbackOpened(true);
+                                    }}
+                                  >
+                                    Nhận xét
+                                  </Button>
                                 </Group>
                               )}
                             </Group>
@@ -524,7 +548,10 @@ export function SchedulePage() {
                                   variant={session.hasAttendance ? "light" : (isPendingAttendance ? "filled" : "outline")}
                                   color={session.hasAttendance ? "green" : (isPendingAttendance ? "orange" : "gray")}
                                   leftSection={<CheckSquare size={12} />}
-                                  onClick={() => handlePlaceholderAction('Điểm danh')}
+                                  onClick={() => {
+                                    setAttendanceSessionId(session.id);
+                                    setAttendanceOpened(true);
+                                  }}
                                 >
                                   {session.hasAttendance ? 'Đã điểm danh' : 'Điểm danh'}
                                 </Button>
@@ -535,7 +562,11 @@ export function SchedulePage() {
                               variant={session.hasFeedback ? "light" : "outline"}
                               color={session.hasFeedback ? "green" : "gray"}
                               leftSection={<Chats size={12} />}
-                              onClick={() => handlePlaceholderAction('Nhận xét')}
+                              onClick={() => {
+                                setFeedbackSessionId(session.id);
+                                setFeedbackSessionTitle(session.title || 'Buổi học');
+                                setFeedbackOpened(true);
+                              }}
                             >
                               Nhận xét
                             </Button>
@@ -603,6 +634,28 @@ export function SchedulePage() {
         confirmLabel="Hủy buổi học"
         color="red"
         loading={loading}
+      />
+
+      <AttendanceModal
+        isOpen={attendanceOpened}
+        onClose={() => {
+          setAttendanceOpened(false);
+          setAttendanceSessionId(null);
+          loadSchedule();
+        }}
+        sessionId={attendanceSessionId}
+      />
+
+      <SessionFeedbackModal
+        opened={feedbackOpened}
+        onClose={() => {
+          setFeedbackOpened(false);
+          setFeedbackSessionId(null);
+          setFeedbackSessionTitle('');
+        }}
+        sessionId={feedbackSessionId}
+        sessionTitle={feedbackSessionTitle}
+        onSaveSuccess={() => loadSchedule()}
       />
     </div>
   );

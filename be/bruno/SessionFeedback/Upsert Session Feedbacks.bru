@@ -1,0 +1,38 @@
+meta {
+  name: "Upsert Session Feedbacks"
+  type: "http"
+  seq: 2
+}
+
+put {
+  url: "{{base_url}}/api/sessions/:sessionId/feedbacks"
+  body: "json"
+  auth: "bearer"
+}
+
+params:path {
+  sessionId: "8f7e2a9b-3c4d-5e6f-7a8b-9c0d1e2f3a4b"
+}
+
+headers {
+  Content-Type: "application/json"
+}
+
+body:json {
+  {
+    "feedbacks": [
+      {
+        "studentId": "d1a8e932-b75c-4d3a-86f2-1b86d9a24c8b",
+        "academicComment": "Học sinh hiểu bài tốt, làm bài tập đầy đủ.",
+        "attitudeComment": "Hăng hái phát biểu ý kiến xây dựng bài.",
+        "homeworkComment": "Làm bài tập về nhà đầy đủ, đạt 9/10 điểm."
+      },
+      {
+        "studentId": "e2b9f043-c86d-5e4b-97g3-2c97e0b35d9c",
+        "academicComment": "Còn hơi lơ là trong phần bài tập thực hành.",
+        "attitudeComment": "Thái độ trong lớp ngoan nhưng chưa thực sự tập trung.",
+        "homeworkComment": "Thiếu bài tập về nhà số 2."
+      }
+    ]
+  }
+}

@@ -19,6 +19,15 @@ export const scheduleService = {
 
   updateSession: async (classId, sessionId, data) => {
     return await apiClient.put(`/api/classes/${classId}/sessions/${sessionId}`, data);
+  },
+
+  // UC-35B/C: Nhận xét buổi học
+  getSessionFeedbacks: async (sessionId) => {
+    return await apiClient.get(`/api/sessions/${sessionId}/feedbacks`);
+  },
+
+  upsertSessionFeedbacks: async (sessionId, feedbacks) => {
+    return await apiClient.put(`/api/sessions/${sessionId}/feedbacks`, { feedbacks });
   }
 };
 

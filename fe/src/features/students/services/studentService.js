@@ -34,6 +34,11 @@ export const studentService = {
   // Giáo viên hủy liên kết (unenroll) học sinh khỏi lớp
   unenrollStudent: async (classId, studentId) => {
     return await apiClient.delete(`/api/classes/${classId}/members/${studentId}`);
+  },
+
+  // UC-35: Xem nhật ký điểm danh tổng hợp của một học sinh trong một lớp học
+  getStudentAttendanceLog: async (classId, studentId) => {
+    return await apiClient.get(`/api/classes/${classId}/members/${studentId}/attendance-log`);
   }
 };
 

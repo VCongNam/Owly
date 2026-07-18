@@ -269,6 +269,59 @@ if (typeof window !== 'undefined') {
       color: 'orange',
     });
   });
+
+  // ── Proactive auto-refresh cho "Duy trì đăng nhập" ───────────────────────
+  // Refresh token mỗi 23 giờ (trước khi JWT 24h hết hạn) để user không bao giờ bị logout
+  const PROACTIVE_REFRESH_INTERVAL = 23 * 60 * 60 * 1000; // 23 giờ
+
+  let proactiveRefreshTimer = null;
+
+  const startProactiveRefresh = () => {
+    stopProactiveRefresh();
+    proactiveRefreshTimer = setInterval(async () => {
+      const { token, refreshAccessToken } = useAuthStore.getState();
+      const rememberMe = localStorage.getItem('owly_remember_me') === '1';
+      if (token && rememberMe) {
+        console.log('[Owly] Proactive token refresh (duy trì đăng nhập)...');
+        await refreshAccessToken();
+      }
+    }, PROACTIVE_REFRESH_INTERVAL);
+  };
+
+  const stopProactiveRefresh = () => {
+    if (proactiveRefreshTimer) {
+      clearInterval(proactiveRefreshTimer);
+      proactiveRefreshTimer = null;
+    }
+  };
+
+  // Khởi động proactive refresh nếu đang "duy trì đăng nhập" và có token
+  const initToken = getFromStorage('owly_token');
+  const initRemember = localStorage.getItem('owly_remember_me') === '1';
+  if (initToken && initRemember) {
+    // Refresh ngay khi mở lại trang (token có thể sắp hết hạn)
+    setTimeout(async () => {
+      const store = useAuthStore.getState();
+      if (store.token) {
+        console.log('[Owly] Refreshing token on page load (duy trì đăng nhập)...');
+        await store.refreshAccessToken();
+      }
+    }, 3000); // Chờ 3s sau khi app load xong
+
+    startProactiveRefresh();
+  }
+
+  // Theo dõi thay đổi trạng thái đăng nhập để bật/tắt proactive refresh
+  useAuthStore.subscribe((state, prevState) => {
+    if (state.token && !prevState.token) {
+      // Vừa đăng nhập
+      const rememberMe = localStorage.getItem('owly_remember_me') === '1';
+      if (rememberMe) startProactiveRefresh();
+    } else if (!state.token && prevState.token) {
+      // Vừa đăng xuất
+      stopProactiveRefresh();
+    }
+  });
 }
 
 export function useAuth() {

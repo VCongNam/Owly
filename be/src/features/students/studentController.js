@@ -180,3 +180,20 @@ export const unenrollStudent = async (req, res, next) => {
     next(error);
   }
 };
+
+// UC-35: Giáo viên xem nhật ký điểm danh tổng hợp của một học sinh trong lớp
+export const getStudentAttendanceLog = async (req, res, next) => {
+  try {
+    const teacherId = req.user.id;
+    const { classId, studentId } = req.params;
+
+    const log = await studentService.getStudentAttendanceLog(classId, studentId, teacherId);
+
+    return res.status(200).json({
+      success: true,
+      data: log
+    });
+  } catch (error) {
+    next(error);
+  }
+};

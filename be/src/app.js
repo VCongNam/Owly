@@ -9,6 +9,7 @@ import profileRoutes from './features/profile/profileRoutes.js';
 import feedbackRoutes from './features/systemFeedbacks/feedbackRoutes.js';
 import studentRoutes from './features/students/studentRoutes.js';
 import scheduleRoutes from './features/schedule/scheduleRoutes.js';
+import attendanceRoutes from './features/attendance/attendanceRoutes.js';
 
 
 dotenv.config();
@@ -27,6 +28,7 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/feedbacks', feedbackRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api', scheduleRoutes);
+app.use('/api/sessions/:sessionId/attendances', attendanceRoutes);
 
 
 // Test route

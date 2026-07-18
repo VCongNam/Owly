@@ -85,4 +85,49 @@ Tài liệu này lưu trữ tất cả các Kế hoạch Thực thi (Implementat
 - Thiết lập tab "Buổi học" trong chi tiết lớp học giúp cấu hình lịch tuần lặp lại (`ScheduleSetupModal`) và thêm buổi học lẻ/học bù (`SessionFormModal`).
 - Tự động hóa kết nối qua custom Hook `useSchedule` và Axios client.
 
+---
+
+## 6. Tính năng Điểm danh Buổi học cho Giáo viên (Teacher Attendance) (Ngày 17/07/2026)
+
+### 1. Đồng bộ API & Cơ sở dữ liệu (Backend)
+- **Database Schema**: Tận dụng bảng `Attendance` và `Session`.
+- **API endpoints**:
+  - `GET /api/sessions/:sessionId/attendances`: Lấy danh sách điểm danh buổi học. Tự động kết hợp (Left Join) học sinh từ `ClassEnrollment` và bản ghi `Attendance` hiện có để trả về sĩ số đầy đủ, mặc định trạng thái 'Present'.
+  - `PUT /api/sessions/:sessionId/attendances`: Lưu điểm danh hàng loạt (Bulk Upsert) dùng Prisma `$transaction`. Tự động cập nhật trạng thái session sang `Completed` nếu đây là lần điểm danh đầu tiên.
+- **Middleware**: Đăng ký route sử dụng middleware xác thực tập trung `/src/middlewares/auth.js`.
+
+### 2. Giao diện Người dùng & Luồng (Frontend)
+- **Mantine UI Modal (`AttendanceModal.jsx`)**: 
+  - Thay thế layout Tailwind CSS bằng các component chuẩn của Mantine (`Modal`, `Table`, `Radio`, `TextInput`, `Avatar`...) để đồng bộ giao diện.
+  - Hiển thị danh sách học viên trực quan kèm các nút chọn trạng thái Tiếng Việt hoàn toàn: `Có mặt`, `Vắng`, `Muộn`, `Có phép`, và ô nhập `Ghi chú`.
+- **Custom Hook (`useAttendance.js`)**:
+  - Xây dựng hooks quản lý API bằng các hooks React cơ bản (`useState`, `useCallback`) thay vì dùng `@tanstack/react-query` (do dự án không cài đặt thư viện này).
+  - Tích hợp thông báo qua Mantine `@mantine/notifications`.
+- **Tích hợp giao diện**: Gắn nút Điểm danh mở Modal trực tiếp ở cả tab **Buổi học** trong Chi tiết Lớp học và trên trang **Lịch dạy**.
+
+### 3. API Testing Documentation (Bruno)
+- Tạo folder `be/bruno/Attendance/` chứa 2 request mẫu:
+  - `Get Attendances by Session.bru`
+  - `Upsert Attendances.bru`
+
+---
+
+## 7. Nhật ký Điểm danh Học sinh (View Student Attendance Log - UC-35) (Ngày 18/07/2026)
+
+### 1. Đồng bộ API & Cơ sở dữ liệu (Backend)
+- **API endpoint**:
+  - `GET /api/classes/:classId/members/:studentId/attendance-log`: Lấy lịch sử và thống kê điểm danh của học sinh trong lớp.
+- **Business Logic**: 
+  - Tính tổng số buổi học, số buổi đã điểm danh, số buổi có mặt, vắng, muộn, phép.
+  - Tính tỉ lệ chuyên cần theo công thức: `(Có mặt + Đi muộn) / (Tổng số buổi đã điểm danh) * 100%`.
+
+### 2. Giao diện Người dùng & Tích hợp (Frontend)
+- **Mantine UI Modal (`AttendanceLogModal` trong `ClassMembersTab.jsx`)**:
+  - Tích hợp vòng tròn tỉ lệ chuyên cần `RingProgress` và 6 thẻ thống kê chi tiết.
+  - Hiển thị bảng lịch sử từng buổi học kèm ghi chú và badge trạng thái đồng bộ với trang quản lý lịch.
+  - Hỗ trợ **Bộ lọc dynamic** (tìm kiếm theo ngày/tiêu đề, lọc trạng thái điểm danh, lọc trạng thái buổi học) và **Phân trang (Pagination)** 8 dòng/trang.
+  - Đảm bảo hiển thị hoàn toàn **Responsive** qua thanh cuộn ngang `overflow-x: auto`.
+
+
+
 

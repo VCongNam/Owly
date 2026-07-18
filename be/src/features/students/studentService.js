@@ -368,3 +368,95 @@ export const getStudentById = async (id, teacherId) => {
 
   return student;
 };
+
+// UC-35: Lấy nhật ký điểm danh tổng hợp của một học sinh trong một lớp học
+export const getStudentAttendanceLog = async (classId, studentId, teacherId) => {
+  // 1. Xác thực lớp học có thuộc giáo viên không
+  const targetClass = await prisma.class.findFirst({
+    where: { id: classId, teacherId }
+  });
+
+  if (!targetClass) {
+    throw new Error('Không tìm thấy lớp học hoặc bạn không có quyền truy cập lớp học này');
+  }
+
+  // 2. Xác thực học sinh có ghi danh trong lớp không
+  const enrollment = await prisma.classEnrollment.findUnique({
+    where: {
+      classId_studentId: { classId, studentId }
+    },
+    include: {
+      student: true
+    }
+  });
+
+  if (!enrollment) {
+    throw new Error('Học viên không tham gia lớp học này');
+  }
+
+  // 3. Lấy toàn bộ buổi học của lớp (sắp xếp theo ngày tăng dần)
+  const sessions = await prisma.session.findMany({
+    where: { classId },
+    orderBy: { date: 'desc' }
+  });
+
+  // 4. Lấy toàn bộ bản ghi điểm danh của học sinh trong lớp này
+  const attendances = await prisma.attendance.findMany({
+    where: {
+      studentId,
+      session: { classId }
+    }
+  });
+
+  // 5. Map bản ghi điểm danh theo sessionId để tra cứu nhanh
+  const attendanceMap = new Map();
+  attendances.forEach(att => attendanceMap.set(att.sessionId, att));
+
+  // 6. Tạo danh sách chi tiết từng buổi học với trạng thái điểm danh
+  const sessionLogs = sessions.map(session => {
+    const att = attendanceMap.get(session.id);
+    return {
+      sessionId: session.id,
+      date: session.date,
+      title: session.title || null,
+      sessionStatus: session.status, // Scheduled | Completed | Cancelled
+      attendanceStatus: att ? att.status : null, // Present | Absent | Late | Excused | null (chưa điểm danh)
+      notes: att ? att.notes : null,
+      updatedAt: att ? att.updatedAt : null
+    };
+  });
+
+  // 7. Tính thống kê chuyên cần chỉ trên các buổi đã Completed và có điểm danh
+  const attendedSessions = sessionLogs.filter(s => s.attendanceStatus !== null);
+  const totalTracked = attendedSessions.length;
+  const totalSessions = sessions.length;
+
+  const stats = {
+    totalSessions,
+    totalTracked,
+    present: attendedSessions.filter(s => s.attendanceStatus === 'Present').length,
+    absent: attendedSessions.filter(s => s.attendanceStatus === 'Absent').length,
+    late: attendedSessions.filter(s => s.attendanceStatus === 'Late').length,
+    excused: attendedSessions.filter(s => s.attendanceStatus === 'Excused').length,
+  };
+
+  // Tỉ lệ chuyên cần: Có mặt + Đi muộn trên tổng buổi đã điểm danh
+  stats.attendanceRate = totalTracked > 0
+    ? Math.round(((stats.present + stats.late) / totalTracked) * 100)
+    : null;
+
+  return {
+    student: {
+      id: enrollment.student.id,
+      fullName: enrollment.student.fullName,
+      studentCode: enrollment.student.studentCode
+    },
+    class: {
+      id: targetClass.id,
+      name: targetClass.name,
+      classCode: targetClass.classCode
+    },
+    stats,
+    sessions: sessionLogs
+  };
+};

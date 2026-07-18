@@ -1,0 +1,19 @@
+meta {
+  name: Get Attendances by Session
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/sessions/:sessionId/attendances
+  body: none
+  auth: bearer
+}
+
+params:path {
+  sessionId: replace-with-session-id
+}
+
+auth:bearer {
+  token: {{token}}
+}

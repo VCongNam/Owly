@@ -1,5 +1,6 @@
 import express from 'express';
 import * as scheduleController from './scheduleController.js';
+import * as feedbackController from './feedbackController.js';
 import { authMiddleware } from '../../middlewares/auth.js';
 import { validate } from '../../middlewares/validate.js';
 import {
@@ -28,4 +29,9 @@ router.post('/classes/:classId/sessions', validate(createSessionSchema), schedul
 // Chỉnh sửa hoặc hủy buổi học cụ thể
 router.put('/classes/:classId/sessions/:sessionId', validate(updateSessionSchema), scheduleController.updateSession);
 
+// UC-35B/C: Nhận xét buổi học (lấy danh sách và cập nhật)
+router.get('/sessions/:sessionId/feedbacks', feedbackController.getSessionFeedbacks);
+router.put('/sessions/:sessionId/feedbacks', feedbackController.upsertSessionFeedbacks);
+
 export default router;
+
