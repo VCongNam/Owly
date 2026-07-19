@@ -72,6 +72,25 @@ export const uploadMaterial = async (req, res, next) => {
       uploadedMaterials.push(material);
     }));
 
+    // 5. Tự động đăng bài viết thông báo có tài liệu mới lên Bảng tin (Class Stream)
+    try {
+      const materialTitles = uploadedMaterials.map(m => `"${m.title}"`).join(', ');
+      const postContent = `TÀI LIỆU HỌC TẬP MỚI\n\nGiáo viên vừa tải lên tài liệu mới cho lớp học: ${materialTitles}.\nCác bạn học sinh hãy xem chi tiết và tải xuống tài liệu ở danh sách đính kèm bên dưới hoặc tại tab "Học liệu" nhé!`;
+      const attachments = uploadedMaterials.map(m => m.fileUrl);
+
+      await prisma.post.create({
+        data: {
+          classId,
+          authorId: userId,
+          content: postContent,
+          attachments,
+          commentsEnabled: true
+        }
+      });
+    } catch (postError) {
+      console.error('Lỗi khi tự động đăng bài viết thông báo học liệu mới:', postError);
+    }
+
     return res.status(201).json({
       success: true,
       message: `Tải lên thành công ${files.length} tài liệu.`,

@@ -14,6 +14,7 @@ import { useClassDetails } from '../hooks/useClasses';
 import { ClassMembersTab } from './ClassMembersTab';
 import { ClassSessionsTab } from './ClassSessionsTab';
 import { ClassMaterialsTab } from './ClassMaterialsTab';
+import { ClassStreamTab } from './ClassStreamTab';
 import classes from './ClassDetailPage.module.css';
 
 
@@ -112,10 +113,11 @@ export function ClassDetailPage() {
       <div className={classes.tabContent}>
         <Routes>
           <Route index element={<Navigate to="stream" replace />} />
+          <Route path="stream" element={<ClassStreamTab />} />
           <Route path="members" element={<ClassMembersTab />} />
           <Route path="sessions" element={<ClassSessionsTab classDetail={cls} />} />
           <Route path="materials" element={<ClassMaterialsTab />} />
-          {TABS.filter(tab => tab.key !== 'members' && tab.key !== 'sessions' && tab.key !== 'materials').map((tab) => (
+          {TABS.filter(tab => !['members', 'sessions', 'materials', 'stream'].includes(tab.key)).map((tab) => (
             <Route
               key={tab.key}
               path={tab.key}

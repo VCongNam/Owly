@@ -1,0 +1,21 @@
+meta {
+  name: Create Comment
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/posts/:postId/comments
+  body: json
+  auth: bearer
+}
+
+params:path {
+  postId: 00000000-0000-0000-0000-000000000000
+}
+
+body:json {
+  {
+    "content": "Em đã nhận được thông tin ạ. Em cảm ơn thầy!"
+  }
+}

@@ -153,6 +153,40 @@ Tài liệu này lưu trữ tất cả các Kế hoạch Thực thi (Implementat
   - `Upload Material`
   - `Delete Material`
 
+---
+
+## 9. Phân hệ Bảng tin Lớp học & Thảo luận (Class Stream & Comments) (Ngày 19/07/2026)
+
+### 1. Cơ cấu Cơ sở dữ liệu & Storage
+- **Post & Comment Models:** Thêm bảng `Post` (chứa `views`, `commentsEnabled`) và `Comment` trong Postgres thông qua Prisma, tạo quan hệ ngược lại vào `Class` và `Account`.
+- **Đồng bộ DB:** Chạy `prisma db push` kết nối trực tiếp cổng `5432` và sinh Prisma Client `prisma generate`.
+
+### 2. API Backend & Nghiệp vụ (Express.js)
+- **Validation & Upload:** Thiết lập Zod schema validate và sử dụng `upload.array('files', 10)` hỗ trợ đính kèm nhiều file bài đăng.
+- **Nghiệp vụ:**
+  - Chỉ giáo viên của lớp được quyền đăng bài, xóa bài, bật/tắt bình luận bài viết.
+  - Học sinh và giáo viên trong lớp được quyền bình luận, tăng lượt xem (views) khi mở bài viết.
+  - Bình luận có thể bị xóa bởi chính tác giả bình luận hoặc giáo viên lớp.
+  - **Tự động đăng thông báo học liệu:** Khi Giáo viên đăng học liệu mới (upload file ở tab Học liệu), hệ thống tự động tạo một bài viết thông báo trên Bảng tin đính kèm trực tiếp danh sách file học liệu vừa upload.
+- **Bài tập sắp đến hạn:** Thêm API `/api/classes/:classId/upcoming-assignments` lấy danh sách bài tập sắp hết hạn.
+
+### 3. Giao diện Người dùng & Tích hợp (Frontend)
+- **Split Layout (2 cột):**
+  - Cột trái: Thông tin lớp học (Môn, GV, Lịch, Mã lớp + sao chép nhanh, Sĩ số) và bài tập sắp đến hạn.
+  - Cột phải: Khung đăng tin dặn dò (Giáo viên) và danh sách luồng bài đăng.
+- **Mạng xã hội Modal Detail:** Click vào bình luận mở modal hiển thị đầy đủ thông tin bài đăng, file đính kèm, lượt xem, luồng hội thoại bình luận dạng bong bóng và cho phép gửi bình luận nhanh.
+- **ConfirmModal:** Sử dụng modal xác nhận dùng chung thay thế các hàm `confirm()` của trình duyệt.
+
+### 4. API Testing Documentation (Bruno)
+- Tạo folder `be/bruno/Posts/` chứa 7 API mẫu:
+  - `Create Post`
+  - `Get Class Posts`
+  - `Get Post Details`
+  - `Toggle Comments`
+  - `Delete Post`
+  - `Create Comment`
+  - `Delete Comment`
+
 
 
 
