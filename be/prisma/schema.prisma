@@ -107,6 +107,7 @@ model Class {
   assignments     Assignment[]
   tuitionConfig   ClassTum?
   invoices        Invoice[]
+  materials       ClassMaterial[]
 
   @@map("classes")
 }
@@ -328,4 +329,20 @@ model SystemFeedback {
   account     Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
   @@map("system_feedbacks")
+}
+
+model ClassMaterial {
+  id          String   @id @default(uuid()) @db.Uuid
+  classId     String   @map("class_id") @db.Uuid
+  title       String   @db.VarChar(255)
+  description String?  @db.Text
+  fileUrl     String   @map("file_url") @db.Text
+  fileName    String   @map("file_name") @db.VarChar(255)
+  fileType    String?  @map("file_type") @db.VarChar(100)
+  fileSize    Int?     @map("file_size")
+  uploadedAt  DateTime @default(now()) @map("uploaded_at") @db.Timestamptz
+
+  class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@map("class_materials")
 }

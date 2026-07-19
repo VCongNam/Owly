@@ -10,6 +10,7 @@ import feedbackRoutes from './features/systemFeedbacks/feedbackRoutes.js';
 import studentRoutes from './features/students/studentRoutes.js';
 import scheduleRoutes from './features/schedule/scheduleRoutes.js';
 import attendanceRoutes from './features/attendance/attendanceRoutes.js';
+import materialRoutes from './features/materials/materialRoutes.js';
 
 
 dotenv.config();
@@ -29,6 +30,7 @@ app.use('/api/feedbacks', feedbackRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api', scheduleRoutes);
 app.use('/api/sessions/:sessionId/attendances', attendanceRoutes);
+app.use('/api', materialRoutes);
 
 
 // Test route
@@ -85,7 +87,7 @@ app.listen(PORT, () => {
 });
 
 export default app;
-// Triggers nodemon reload after database sync with Supabase. Reloading... Done.
+// Triggers nodemon reload after database sync with Supabase. Reloading... Done. Pushed schema changes.
 
 
 

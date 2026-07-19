@@ -1,0 +1,20 @@
+meta {
+  name: Get Class Materials
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/classes/:classId/materials?page=1&limit=10
+  body: none
+  auth: bearer
+}
+
+params:query {
+  page: 1
+  limit: 10
+}
+
+params:path {
+  classId: b3c4d3bf-db82-4fad-b1fe-314ed3c26d85
+}

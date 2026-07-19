@@ -128,6 +128,31 @@ Tài liệu này lưu trữ tất cả các Kế hoạch Thực thi (Implementat
   - Hỗ trợ **Bộ lọc dynamic** (tìm kiếm theo ngày/tiêu đề, lọc trạng thái điểm danh, lọc trạng thái buổi học) và **Phân trang (Pagination)** 8 dòng/trang.
   - Đảm bảo hiển thị hoàn toàn **Responsive** qua thanh cuộn ngang `overflow-x: auto`.
 
+---
+
+## 8. Tải lên Tài liệu học tập (Học liệu) qua Cloudflare R2 (Ngày 19/07/2026)
+
+### 1. Cơ cấu Cơ sở dữ liệu & Storage
+- **Database Schema:** Thêm bảng `ClassMaterial` lưu thông tin tài liệu liên kết quan hệ 1-N với `Class` trong Postgres qua Prisma.
+- **Storage:** Sử dụng **Cloudflare R2** thông qua service `r2.service.js` sẵn có để tải file vật lý lên bucket.
+- **Đồng bộ DB:** Chạy `prisma db push` kết nối trực tiếp cổng `5432` và sinh lại Prisma Client bằng `prisma generate`.
+
+### 2. API Backend & Nghiệp vụ
+- **Upload (Multer):** Sử dụng `upload.array('files', 10)` hỗ trợ tải lên tối đa 10 file tài liệu đồng thời.
+- **Controller:** Tự động sử dụng tên file gốc làm tiêu đề học liệu nếu upload hàng loạt. Phân trang dữ liệu trả về theo quy chuẩn.
+
+### 3. Giao diện Người dùng & Tích hợp (Frontend)
+- **UI Tab Component:** Xây dựng tab `ClassMaterialsTab.jsx` hiển thị danh sách tài liệu dưới dạng bảng kèm icon nhận dạng loại file, nút tải xuống trực tiếp.
+- **Form tải lên:** Cho chọn nhiều file cùng lúc, tự động ẩn trường tiêu đề thủ công khi upload hàng loạt.
+- **Mượt mà (Optimistic UI):** Xử lý xóa tài liệu tối ưu, lọc trực tiếp trên state React local giúp giao diện cập nhật ngay lập tức mà không cần fetch lại API.
+- **Không dùng Native Dialogs:** Nghiêm cấm sử dụng `alert()` hay `confirm()` native của trình duyệt. Thay bằng component `ConfirmModal` dùng chung.
+
+### 4. API Testing Documentation (Bruno)
+- Tạo folder `be/bruno/Materials/` chứa 3 file API mẫu kiểm thử:
+  - `Get Class Materials`
+  - `Upload Material`
+  - `Delete Material`
+
 
 
 

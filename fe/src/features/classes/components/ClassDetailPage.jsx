@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom';
 import { useClassDetails } from '../hooks/useClasses';
 import { ClassMembersTab } from './ClassMembersTab';
 import { ClassSessionsTab } from './ClassSessionsTab';
+import { ClassMaterialsTab } from './ClassMaterialsTab';
 import classes from './ClassDetailPage.module.css';
 
 
@@ -113,7 +114,8 @@ export function ClassDetailPage() {
           <Route index element={<Navigate to="stream" replace />} />
           <Route path="members" element={<ClassMembersTab />} />
           <Route path="sessions" element={<ClassSessionsTab classDetail={cls} />} />
-          {TABS.filter(tab => tab.key !== 'members' && tab.key !== 'sessions').map((tab) => (
+          <Route path="materials" element={<ClassMaterialsTab />} />
+          {TABS.filter(tab => tab.key !== 'members' && tab.key !== 'sessions' && tab.key !== 'materials').map((tab) => (
             <Route
               key={tab.key}
               path={tab.key}
