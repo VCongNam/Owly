@@ -91,7 +91,6 @@ app.listen(PORT, () => {
 });
 
 export default app;
-// Triggers nodemon reload after database sync with Supabase. Reloading... Done. Pushed schema changes.
 
 
 

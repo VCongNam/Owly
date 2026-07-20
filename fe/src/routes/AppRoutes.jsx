@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { SignIn, SignUp, AuthCallback, ForgotPassword, ChangePassword } from '../features/auth';
 import { DashboardPage } from '../features/dashboard';
-import { ClassListPage, ClassDetailPage, ArchivedClassesPage } from '../features/classes';
+import { ClassListPage, ClassDetailPage, ArchivedClassesPage, AssignmentCreatePage } from '../features/classes';
 import { StudentListPage } from '../features/students';
 import { SchedulePage } from '../features/schedule';
 import { DashboardLayout, ProtectedRoute } from '../shared';
@@ -31,6 +31,7 @@ export function AppRoutes() {
         {/* Classes */}
         <Route path="/classes" element={<ClassListPage />} />
         <Route path="/classes/archived" element={<ArchivedClassesPage />} />
+        <Route path="/classes/:classId/assignments/create" element={<AssignmentCreatePage />} />
         <Route path="/classes/:classId/*" element={<ClassDetailPage />} />
 
         {/* Students */}

@@ -1,22 +1,6 @@
-import { PutObjectCommand } from '@aws-sdk/client-s3';
-import { s3Client, R2_BUCKET_NAME, R2_PUBLIC_URL } from '../../utils/s3Client.js';
+import { uploadFileToR2 } from '../../services/r2.service.js';
 import * as assignmentService from './assignmentService.js';
 import { v4 as uuidv4 } from 'uuid';
-
-// Helper to upload buffer to R2
-const uploadToR2 = async (buffer, fileName, contentType) => {
-  if (!R2_BUCKET_NAME) throw new Error('Cloudflare R2 is not configured properly.');
-
-  const command = new PutObjectCommand({
-    Bucket: R2_BUCKET_NAME,
-    Key: fileName,
-    Body: buffer,
-    ContentType: contentType,
-  });
-
-  await s3Client.send(command);
-  return `${R2_PUBLIC_URL}/${fileName}`;
-};
 
 export const createAssignment = async (req, res, next) => {
   try {
@@ -72,7 +56,7 @@ export const uploadFiles = async (req, res, next) => {
     for (const file of files) {
       const fileExt = file.originalname.split('.').pop();
       const fileName = `assignments/${uuidv4()}.${fileExt}`;
-      const url = await uploadToR2(file.buffer, fileName, file.mimetype);
+      const url = await uploadFileToR2(file.buffer, fileName, file.mimetype);
       attachmentUrls.push(url);
     }
 
@@ -109,7 +93,7 @@ export const createFileFromEditor = async (req, res, next) => {
 </html>`;
 
     const fullBuffer = Buffer.from(fullHtml, 'utf-8');
-    const url = await uploadToR2(fullBuffer, fileName, 'text/html');
+    const url = await uploadFileToR2(fullBuffer, fileName, 'text/html');
 
     res.status(200).json({ success: true, data: { url } });
   } catch (error) {

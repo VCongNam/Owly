@@ -15,9 +15,10 @@ import { ClassMembersTab } from './ClassMembersTab';
 import { ClassSessionsTab } from './ClassSessionsTab';
 import { ClassMaterialsTab } from './ClassMaterialsTab';
 import { ClassStreamTab } from './ClassStreamTab';
+import { ClassAssignmentsTab } from './ClassAssignmentsTab';
 import classes from './ClassDetailPage.module.css';
 
-
+ 
 // ── Tab configuration ────────────────────────────────────────────────────────
 const TABS = [
   { key: 'stream',      label: 'Bảng tin',    icon: MegaphoneSimple },
@@ -117,7 +118,8 @@ export function ClassDetailPage() {
           <Route path="members" element={<ClassMembersTab />} />
           <Route path="sessions" element={<ClassSessionsTab classDetail={cls} />} />
           <Route path="materials" element={<ClassMaterialsTab />} />
-          {TABS.filter(tab => !['members', 'sessions', 'materials', 'stream'].includes(tab.key)).map((tab) => (
+          <Route path="assignments" element={<ClassAssignmentsTab />} />
+          {TABS.filter(tab => !['members', 'sessions', 'materials', 'stream', 'assignments'].includes(tab.key)).map((tab) => (
             <Route
               key={tab.key}
               path={tab.key}
