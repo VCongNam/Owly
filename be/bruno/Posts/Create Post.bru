@@ -1,0 +1,20 @@
+meta {
+  name: Create Post
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/classes/:classId/posts
+  body: multipartForm
+  auth: bearer
+}
+
+params:path {
+  classId: b3c4d3bf-db82-4fad-b1fe-314ed3c26d85
+}
+
+body:multipart-form {
+  content: Thông báo khẩn: Lớp chúng ta sẽ chuyển sang học online vào ngày mai do thời tiết xấu. Các bạn tải tài liệu chuẩn bị sẵn ở tab học liệu nhé.
+  files: @file()
+}

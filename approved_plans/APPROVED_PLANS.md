@@ -130,6 +130,64 @@ Tài liệu này lưu trữ tất cả các Kế hoạch Thực thi (Implementat
 
 ---
 
+## 8. Tải lên Tài liệu học tập (Học liệu) qua Cloudflare R2 (Ngày 19/07/2026)
+
+### 1. Cơ cấu Cơ sở dữ liệu & Storage
+- **Database Schema:** Thêm bảng `ClassMaterial` lưu thông tin tài liệu liên kết quan hệ 1-N với `Class` trong Postgres qua Prisma.
+- **Storage:** Sử dụng **Cloudflare R2** thông qua service `r2.service.js` sẵn có để tải file vật lý lên bucket.
+- **Đồng bộ DB:** Chạy `prisma db push` kết nối trực tiếp cổng `5432` và sinh lại Prisma Client bằng `prisma generate`.
+
+### 2. API Backend & Nghiệp vụ
+- **Upload (Multer):** Sử dụng `upload.array('files', 10)` hỗ trợ tải lên tối đa 10 file tài liệu đồng thời.
+- **Controller:** Tự động sử dụng tên file gốc làm tiêu đề học liệu nếu upload hàng loạt. Phân trang dữ liệu trả về theo quy chuẩn.
+
+### 3. Giao diện Người dùng & Tích hợp (Frontend)
+- **UI Tab Component:** Xây dựng tab `ClassMaterialsTab.jsx` hiển thị danh sách tài liệu dưới dạng bảng kèm icon nhận dạng loại file, nút tải xuống trực tiếp.
+- **Form tải lên:** Cho chọn nhiều file cùng lúc, tự động ẩn trường tiêu đề thủ công khi upload hàng loạt.
+- **Mượt mà (Optimistic UI):** Xử lý xóa tài liệu tối ưu, lọc trực tiếp trên state React local giúp giao diện cập nhật ngay lập tức mà không cần fetch lại API.
+- **Không dùng Native Dialogs:** Nghiêm cấm sử dụng `alert()` hay `confirm()` native của trình duyệt. Thay bằng component `ConfirmModal` dùng chung.
+
+### 4. API Testing Documentation (Bruno)
+- Tạo folder `be/bruno/Materials/` chứa 3 file API mẫu kiểm thử:
+  - `Get Class Materials`
+  - `Upload Material`
+  - `Delete Material`
+
+---
+
+## 9. Phân hệ Bảng tin Lớp học & Thảo luận (Class Stream & Comments) (Ngày 19/07/2026)
+
+### 1. Cơ cấu Cơ sở dữ liệu & Storage
+- **Post & Comment Models:** Thêm bảng `Post` (chứa `views`, `commentsEnabled`) và `Comment` trong Postgres thông qua Prisma, tạo quan hệ ngược lại vào `Class` và `Account`.
+- **Đồng bộ DB:** Chạy `prisma db push` kết nối trực tiếp cổng `5432` và sinh Prisma Client `prisma generate`.
+
+### 2. API Backend & Nghiệp vụ (Express.js)
+- **Validation & Upload:** Thiết lập Zod schema validate và sử dụng `upload.array('files', 10)` hỗ trợ đính kèm nhiều file bài đăng.
+- **Nghiệp vụ:**
+  - Chỉ giáo viên của lớp được quyền đăng bài, xóa bài, bật/tắt bình luận bài viết.
+  - Học sinh và giáo viên trong lớp được quyền bình luận, tăng lượt xem (views) khi mở bài viết.
+  - Bình luận có thể bị xóa bởi chính tác giả bình luận hoặc giáo viên lớp.
+  - **Tự động đăng thông báo học liệu:** Khi Giáo viên đăng học liệu mới (upload file ở tab Học liệu), hệ thống tự động tạo một bài viết thông báo trên Bảng tin đính kèm trực tiếp danh sách file học liệu vừa upload.
+- **Bài tập sắp đến hạn:** Thêm API `/api/classes/:classId/upcoming-assignments` lấy danh sách bài tập sắp hết hạn.
+
+### 3. Giao diện Người dùng & Tích hợp (Frontend)
+- **Split Layout (2 cột):**
+  - Cột trái: Thông tin lớp học (Môn, GV, Lịch, Mã lớp + sao chép nhanh, Sĩ số) và bài tập sắp đến hạn.
+  - Cột phải: Khung đăng tin dặn dò (Giáo viên) và danh sách luồng bài đăng.
+- **Mạng xã hội Modal Detail:** Click vào bình luận mở modal hiển thị đầy đủ thông tin bài đăng, file đính kèm, lượt xem, luồng hội thoại bình luận dạng bong bóng và cho phép gửi bình luận nhanh.
+- **ConfirmModal:** Sử dụng modal xác nhận dùng chung thay thế các hàm `confirm()` của trình duyệt.
+
+### 4. API Testing Documentation (Bruno)
+- Tạo folder `be/bruno/Posts/` chứa 7 API mẫu:
+  - `Create Post`
+  - `Get Class Posts`
+  - `Get Post Details`
+  - `Toggle Comments`
+  - `Delete Post`
+  - `Create Comment`
+  - `Delete Comment`
+
+
 ## 8. Quản lý Bài tập (Assignment Management) - "Mọi thứ đều là File" & Cloudflare R2 (Ngày 20/07/2026)
 
 ### 1. Giải pháp Lưu trữ (Kiến trúc "Mọi thứ đều là File")

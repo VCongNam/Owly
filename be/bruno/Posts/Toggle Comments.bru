@@ -1,0 +1,15 @@
+meta {
+  name: Toggle Comments
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/posts/:id/toggle-comments
+  body: none
+  auth: bearer
+}
+
+params:path {
+  id: 00000000-0000-0000-0000-000000000000
+}

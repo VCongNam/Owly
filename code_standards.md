@@ -147,6 +147,7 @@ graph TD
 *   **State Synchronization (Zustand Stores):**
     *   Separate global states (such as logged-in User info, application Theme) into Zustand stores.
     *   Keep local states (like form inputs or UI modal states) within the local component using `useState`.
+*   **Không sử dụng Native Dialogs (alert, confirm):** Tuyệt đối không sử dụng các hàm native của trình duyệt như `alert()` hay `confirm()`. Bắt buộc sử dụng hệ thống Notifications của Mantine hoặc component `ConfirmModal` dùng chung tại [ConfirmModal.jsx](file:///d:/Study/Owly/fe/src/shared/components/ConfirmModal.jsx) để đảm bảo trải nghiệm người dùng đồng nhất và tương thích giao diện Light/Dark Mode.
 
 ### 4. Thiết kế & Quy chuẩn Màu sắc (Color Scheme & Aesthetics)
 *   **Hỗ trợ Light/Dark Mode:** Bắt buộc sử dụng các biến CSS toàn cục được khai báo tại [index.css](file:///e:/Data/Owly/fe/src/index.css) (ví dụ: `var(--bg-color)`, `var(--text-color)`, `var(--accent-color)`, `var(--card-bg)`, `var(--border-color)`) để các modal, panel, card tự động chuyển đổi tương thích khi người dùng chuyển đổi giao diện sáng/tối.

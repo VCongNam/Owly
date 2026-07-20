@@ -1,0 +1,94 @@
+.container {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: var(--mantine-spacing-xl);
+}
+
+@media (max-width: 992px) {
+  .container {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-md);
+}
+
+.sidebarCard {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--card-bg);
+}
+
+.upcomingItem {
+  border-left: 3px solid var(--accent-color);
+  padding-left: var(--mantine-spacing-xs);
+  transition: transform 0.15s ease;
+}
+
+.upcomingItem:hover {
+  transform: translateX(4px);
+}
+
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-md);
+}
+
+.postFormCard {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--card-bg);
+}
+
+.postCard {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--card-bg);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.postCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.03);
+}
+
+.attachmentBadge {
+  border: 1px solid var(--border-color);
+  background: var(--mantine-color-gray-0);
+  border-radius: 6px;
+  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  max-width: 100%;
+}
+
+.attachmentBadge:hover {
+  background: var(--mantine-color-gray-1);
+}
+
+.interactionBar {
+  border-top: 1px solid var(--border-color);
+  padding-top: var(--mantine-spacing-xs);
+}
+
+.modalContent {
+  padding: 0;
+}
+
+.commentBubble {
+  background: var(--mantine-color-gray-0);
+  border-radius: 12px;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+  flex-grow: 1;
+}
+
+.commentInput {
+  border-top: 1px solid var(--border-color);
+  padding-top: var(--mantine-spacing-md);
+}
