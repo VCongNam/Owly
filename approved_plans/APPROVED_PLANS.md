@@ -128,6 +128,19 @@ Tài liệu này lưu trữ tất cả các Kế hoạch Thực thi (Implementat
   - Hỗ trợ **Bộ lọc dynamic** (tìm kiếm theo ngày/tiêu đề, lọc trạng thái điểm danh, lọc trạng thái buổi học) và **Phân trang (Pagination)** 8 dòng/trang.
   - Đảm bảo hiển thị hoàn toàn **Responsive** qua thanh cuộn ngang `overflow-x: auto`.
 
+---
 
+## 8. Quản lý Bài tập (Assignment Management) - "Mọi thứ đều là File" & Cloudflare R2 (Ngày 20/07/2026)
 
+### 1. Giải pháp Lưu trữ (Kiến trúc "Mọi thứ đều là File")
+- Thống nhất không lưu nội dung bài tập bằng văn bản siêu dài vào Database.
+- Thay vào đó, nếu giáo viên upload file có sẵn (PDF, Word) -> lưu thẳng lên Cloudflare R2 lấy Link.
+- Nếu giáo viên soạn thảo nội dung trên trình soạn thảo Tiptap Editor -> Hệ thống tự động bọc đoạn HTML đó thành 1 file `.html`, đẩy lên Cloudflare R2 và lấy Link.
+- Giúp giảm tải cho Database (bảng `Assignment` chỉ cần lưu 1 mảng các URL duy nhất).
 
+### 2. Thay đổi Database
+- Bổ sung trường `attachmentUrls` (kiểu mảng `String[]`) vào model `Assignment` trong `schema.prisma`.
+
+### 3. Công nghệ Frontend
+- Sử dụng **Tiptap** (thông qua `@mantine/tiptap`) làm Rich Text Editor.
+- Tích hợp **Mammoth.js** để hỗ trợ tính năng kéo thả file `.docx` vào khung soạn thảo để tự động chuyển thành định dạng HTML.

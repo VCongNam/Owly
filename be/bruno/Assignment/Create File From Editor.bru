@@ -1,0 +1,21 @@
+meta {
+  name: Create File From Editor
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/assignments/create-file-from-editor
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{teacherToken}}
+}
+
+body:json {
+  {
+    "htmlContent": "<h1>Bài tập</h1><p>Nội dung</p>"
+  }
+}

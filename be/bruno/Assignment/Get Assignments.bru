@@ -1,0 +1,19 @@
+meta {
+  name: Get Assignments by Class
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/assignments/class/:classId?page=1&limit=10
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{teacherToken}}
+}
+
+params:path {
+  classId: CLASS_UUID
+}

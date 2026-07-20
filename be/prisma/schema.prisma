@@ -208,6 +208,7 @@ model Assignment {
   title           String        @db.VarChar(255)
   dueDate         DateTime      @map("due_date") @db.Timestamptz
   maxPoints       Float         @map("max_points")
+  attachmentUrls  String[]      @map("attachment_urls")
 
   class           Class         @relation(fields: [classId], references: [id], onDelete: Cascade)
   category        GradeCategory @relation(fields: [gradeCategoryId], references: [id], onDelete: Cascade)
