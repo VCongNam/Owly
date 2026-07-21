@@ -374,7 +374,7 @@ export function AssignmentCreatePage() {
 
           {/* Section: Cấu hình bài tập */}
           <Stack gap="xs">
-            <Text className={classes.sectionTitle}>📌 Cấu hình bài tập</Text>
+            <Text className={classes.sectionTitle}>Cấu hình bài tập</Text>
 
             <div>
               <Text size="xs" c="dimmed" mb={4}>Hạn nộp bài</Text>
@@ -436,7 +436,7 @@ export function AssignmentCreatePage() {
 
           {/* Section: Nhập nội dung từ File */}
           <Stack gap="xs">
-            <Text className={classes.sectionTitle}>📄 Nhập đề bài từ tệp</Text>
+            <Text className={classes.sectionTitle}>Nhập đề bài từ tệp</Text>
             <Text size="xs" c="dimmed">Hỗ trợ Word (.docx), Text (.txt), Markdown (.md), HTML</Text>
             <Dropzone
               onDrop={(files) => handleContentImport(files[0])}
@@ -466,7 +466,7 @@ export function AssignmentCreatePage() {
 
           {/* Section: File đính kèm bổ sung */}
           <Stack gap="xs">
-            <Text className={classes.sectionTitle}>📎 Tệp đính kèm bổ sung</Text>
+            <Text className={classes.sectionTitle}> Tệp đính kèm bổ sung</Text>
             <Dropzone
               onDrop={(newFiles) => {
                 setAttachedFiles(prev => {
