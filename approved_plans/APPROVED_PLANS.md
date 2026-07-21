@@ -202,3 +202,33 @@ Tài liệu này lưu trữ tất cả các Kế hoạch Thực thi (Implementat
 ### 3. Công nghệ Frontend
 - Sử dụng **Tiptap** (thông qua `@mantine/tiptap`) làm Rich Text Editor.
 - Tích hợp **Mammoth.js** để hỗ trợ tính năng kéo thả file `.docx` vào khung soạn thảo để tự động chuyển thành định dạng HTML.
+
+---
+
+## 9. Tích hợp Danh mục Đầu điểm & Tự động hóa Fallback (Ngày 21/07/2026)
+
+### 1. Cơ cấu Cơ sở dữ liệu & Backend
+- **Tự động hóa Fallback**: Cập nhật `createAssignmentSchema` (Zod) cho phép `gradeCategoryId` optional/nullable. Nếu chưa truyền `gradeCategoryId`, Service tự động kiểm tra/khởi tạo danh mục mặc định `"Bài tập chung"` (trọng số `1.0`) cho lớp học.
+- **API Danh mục điểm**: Tạo mới `gradeCategoryService.js`, `gradeCategoryController.js`, `gradeCategoryRoutes.js` cung cấp 2 endpoint: `GET /api/classes/:classId/grade-categories` và `POST /api/classes/:classId/grade-categories`.
+- **Bruno Testing**: Tạo folder `be/bruno/GradeCategories/` chứa 2 file `.bru` kiểm thử (`Get Grade Categories` và `Create Grade Category`).
+
+### 2. Giao diện Người dùng (Frontend)
+- **Select & Quick Modal**: Thêm ô chọn `Select` "Danh mục điểm" trên trang tạo bài tập kèm nút `+` tạo nhanh danh mục điểm mới qua Modal.
+- **Nhắc nhở UX**: Thêm Tooltip rõ ràng thông báo người dùng có thể để trống (hệ thống tự xếp vào "Bài tập chung") hoặc chọn/tạo danh mục cụ thể.
+
+---
+
+## 10. Tái cấu trúc Giao diện Tạo Bài tập & Đọc File Đa Định dạng (Ngày 21/07/2026)
+
+### 1. Tải cấu trúc Giao diện (Layout & Styling)
+- **Thanh Tiêu đề (Top Bar)**: Giữ lại nút `← Quay lại` và **Ô nhập Tiêu đề** trải rộng toàn bộ không gian ở trên. Loại bỏ tất cả ô Hạn nộp bài, Điểm số, Danh mục điểm và nút Lưu khỏi thanh trên cùng.
+- **Cột bên phải (Sidebar 320px)**: Gom trọn nút **💾 Lưu bài tập** ở đầu, theo sau là **Hạn nộp bài**, **Điểm số**, **Danh mục đầu điểm**, khung **Nhập đề bài từ File** và khung **Tệp đính kèm**.
+
+### 2. Ràng buộc Màn hình Desktop (>= 1024px)
+- Kiểm tra độ rộng màn hình bằng `useMediaQuery('(min-width: 1024px)')`.
+- Nếu màn hình `< 1024px`, hiển thị màn hình thông báo yêu cầu chuyển sang thiết bị máy tính để đảm bảo trải nghiệm soạn thảo bài tập tốt nhất.
+
+### 3. Mở rộng Khả năng Đọc File Nhập liệu (Multi-format Import)
+- Đọc trực tiếp nội dung đề bài từ các file: **Word (`.docx`)** qua `mammoth.js`, **Văn bản thuần (`.txt`)**, **Markdown (`.md`)**, và **Trang web (`.html`, `.htm`)** bằng `FileReader`.
+
+

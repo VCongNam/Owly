@@ -1,11 +1,15 @@
-import { useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  Button, Text, NumberInput, Tooltip, ActionIcon,
-  FileInput, Stack, Divider, Group, Loader, Center
+  Button, Text, NumberInput, Tooltip, ActionIcon, Select, Modal, TextInput,
+  Stack, Divider, Group, Loader, Center, Paper, Badge
 } from '@mantine/core';
+import { useMediaQuery } from '@mantine/hooks';
 import { DateTimePicker } from '@mantine/dates';
-import { ArrowLeft, FloppyDisk, FilePdf, FileDoc, FileZip, X, CodeSimple, UploadSimple } from '@phosphor-icons/react';
+import {
+  ArrowLeft, FloppyDisk, FilePdf, FileDoc, FileZip, FileText, FileCode, X,
+  CodeSimple, UploadSimple, Plus, Desktop
+} from '@phosphor-icons/react';
 import { Dropzone } from '@mantine/dropzone';
 import { Link, RichTextEditor, getTaskListExtension } from '@mantine/tiptap';
 import { useEditor } from '@tiptap/react';
@@ -25,23 +29,61 @@ import { common, createLowlight } from 'lowlight';
 import mammoth from 'mammoth';
 import { notifications } from '@mantine/notifications';
 import { useAssignments } from '../hooks/useAssignments';
+import { gradeCategoryService } from '../services/gradeCategories';
 import classes from './AssignmentCreatePage.module.css';
 
 const lowlight = createLowlight(common);
-
 const content = '<p></p>';
 
 export function AssignmentCreatePage() {
   const { classId } = useParams();
   const navigate = useNavigate();
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
+
   const { createAssignment, submitting } = useAssignments(classId);
 
   const [title, setTitle] = useState('');
   const [dueDate, setDueDate] = useState(null);
   const [maxPoints, setMaxPoints] = useState(10);
   const [attachedFiles, setAttachedFiles] = useState([]);
-  const [wordFile, setWordFile] = useState(null);
+  const [importedContentFile, setImportedContentFile] = useState(null);
   const [isSourceCodeModeActive, onSourceCodeTextSwitch] = useState(false);
+
+  const [gradeCategories, setGradeCategories] = useState([]);
+  const [gradeCategoryId, setGradeCategoryId] = useState(null);
+  const [modalOpened, setModalOpened] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [creatingCategory, setCreatingCategory] = useState(false);
+
+  useEffect(() => {
+    if (!classId) return;
+    gradeCategoryService.getGradeCategories(classId)
+      .then(res => {
+        if (res?.data) {
+          setGradeCategories(res.data);
+        }
+      })
+      .catch(err => console.error('Lỗi lấy danh mục đầu điểm:', err));
+  }, [classId]);
+
+  const handleCreateCategory = async () => {
+    if (!newCategoryName.trim()) return;
+    setCreatingCategory(true);
+    try {
+      const res = await gradeCategoryService.createGradeCategory(classId, { name: newCategoryName.trim() });
+      if (res?.data) {
+        setGradeCategories(prev => [...prev, res.data]);
+        setGradeCategoryId(res.data.id);
+        setNewCategoryName('');
+        setModalOpened(false);
+        notifications.show({ title: 'Thành công', message: 'Đã tạo danh mục điểm mới.', color: 'teal' });
+      }
+    } catch {
+      notifications.show({ title: 'Lỗi', message: 'Không thể tạo danh mục điểm.', color: 'red' });
+    } finally {
+      setCreatingCategory(false);
+    }
+  };
 
   const editor = useEditor({
     extensions: [
@@ -62,20 +104,43 @@ export function AssignmentCreatePage() {
     shouldRerenderOnTransaction: true,
   });
 
-  const handleWordImport = useCallback(async (file) => {
+  const handleContentImport = useCallback(async (file) => {
     if (!file) return;
-    setWordFile(file);
+    const ext = file.name?.split('.').pop()?.toLowerCase();
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      const result = await mammoth.convertToHtml({ arrayBuffer });
-      editor?.commands.setContent(result.value);
+      if (['docx', 'doc'].includes(ext)) {
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.convertToHtml({ arrayBuffer });
+        editor?.commands.setContent(result.value);
+      } else if (['txt', 'md', 'html', 'htm'].includes(ext)) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          let text = e.target?.result || '';
+          if (ext === 'txt') {
+            text = text.split('\n').map(line => line.trim() ? `<p>${line}</p>` : '').join('');
+          } else if (ext === 'md') {
+            text = text
+              .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+              .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+              .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+              .replace(/^\- (.*$)/gim, '<li>$1</li>')
+              .replace(/\n$/gim, '<br />');
+          }
+          editor?.commands.setContent(text);
+        };
+        reader.readAsText(file);
+      } else {
+        notifications.show({ title: 'Định dạng không hỗ trợ', message: 'Chỉ chấp nhận file Word (.docx), TXT, Markdown (.md), HTML.', color: 'orange' });
+        return;
+      }
+      setImportedContentFile(file);
       notifications.show({
         title: 'Đã nhập nội dung',
-        message: `"${file.name}" đã được chuyển đổi thành công.`,
+        message: `"${file.name}" đã được nạp thành công vào trình soạn thảo.`,
         color: 'teal'
       });
     } catch {
-      notifications.show({ title: 'Lỗi', message: 'Không thể đọc file Word.', color: 'red' });
+      notifications.show({ title: 'Lỗi', message: 'Không thể đọc nội dung file.', color: 'red' });
     }
   }, [editor]);
 
@@ -84,8 +149,9 @@ export function AssignmentCreatePage() {
       notifications.show({ title: 'Thiếu thông tin', message: 'Vui lòng nhập tiêu đề bài tập.', color: 'orange' });
       return;
     }
-    if (!dueDate) {
-      notifications.show({ title: 'Thiếu thông tin', message: 'Vui lòng chọn hạn nộp bài.', color: 'orange' });
+    const dateObj = dueDate instanceof Date ? dueDate : new Date(dueDate);
+    if (isNaN(dateObj.getTime())) {
+      notifications.show({ title: 'Thiếu thông tin', message: 'Vui lòng chọn hạn nộp bài hợp lệ.', color: 'orange' });
       return;
     }
 
@@ -94,8 +160,8 @@ export function AssignmentCreatePage() {
 
     const ok = await createAssignment({
       title: title.trim(),
-      gradeCategoryId: null,
-      dueDate: dueDate.toISOString(),
+      gradeCategoryId: gradeCategoryId || null,
+      dueDate: dateObj.toISOString(),
       maxPoints,
       mode: hasEditorContent ? 'editor' : (attachedFiles.length > 0 ? 'upload' : 'editor'),
       htmlContent: hasEditorContent ? htmlContent : null,
@@ -112,8 +178,30 @@ export function AssignmentCreatePage() {
     if (ext === 'pdf') return <FilePdf size={16} color="var(--mantine-color-red-6)" />;
     if (['doc', 'docx'].includes(ext)) return <FileDoc size={16} color="var(--mantine-color-blue-6)" />;
     if (['zip', 'rar'].includes(ext)) return <FileZip size={16} color="var(--mantine-color-grape-6)" />;
+    if (['txt', 'md'].includes(ext)) return <FileText size={16} color="var(--mantine-color-teal-6)" />;
+    if (['html', 'htm'].includes(ext)) return <FileCode size={16} color="var(--mantine-color-orange-6)" />;
     return <FilePdf size={16} color="var(--mantine-color-gray-6)" />;
   };
+
+  // Screen size boundary fallback (< 1024px)
+  if (isDesktop === false) {
+    return (
+      <Center h="100vh" p="md" bg="var(--bg-color)">
+        <Paper p="xl" radius="md" withBorder style={{ maxWidth: 460, textAlign: 'center' }}>
+          <Stack align="center" gap="md">
+            <Desktop size={48} color="var(--accent-color)" />
+            <Text fw={700} size="lg">Yêu cầu màn hình máy tính</Text>
+            <Text size="sm" c="dimmed">
+              Trình soạn thảo bài tập nâng cao yêu cầu màn hình máy tính (từ 1024px trở lên) để đảm bảo không gian soạn thảo văn bản và thao tác cài đặt tốt nhất.
+            </Text>
+            <Button color="copper" variant="light" onClick={() => navigate(`/classes/${classId}/assignments`)}>
+              Quay lại danh sách bài tập
+            </Button>
+          </Stack>
+        </Paper>
+      </Center>
+    );
+  }
 
   if (!editor) {
     return <Center h="100vh"><Loader color="copper" /></Center>;
@@ -123,6 +211,34 @@ export function AssignmentCreatePage() {
 
   return (
     <div className={classes.pageWrapper}>
+      {/* Modal Tạo Danh mục điểm */}
+      <Modal
+        opened={modalOpened}
+        onClose={() => setModalOpened(false)}
+        title="Tạo danh mục đầu điểm mới"
+        centered
+        size="sm"
+      >
+        <Stack gap="md">
+          <TextInput
+            label="Tên danh mục"
+            placeholder="Ví dụ: Kiểm tra 15p, Giữa kỳ..."
+            value={newCategoryName}
+            onChange={(e) => setNewCategoryName(e.target.value)}
+            data-autofocus
+          />
+          <Group justify="flex-end" gap="xs">
+            <Button variant="subtle" color="gray" onClick={() => setModalOpened(false)}>
+              Hủy
+            </Button>
+            <Button color="copper" loading={creatingCategory} onClick={handleCreateCategory}>
+              Tạo danh mục
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      {/* ── TOP HEADER (TITLE ONLY) ───────────────────────────── */}
       <div className={classes.topBar}>
         <Tooltip label="Quay lại danh sách bài tập" withArrow position="bottom">
           <ActionIcon variant="subtle" color="gray" size="lg"
@@ -139,209 +255,252 @@ export function AssignmentCreatePage() {
           onChange={(e) => setTitle(e.target.value)}
           maxLength={200}
         />
+        
+        <Badge color="blue" variant="light" size="sm" radius="sm">
+          Tính năng thử nghiệm
+        </Badge>
+      </div>
 
-        <div className={classes.topBarMeta}>
-          <DateTimePicker
-            placeholder="Hạn nộp bài"
-            value={dueDate}
-            onChange={setDueDate}
-            size="sm"
-            clearable
-            minDate={new Date()}
-            valueFormat="DD/MM/YYYY HH:mm"
-            style={{ width: 200 }}
-          />
-          <NumberInput
-            placeholder="Điểm"
-            value={maxPoints}
-            onChange={setMaxPoints}
-            min={0}
-            size="sm"
-            style={{ width: 100 }}
-            prefix="Điểm: "
-          />
+      {/* ── MAIN CONTENT ────────────────────────────────────── */}
+      <div className={classes.mainContent}>
+        {/* Document Body (Canvas) */}
+        <div className={classes.documentBody}>
+          <RichTextEditor editor={editor} onSourceCodeTextSwitch={onSourceCodeTextSwitch} className={classes.editorRoot}>
+            <RichTextEditor.Toolbar sticky stickyOffset={0}>
+              <RichTextEditor.ControlsGroup>
+                <RichTextEditor.Undo />
+                <RichTextEditor.Redo />
+              </RichTextEditor.ControlsGroup>
+
+              {!isSourceCodeModeActive && (
+                <>
+                  <RichTextEditor.ControlsGroup>
+                    <RichTextEditor.H1 />
+                    <RichTextEditor.H2 />
+                    <RichTextEditor.H3 />
+                  </RichTextEditor.ControlsGroup>
+
+                  <RichTextEditor.ControlsGroup>
+                    <RichTextEditor.Bold />
+                    <RichTextEditor.Italic />
+                    <RichTextEditor.Underline />
+                    <RichTextEditor.Strikethrough />
+                    <RichTextEditor.Superscript />
+                    <RichTextEditor.Subscript />
+                  </RichTextEditor.ControlsGroup>
+
+                  <RichTextEditor.ControlsGroup>
+                    <RichTextEditor.ColorPicker
+                      colors={['#25262b', '#868e96', '#fa5252', '#e64980', '#be4bdb', '#7950f2', '#4c6ef5', '#228be6', '#15aabf', '#12b886', '#40c057', '#82c91e', '#fab005', '#fd7e14']}
+                    />
+                    <RichTextEditor.Highlight />
+                  </RichTextEditor.ControlsGroup>
+
+                  <RichTextEditor.ControlsGroup>
+                    <RichTextEditor.AlignLeft />
+                    <RichTextEditor.AlignCenter />
+                    <RichTextEditor.AlignRight />
+                    <RichTextEditor.AlignJustify />
+                  </RichTextEditor.ControlsGroup>
+
+                  <RichTextEditor.ControlsGroup>
+                    <RichTextEditor.BulletList />
+                    <RichTextEditor.OrderedList />
+                    <RichTextEditor.TaskList />
+                    <RichTextEditor.TaskListLift />
+                    <RichTextEditor.TaskListSink />
+                  </RichTextEditor.ControlsGroup>
+
+                  <RichTextEditor.ControlsGroup>
+                    <RichTextEditor.Link />
+                    <RichTextEditor.Unlink />
+                  </RichTextEditor.ControlsGroup>
+
+                  <RichTextEditor.ControlsGroup>
+                    <RichTextEditor.Blockquote />
+                    <RichTextEditor.CodeBlock />
+                    <RichTextEditor.ClearFormatting />
+                  </RichTextEditor.ControlsGroup>
+                </>
+              )}
+
+              <RichTextEditor.ControlsGroup>
+                <RichTextEditor.SourceCode icon={SourceCodeIcon} />
+              </RichTextEditor.ControlsGroup>
+            </RichTextEditor.Toolbar>
+
+            {editor && (
+              <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }}>
+                <RichTextEditor.ControlsGroup>
+                  <RichTextEditor.Bold />
+                  <RichTextEditor.Italic />
+                  <RichTextEditor.Underline />
+                  <RichTextEditor.Link />
+                  <RichTextEditor.Highlight />
+                </RichTextEditor.ControlsGroup>
+              </BubbleMenu>
+            )}
+
+            {editor && (
+              <FloatingMenu editor={editor} tippyOptions={{ duration: 100 }}>
+                <RichTextEditor.ControlsGroup>
+                  <RichTextEditor.H1 />
+                  <RichTextEditor.H2 />
+                  <RichTextEditor.BulletList />
+                  <RichTextEditor.TaskList />
+                </RichTextEditor.ControlsGroup>
+              </FloatingMenu>
+            )}
+
+            <RichTextEditor.Content />
+          </RichTextEditor>
+        </div>
+
+        {/* ── RIGHT SIDEBAR (SETTINGS & ATTACHMENTS) ────────────── */}
+        <aside className={classes.sidebar}>
+          {/* Primary Action Button */}
           <Button
             color="copper"
-            leftSection={<FloppyDisk size={16} weight="bold" />}
+            size="md"
+            fullWidth
+            leftSection={<FloppyDisk size={18} weight="bold" />}
             loading={submitting}
             onClick={handleSave}
           >
             Lưu bài tập
           </Button>
-        </div>
-      </div>
 
-      <div className={classes.mainContent}>
-        <div className={classes.documentBody}>
-          <RichTextEditor editor={editor} onSourceCodeTextSwitch={onSourceCodeTextSwitch} className={classes.editorRoot}>
-          {/* Sticky Main Toolbar */}
-          <RichTextEditor.Toolbar sticky stickyOffset={0}>
-            {/* Undo / Redo */}
-            <RichTextEditor.ControlsGroup>
-              <RichTextEditor.Undo />
-              <RichTextEditor.Redo />
-            </RichTextEditor.ControlsGroup>
+          <Divider />
 
-            {!isSourceCodeModeActive && (
-              <>
-                <RichTextEditor.ControlsGroup>
-                  <RichTextEditor.H1 />
-                  <RichTextEditor.H2 />
-                  <RichTextEditor.H3 />
-                </RichTextEditor.ControlsGroup>
+          {/* Section: Cấu hình bài tập */}
+          <Stack gap="xs">
+            <Text className={classes.sectionTitle}>📌 Cấu hình bài tập</Text>
 
-                <RichTextEditor.ControlsGroup>
-                  <RichTextEditor.Bold />
-                  <RichTextEditor.Italic />
-                  <RichTextEditor.Underline />
-                  <RichTextEditor.Strikethrough />
-                  <RichTextEditor.Superscript />
-                  <RichTextEditor.Subscript />
-                </RichTextEditor.ControlsGroup>
+            <div>
+              <Text size="xs" c="dimmed" mb={4}>Hạn nộp bài</Text>
+              <DateTimePicker
+                placeholder="Chọn thời gian..."
+                value={dueDate}
+                onChange={setDueDate}
+                size="sm"
+                clearable
+                minDate={new Date()}
+                valueFormat="DD/MM/YYYY HH:mm"
+              />
+            </div>
 
-                <RichTextEditor.ControlsGroup>
-                  <RichTextEditor.ColorPicker
-                    colors={['#25262b', '#868e96', '#fa5252', '#e64980', '#be4bdb', '#7950f2', '#4c6ef5', '#228be6', '#15aabf', '#12b886', '#40c057', '#82c91e', '#fab005', '#fd7e14']}
-                  />
-                  <RichTextEditor.Highlight />
-                </RichTextEditor.ControlsGroup>
+            <div>
+              <Text size="xs" c="dimmed" mb={4}>Điểm tối đa</Text>
+              <NumberInput
+                placeholder="Ví dụ: 10"
+                value={maxPoints}
+                onChange={setMaxPoints}
+                min={0}
+                size="sm"
+              />
+            </div>
 
-                <RichTextEditor.ControlsGroup>
-                  <RichTextEditor.AlignLeft />
-                  <RichTextEditor.AlignCenter />
-                  <RichTextEditor.AlignRight />
-                  <RichTextEditor.AlignJustify />
-                </RichTextEditor.ControlsGroup>
-
-                <RichTextEditor.ControlsGroup>
-                  <RichTextEditor.BulletList />
-                  <RichTextEditor.OrderedList />
-                  <RichTextEditor.TaskList />
-                  <RichTextEditor.TaskListLift />
-                  <RichTextEditor.TaskListSink />
-                </RichTextEditor.ControlsGroup>
-
-                <RichTextEditor.ControlsGroup>
-                  <RichTextEditor.Link />
-                  <RichTextEditor.Unlink />
-                </RichTextEditor.ControlsGroup>
-
-                <RichTextEditor.ControlsGroup>
-                  <RichTextEditor.Blockquote />
-                  <RichTextEditor.CodeBlock />
-                  <RichTextEditor.ClearFormatting />
-                </RichTextEditor.ControlsGroup>
-              </>
-            )}
-            
-            <RichTextEditor.ControlsGroup>
-              <RichTextEditor.SourceCode icon={SourceCodeIcon} />
-            </RichTextEditor.ControlsGroup>
-          </RichTextEditor.Toolbar>
-
-          {/* Bubble Menu when selecting text */}
-          {editor && (
-            <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }}>
-              <RichTextEditor.ControlsGroup>
-                <RichTextEditor.Bold />
-                <RichTextEditor.Italic />
-                <RichTextEditor.Underline />
-                <RichTextEditor.Link />
-                <RichTextEditor.Highlight />
-              </RichTextEditor.ControlsGroup>
-            </BubbleMenu>
-          )}
-
-          {/* Floating Menu on empty new line */}
-          {editor && (
-            <FloatingMenu editor={editor} tippyOptions={{ duration: 100 }}>
-              <RichTextEditor.ControlsGroup>
-                <RichTextEditor.H1 />
-                <RichTextEditor.H2 />
-                <RichTextEditor.BulletList />
-                <RichTextEditor.TaskList />
-              </RichTextEditor.ControlsGroup>
-            </FloatingMenu>
-          )}
-
-          <RichTextEditor.Content />
-        </RichTextEditor>
-      </div>
-
-      {/* ── RIGHT SIDEBAR ────────────────────────────────────── */}
-      <aside className={classes.sidebar}>
-        <Text fw={600} size="sm">Đính kèm tài liệu</Text>
-
-        {/* Import Word */}
-        <div>
-          <Text size="xs" c="dimmed" mb={6}>Nhập từ file Word (.docx)</Text>
-          <Dropzone
-            onDrop={(files) => handleWordImport(files[0])}
-            accept={['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword']}
-            maxFiles={1}
-            multiple={false}
-            p="xs"
-            styles={{ inner: { pointerEvents: 'all' } }}
-          >
-            <Group justify="center" gap="xs" style={{ minHeight: 50, pointerEvents: 'none' }}>
-              <FileDoc size={20} color="var(--mantine-color-blue-6)" />
-              <Text size="xs" c="dimmed" inline>Kéo thả file Word vào đây</Text>
-            </Group>
-          </Dropzone>
-          {wordFile && (
-            <Text size="xs" c="teal" mt={4}>✓ Đã nhập: {wordFile.name}</Text>
-          )}
-        </div>
-
-        <Divider />
-
-        {/* Upload extra files */}
-        <div>
-          <Text size="xs" c="dimmed" mb={6}>File đính kèm bổ sung</Text>
-          <Dropzone
-            onDrop={(newFiles) => {
-              setAttachedFiles(prev => {
-                const names = new Set(prev.map(f => f.name));
-                return [...prev, ...newFiles.filter(f => !names.has(f.name))];
-              });
-            }}
-            accept={['application/pdf', 'image/png', 'image/jpeg', 'application/zip', 'application/x-rar-compressed']}
-            p="xs"
-            styles={{ inner: { pointerEvents: 'all' } }}
-          >
-            <Group justify="center" gap="xs" style={{ minHeight: 50, pointerEvents: 'none' }}>
-              <UploadSimple size={20} color="var(--mantine-color-copper-6)" />
-              <Text size="xs" c="dimmed" inline>Kéo thả file PDF, Ảnh, ZIP...</Text>
-            </Group>
-          </Dropzone>
-        </div>
-
-        {attachedFiles.length > 0 && (
-          <Stack gap={6}>
-            {attachedFiles.map((file, idx) => (
-              <Group key={idx} gap={6} justify="space-between" wrap="nowrap"
-                style={{ border: '1px solid #e9ecef', padding: '6px 8px', borderRadius: 6, background: '#f8f9fa' }}
+            <div>
+              <Text size="xs" c="dimmed" mb={4}>Danh mục đầu điểm</Text>
+              <Tooltip
+                label="Có thể để trống để tự xếp vào 'Bài tập chung' hoặc ấn nút + để tạo mới"
+                withArrow
+                multiline
+                w={220}
               >
-                <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
-                  {getFileIcon(file)}
-                  <Text size="xs" lineClamp={1} style={{ flex: 1 }} title={file.name}>{file.name}</Text>
+                <Group gap={4} wrap="nowrap">
+                  <Select
+                    placeholder="Chọn danh mục..."
+                    data={gradeCategories.map(cat => ({ value: cat.id, label: cat.name }))}
+                    value={gradeCategoryId}
+                    onChange={setGradeCategoryId}
+                    clearable
+                    size="sm"
+                    style={{ flex: 1 }}
+                  />
+                  <ActionIcon
+                    variant="light"
+                    color="copper"
+                    size="md"
+                    onClick={() => setModalOpened(true)}
+                    title="Tạo danh mục mới"
+                  >
+                    <Plus size={16} weight="bold" />
+                  </ActionIcon>
                 </Group>
-                <ActionIcon size="xs" variant="subtle" color="red" onClick={() => removeFile(idx)}>
-                  <X size={12} />
-                </ActionIcon>
-              </Group>
-            ))}
+              </Tooltip>
+            </div>
           </Stack>
-        )}
 
-        <Divider />
+          <Divider />
 
-        <Text size="xs" c="dimmed" lh={1.5}>
-          <b>Các định dạng cho phép:</b>
-          <br/>• File nội dung: Word (.docx)
-          <br/>• File đính kèm: PDF, PNG, JPG, JPEG, ZIP, RAR.
-        </Text>
-      </aside>
+          {/* Section: Nhập nội dung từ File */}
+          <Stack gap="xs">
+            <Text className={classes.sectionTitle}>📄 Nhập đề bài từ tệp</Text>
+            <Text size="xs" c="dimmed">Hỗ trợ Word (.docx), Text (.txt), Markdown (.md), HTML</Text>
+            <Dropzone
+              onDrop={(files) => handleContentImport(files[0])}
+              accept={[
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'application/msword',
+                'text/plain',
+                'text/markdown',
+                'text/html'
+              ]}
+              maxFiles={1}
+              multiple={false}
+              p="xs"
+              styles={{ inner: { pointerEvents: 'all' } }}
+            >
+              <Group justify="center" gap="xs" style={{ minHeight: 50, pointerEvents: 'none' }}>
+                <FileDoc size={20} color="var(--mantine-color-blue-6)" />
+                <Text size="xs" c="dimmed" inline>Kéo thả tệp nội dung vào đây</Text>
+              </Group>
+            </Dropzone>
+            {importedContentFile && (
+              <Text size="xs" c="teal">✓ Đã nạp: {importedContentFile.name}</Text>
+            )}
+          </Stack>
+
+          <Divider />
+
+          {/* Section: File đính kèm bổ sung */}
+          <Stack gap="xs">
+            <Text className={classes.sectionTitle}>📎 Tệp đính kèm bổ sung</Text>
+            <Dropzone
+              onDrop={(newFiles) => {
+                setAttachedFiles(prev => {
+                  const names = new Set(prev.map(f => f.name));
+                  return [...prev, ...newFiles.filter(f => !names.has(f.name))];
+                });
+              }}
+              accept={['application/pdf', 'image/png', 'image/jpeg', 'application/zip', 'application/x-rar-compressed']}
+              p="xs"
+              styles={{ inner: { pointerEvents: 'all' } }}
+            >
+              <Group justify="center" gap="xs" style={{ minHeight: 50, pointerEvents: 'none' }}>
+                <UploadSimple size={20} color="var(--mantine-color-copper-6)" />
+                <Text size="xs" c="dimmed" inline>Kéo thả PDF, Ảnh, ZIP vào đây...</Text>
+              </Group>
+            </Dropzone>
+
+            {attachedFiles.length > 0 && (
+              <Stack gap={6}>
+                {attachedFiles.map((file, idx) => (
+                  <div key={idx} className={classes.attachedFileItem}>
+                    <Group gap={6} wrap="nowrap" style={{ minWidth: 0 }}>
+                      {getFileIcon(file)}
+                      <Text size="xs" lineClamp={1} style={{ flex: 1 }} title={file.name}>{file.name}</Text>
+                    </Group>
+                    <ActionIcon size="xs" variant="subtle" color="red" onClick={() => removeFile(idx)}>
+                      <X size={12} />
+                    </ActionIcon>
+                  </div>
+                ))}
+              </Stack>
+            )}
+          </Stack>
+        </aside>
       </div>
     </div>
   );

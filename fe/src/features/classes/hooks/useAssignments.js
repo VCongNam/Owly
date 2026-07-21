@@ -64,6 +64,11 @@ export function useAssignments(classId) {
       return true;
     } catch (error) {
       console.error('Lỗi khi tạo bài tập:', error);
+      notifications.show({
+        title: 'Thất bại',
+        message: error?.response?.data?.message || 'Không thể tạo bài tập. Vui lòng thử lại.',
+        color: 'red'
+      });
       return false;
     } finally {
       setSubmitting(false);

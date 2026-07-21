@@ -8,10 +8,8 @@ import { Dropzone } from '@mantine/dropzone';
 import { UploadSimple, FilePdf, FileDoc, FileZip, X, FloppyDisk } from '@phosphor-icons/react';
 import { notifications } from '@mantine/notifications';
 import { useAssignments } from '../hooks/useAssignments';
-import { useParams } from 'react-router-dom';
 
-export function AssignmentUploadModal({ opened, onClose }) {
-  const { classId } = useParams();
+export function AssignmentUploadModal({ classId, opened, onClose }) {
   const { createAssignment, submitting } = useAssignments(classId);
 
   const [title, setTitle] = useState('');
@@ -34,8 +32,10 @@ export function AssignmentUploadModal({ opened, onClose }) {
       notifications.show({ title: 'Thiếu thông tin', message: 'Vui lòng nhập tiêu đề bài tập.', color: 'orange' });
       return;
     }
-    if (!dueDate) {
-      notifications.show({ title: 'Thiếu thông tin', message: 'Vui lòng chọn hạn nộp bài.', color: 'orange' });
+    
+    const dateObj = dueDate instanceof Date ? dueDate : new Date(dueDate);
+    if (!dueDate || isNaN(dateObj.getTime())) {
+      notifications.show({ title: 'Thiếu thông tin', message: 'Vui lòng chọn hạn nộp bài hợp lệ.', color: 'orange' });
       return;
     }
     if (attachedFiles.length === 0) {
@@ -43,22 +43,27 @@ export function AssignmentUploadModal({ opened, onClose }) {
       return;
     }
 
-    const ok = await createAssignment({
-      title: title.trim(),
-      gradeCategoryId: null,
-      dueDate: dueDate.toISOString(),
-      maxPoints,
-      mode: 'upload',
-      htmlContent: null,
-      files: attachedFiles
-    });
+    try {
+      const ok = await createAssignment({
+        title: title.trim(),
+        gradeCategoryId: null,
+        dueDate: dateObj.toISOString(),
+        maxPoints,
+        mode: 'upload',
+        htmlContent: null,
+        files: attachedFiles
+      });
 
-    if (ok) {
-      setTitle('');
-      setDueDate(null);
-      setMaxPoints(10);
-      setAttachedFiles([]);
-      onClose();
+      if (ok) {
+        setTitle('');
+        setDueDate(null);
+        setMaxPoints(10);
+        setAttachedFiles([]);
+        onClose();
+      }
+    } catch (err) {
+      console.error(err);
+      notifications.show({ title: 'Lỗi', message: err.message || 'Đã có lỗi xảy ra', color: 'red' });
     }
   };
 

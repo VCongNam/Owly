@@ -13,6 +13,7 @@ import attendanceRoutes from './features/attendance/attendanceRoutes.js';
 import assignmentRoutes from './features/assignments/assignmentRoutes.js';
 import materialRoutes from './features/materials/materialRoutes.js';
 import postRoutes from './features/posts/postRoutes.js';
+import gradeCategoryRoutes from './features/gradeCategories/gradeCategoryRoutes.js';
 
 
 dotenv.config();
@@ -35,6 +36,7 @@ app.use('/api/sessions/:sessionId/attendances', attendanceRoutes);
 app.use('/api/assignments', assignmentRoutes);
 app.use('/api', materialRoutes);
 app.use('/api', postRoutes);
+app.use('/api', gradeCategoryRoutes);
 
 
 // Test route

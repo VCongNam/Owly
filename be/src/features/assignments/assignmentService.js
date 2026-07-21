@@ -1,6 +1,12 @@
 import { prisma } from '../../config/db.js';
+import { getOrCreateDefaultGradeCategory } from '../gradeCategories/gradeCategoryService.js';
 
 export const createAssignment = async (data) => {
+  if (!data.gradeCategoryId) {
+    const categories = await getOrCreateDefaultGradeCategory(data.classId);
+    data.gradeCategoryId = categories[0].id;
+  }
+
   return prisma.assignment.create({
     data
   });

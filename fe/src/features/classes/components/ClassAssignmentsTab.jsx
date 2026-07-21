@@ -210,6 +210,7 @@ export function ClassAssignmentsTab() {
 
       {uploadModalOpened && (
         <AssignmentUploadModal 
+          classId={classId}
           opened={uploadModalOpened} 
           onClose={() => {
             setUploadModalOpened(false);
