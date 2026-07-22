@@ -3,6 +3,11 @@ import { prisma } from '../../config/db.js';
 export const getOrCreateDefaultGradeCategory = async (classId) => {
   let categories = await prisma.gradeCategory.findMany({
     where: { classId },
+    include: {
+      _count: {
+        select: { assignments: true }
+      }
+    },
     orderBy: { name: 'asc' }
   });
 
@@ -12,6 +17,11 @@ export const getOrCreateDefaultGradeCategory = async (classId) => {
         classId,
         name: 'Bài tập chung',
         weight: 1.0
+      },
+      include: {
+        _count: {
+          select: { assignments: true }
+        }
       }
     });
     categories = [defaultCategory];
@@ -30,6 +40,53 @@ export const createGradeCategory = async ({ classId, name, weight = 0 }) => {
       classId,
       name,
       weight
+    },
+    include: {
+      _count: {
+        select: { assignments: true }
+      }
     }
+  });
+};
+
+export const updateGradeCategory = async (id, { name, weight }) => {
+  const data = {};
+  if (name !== undefined) data.name = name.trim();
+  if (weight !== undefined) data.weight = Number(weight);
+
+  return prisma.gradeCategory.update({
+    where: { id },
+    data,
+    include: {
+      _count: {
+        select: { assignments: true }
+      }
+    }
+  });
+};
+
+export const deleteGradeCategory = async (classId, id) => {
+  const count = await prisma.gradeCategory.count({
+    where: { classId }
+  });
+
+  if (count <= 1) {
+    const err = new Error('Lớp học phải giữ ít nhất 1 danh mục đầu điểm.');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  const defaultCategories = await getOrCreateDefaultGradeCategory(classId);
+  let fallbackCat = defaultCategories.find(c => c.id !== id);
+
+  if (fallbackCat) {
+    await prisma.assignment.updateMany({
+      where: { gradeCategoryId: id },
+      data: { gradeCategoryId: fallbackCat.id }
+    });
+  }
+
+  return prisma.gradeCategory.delete({
+    where: { id }
   });
 };

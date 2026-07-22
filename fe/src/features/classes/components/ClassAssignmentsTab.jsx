@@ -5,12 +5,13 @@ import {
   Tooltip, Center, ThemeIcon, Loader, Badge, Pagination, ScrollArea, Menu
 } from '@mantine/core';
 import {
-  Plus, Trash, Link as LinkIcon, ClipboardText, UploadSimple, FileText, CaretDown
+  Plus, Trash, Link as LinkIcon, ClipboardText, UploadSimple, FileText, CaretDown, ListChecks
 } from '@phosphor-icons/react';
 import { useAuth } from '../../auth';
 import { useAssignments } from '../hooks/useAssignments';
 import { ConfirmModal } from '../../../shared';
 import { AssignmentUploadModal } from './AssignmentUploadModal';
+import { GradeCategoriesModal } from './GradeCategoriesModal';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '—';
@@ -42,6 +43,9 @@ export function ClassAssignmentsTab() {
 
   // Upload modal
   const [uploadModalOpened, setUploadModalOpened] = useState(false);
+
+  // Grade Categories Config modal
+  const [categoriesModalOpened, setCategoriesModalOpened] = useState(false);
 
   const handleOpenDeleteConfirm = (item) => {
     setAssignmentToDelete(item);
@@ -118,32 +122,42 @@ export function ClassAssignmentsTab() {
           </Text>
         </div>
         {isTeacher && (
-          <Menu shadow="md" width={220} position="bottom-end">
-            <Menu.Target>
-              <Button
-                leftSection={<Plus size={16} weight="bold" />}
-                rightSection={<CaretDown size={14} weight="bold" />}
-                color="copper"
-              >
-                Tạo bài tập
-              </Button>
-            </Menu.Target>
+          <Group gap="xs">
+            <Button
+              variant="outline"
+              color="copper"
+              leftSection={<ListChecks size={16} weight="bold" />}
+              onClick={() => setCategoriesModalOpened(true)}
+            >
+              Cấu hình đầu điểm
+            </Button>
+            <Menu shadow="md" width={220} position="bottom-end">
+              <Menu.Target>
+                <Button
+                  leftSection={<Plus size={16} weight="bold" />}
+                  rightSection={<CaretDown size={14} weight="bold" />}
+                  color="copper"
+                >
+                  Tạo bài tập
+                </Button>
+              </Menu.Target>
 
-            <Menu.Dropdown>
-              <Menu.Item 
-                leftSection={<FileText size={16} />}
-                onClick={() => navigate(`/classes/${classId}/assignments/create`)}
-              >
-                Soạn thảo bài tập
-              </Menu.Item>
-              <Menu.Item 
-                leftSection={<UploadSimple size={16} />}
-                onClick={() => setUploadModalOpened(true)}
-              >
-                Tải bài tập lên
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
+              <Menu.Dropdown>
+                <Menu.Item 
+                  leftSection={<FileText size={16} />}
+                  onClick={() => navigate(`/classes/${classId}/assignments/create`)}
+                >
+                  Soạn thảo bài tập
+                </Menu.Item>
+                <Menu.Item 
+                  leftSection={<UploadSimple size={16} />}
+                  onClick={() => setUploadModalOpened(true)}
+                >
+                  Tải bài tập lên
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+          </Group>
         )}
       </Group>
 
@@ -216,6 +230,20 @@ export function ClassAssignmentsTab() {
             setUploadModalOpened(false);
             fetchAssignments(1); // Refresh list
           }} 
+        />
+      )}
+
+      {categoriesModalOpened && (
+        <GradeCategoriesModal
+          classId={classId}
+          opened={categoriesModalOpened}
+          onClose={() => {
+            setCategoriesModalOpened(false);
+            fetchAssignments(1);
+          }}
+          onCategoriesUpdated={() => {
+            fetchAssignments(1);
+          }}
         />
       )}
 

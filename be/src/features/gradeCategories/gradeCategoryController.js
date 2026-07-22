@@ -39,3 +39,38 @@ export const createGradeCategory = async (req, res, next) => {
     next(error);
   }
 };
+
+export const updateGradeCategory = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { name, weight } = req.body;
+
+    const updatedCategory = await gradeCategoryService.updateGradeCategory(id, { name, weight });
+    return res.json({
+      success: true,
+      message: 'Cập nhật danh mục điểm thành công',
+      data: updatedCategory
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteGradeCategory = async (req, res, next) => {
+  try {
+    const { classId, id } = req.params;
+    await gradeCategoryService.deleteGradeCategory(classId, id);
+    return res.json({
+      success: true,
+      message: 'Đã xóa danh mục điểm và tự động chuyển các bài tập liên quan về "Bài tập chung".'
+    });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message
+      });
+    }
+    next(error);
+  }
+};

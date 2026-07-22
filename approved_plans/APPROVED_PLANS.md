@@ -231,4 +231,24 @@ Tài liệu này lưu trữ tất cả các Kế hoạch Thực thi (Implementat
 ### 3. Mở rộng Khả năng Đọc File Nhập liệu (Multi-format Import)
 - Đọc trực tiếp nội dung đề bài từ các file: **Word (`.docx`)** qua `mammoth.js`, **Văn bản thuần (`.txt`)**, **Markdown (`.md`)**, và **Trang web (`.html`, `.htm`)** bằng `FileReader`.
 
+---
+
+## 11. Phân hệ Quản lý Danh mục Đầu điểm & Trọng số (UC-55 đến UC-58) (Ngày 22/07/2026)
+
+### 1. Cơ cấu Cơ sở dữ liệu & API Backend
+- **Cập nhật & Xóa Danh mục điểm (`UC-57`, `UC-58`)**:
+  - `PUT /api/classes/:classId/grade-categories/:id`: Cho phép sửa tên và trọng số phần trăm `weight`.
+  - `DELETE /api/classes/:classId/grade-categories/:id`: Xóa danh mục điểm. Tự động kiểm tra và di chuyển tất cả bài tập thuộc danh mục bị xóa về danh mục mặc định `"Bài tập chung"` để bảo đảm an toàn dữ liệu.
+- **API Documentation (Bruno)**: Khởi tạo 2 file kiểm thử API mới `Update Grade Category.bru` và `Delete Grade Category.bru` tại `be/bruno/GradeCategories/`.
+
+### 2. Giao diện Người dùng Frontend
+- **Modal Quản lý Đầu điểm (`GradeCategoriesModal.jsx`) (`UC-55`)**:
+  - Bảng hiển thị toàn bộ danh mục điểm của lớp kèm Tên, Trọng số (%), Số lượng bài tập liên kết, nút Sửa/Xóa.
+  - Thanh tổng quan tính toán tổng trọng số % hiện tại (Cảnh báo nếu tổng $\neq 100\%$).
+- **Giao diện Thêm/Sửa & Xóa (`UC-56`, `UC-57`, `UC-58`)**:
+  - Tích hợp ô nhập Tên & Trọng số % (`NumberInput` suffix `%`).
+  - Hỗ trợ `ConfirmModal` cảnh báo trước khi xóa và tự động di chuyển bài tập liên quan.
+- **Gắn nút Thao tác (`ClassAssignmentsTab.jsx`)**: Đặt nút "Cấu hình đầu điểm" trên giao diện tab Bài tập để giáo viên mở nhanh Modal quản lý.
+
+
 

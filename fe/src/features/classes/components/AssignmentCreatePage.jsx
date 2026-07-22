@@ -53,15 +53,15 @@ export function AssignmentCreatePage() {
   const [gradeCategoryId, setGradeCategoryId] = useState(null);
   const [modalOpened, setModalOpened] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryWeight, setNewCategoryWeight] = useState(10);
   const [creatingCategory, setCreatingCategory] = useState(false);
 
   useEffect(() => {
     if (!classId) return;
     gradeCategoryService.getGradeCategories(classId)
       .then(res => {
-        if (res?.data) {
-          setGradeCategories(res.data);
-        }
+        const cats = Array.isArray(res) ? res : (res?.data || []);
+        setGradeCategories(cats);
       })
       .catch(err => console.error('Lỗi lấy danh mục đầu điểm:', err));
   }, [classId]);
@@ -70,15 +70,24 @@ export function AssignmentCreatePage() {
     if (!newCategoryName.trim()) return;
     setCreatingCategory(true);
     try {
-      const res = await gradeCategoryService.createGradeCategory(classId, { name: newCategoryName.trim() });
-      if (res?.data) {
-        setGradeCategories(prev => [...prev, res.data]);
-        setGradeCategoryId(res.data.id);
+      const weightVal = Number(newCategoryWeight) ? Number(newCategoryWeight) / 100 : 0;
+      const res = await gradeCategoryService.createGradeCategory(classId, {
+        name: newCategoryName.trim(),
+        weight: weightVal
+      });
+      const newCat = res?.id ? res : res?.data;
+      if (newCat && newCat.id) {
+        setGradeCategories(prev => [...prev, newCat]);
+        setGradeCategoryId(newCat.id);
         setNewCategoryName('');
+        setNewCategoryWeight(10);
         setModalOpened(false);
         notifications.show({ title: 'Thành công', message: 'Đã tạo danh mục điểm mới.', color: 'teal' });
+      } else {
+        throw new Error('Dữ liệu phản hồi không đúng cấu trúc.');
       }
-    } catch {
+    } catch (err) {
+      console.error(err);
       notifications.show({ title: 'Lỗi', message: 'Không thể tạo danh mục điểm.', color: 'red' });
     } finally {
       setCreatingCategory(false);
@@ -226,6 +235,15 @@ export function AssignmentCreatePage() {
             value={newCategoryName}
             onChange={(e) => setNewCategoryName(e.target.value)}
             data-autofocus
+          />
+          <NumberInput
+            label="Trọng số điểm (%)"
+            placeholder="Ví dụ: 10, 20, 50..."
+            value={newCategoryWeight}
+            onChange={setNewCategoryWeight}
+            min={0}
+            max={100}
+            suffix="%"
           />
           <Group justify="flex-end" gap="xs">
             <Button variant="subtle" color="gray" onClick={() => setModalOpened(false)}>

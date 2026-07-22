@@ -70,7 +70,7 @@ export function DashboardPage() {
     <Stack gap="xl">
       {/* ── Header ──────────────────────────────── */}
       <div>
-        <Text size="sm" c="dimmed">{greeting} 👋</Text>
+        <Text size="sm" c="dimmed">{greeting}</Text>
         <Title order={2} className={classes.pageTitle}>
           {user?.fullName || 'Giáo viên'}
         </Title>

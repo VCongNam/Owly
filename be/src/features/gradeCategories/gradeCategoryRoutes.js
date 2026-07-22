@@ -8,5 +8,7 @@ router.use(authMiddleware);
 
 router.get('/classes/:classId/grade-categories', gradeCategoryController.getGradeCategories);
 router.post('/classes/:classId/grade-categories', gradeCategoryController.createGradeCategory);
+router.put('/classes/:classId/grade-categories/:id', gradeCategoryController.updateGradeCategory);
+router.delete('/classes/:classId/grade-categories/:id', gradeCategoryController.deleteGradeCategory);
 
 export default router;
