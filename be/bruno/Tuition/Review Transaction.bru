@@ -1,0 +1,26 @@
+meta {
+  name: Review Transaction
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{baseUrl}}/api/tuition/transactions/:transactionId/review
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{teacherToken}}
+}
+
+params:path {
+  transactionId: TRANSACTION_UUID
+}
+
+body:json {
+  {
+    "status": "Approved",
+    "rejectionReason": ""
+  }
+}

@@ -16,6 +16,7 @@ import { ClassSessionsTab } from './ClassSessionsTab';
 import { ClassMaterialsTab } from './ClassMaterialsTab';
 import { ClassStreamTab } from './ClassStreamTab';
 import { ClassAssignmentsTab } from './ClassAssignmentsTab';
+import { ClassTuitionTab } from './ClassTuitionTab';
 import classes from './ClassDetailPage.module.css';
 
  
@@ -119,7 +120,8 @@ export function ClassDetailPage() {
           <Route path="sessions" element={<ClassSessionsTab classDetail={cls} />} />
           <Route path="materials" element={<ClassMaterialsTab />} />
           <Route path="assignments" element={<ClassAssignmentsTab />} />
-          {TABS.filter(tab => !['members', 'sessions', 'materials', 'stream', 'assignments'].includes(tab.key)).map((tab) => (
+          <Route path="tuition" element={<ClassTuitionTab />} />
+          {TABS.filter(tab => !['members', 'sessions', 'materials', 'stream', 'assignments', 'tuition'].includes(tab.key)).map((tab) => (
             <Route
               key={tab.key}
               path={tab.key}

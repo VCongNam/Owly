@@ -250,5 +250,30 @@ Tài liệu này lưu trữ tất cả các Kế hoạch Thực thi (Implementat
   - Hỗ trợ `ConfirmModal` cảnh báo trước khi xóa và tự động di chuyển bài tập liên quan.
 - **Gắn nút Thao tác (`ClassAssignmentsTab.jsx`)**: Đặt nút "Cấu hình đầu điểm" trên giao diện tab Bài tập để giáo viên mở nhanh Modal quản lý.
 
+---
+
+## 12. Phân hệ Quản lý Học phí (Tuition Fee Management) (Ngày 23/07/2026)
+
+### 1. Cơ cấu Cơ sở dữ liệu & Backend
+- **Cập nhật Database Schema**: Bổ sung `billingMonth`, `sessionCount`, `title` vào model `Invoice`; bổ sung `rejectionReason` vào model `Transaction`.
+- **API Backend & Business Logic**:
+  - API Cấu hình đơn giá học phí lớp (`GET/PUT /api/classes/:classId/tuition-config`).
+  - API Sinh hóa đơn tháng tự động dựa trên số buổi học trong tháng của lớp (`POST /api/classes/:classId/invoices/generate`).
+  - API Lấy danh sách hóa đơn lớp phân trang & thống kê (`GET /api/classes/:classId/invoices`).
+  - API Học sinh xem hóa đơn & nộp minh chứng chuyển khoản (`GET /api/tuition/my-invoices`, `POST /api/tuition/invoices/:invoiceId/submit-proof`).
+  - API Giáo viên đối soát & duyệt/từ chối giao dịch (`PATCH /api/tuition/transactions/:transactionId/review`).
+- **API Documentation (Bruno)**: Tạo bộ sưu tập `be/bruno/Tuition/` gồm 6 file kiểm thử API.
+
+### 2. Giao diện Người dùng Frontend
+- **Tab Học phí Lớp học (`ClassTuitionTab.jsx`)**:
+  - Thẻ thống kê tổng quan (Đơn giá/buổi, Tiền cần thu, Đã thu, Chưa thu).
+  - Chọn tháng/năm thu phí & nút "Tạo hóa đơn tháng".
+  - Bảng danh sách hóa đơn học viên kèm Badge trạng thái và nút xem minh chứng đối soát.
+- **Modals thao tác**:
+  - `TuitionConfigModal`: Cài đặt đơn giá học phí/buổi.
+  - `GenerateInvoicesModal`: Xem trước (Preview) danh sách hóa đơn trước khi phát hành.
+  - `PaymentProofModal`: Hiển thị VietQR động, ảnh minh chứng chuyển khoản, nút Duyệt/Từ chối.
+
+
 
 

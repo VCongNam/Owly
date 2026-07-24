@@ -1,0 +1,27 @@
+meta {
+  name: Generate Monthly Invoices
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/classes/:classId/invoices/generate
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{teacherToken}}
+}
+
+params:path {
+  classId: CLASS_UUID
+}
+
+body:json {
+  {
+    "billingMonth": "2026-07",
+    "dueDate": "2026-07-31T23:59:59.000Z",
+    "amountPerSession": 200000
+  }
+}

@@ -14,6 +14,7 @@ import assignmentRoutes from './features/assignments/assignmentRoutes.js';
 import materialRoutes from './features/materials/materialRoutes.js';
 import postRoutes from './features/posts/postRoutes.js';
 import gradeCategoryRoutes from './features/gradeCategories/gradeCategoryRoutes.js';
+import tuitionRoutes from './features/tuition/tuitionRoutes.js';
 
 
 dotenv.config();
@@ -37,6 +38,7 @@ app.use('/api/assignments', assignmentRoutes);
 app.use('/api', materialRoutes);
 app.use('/api', postRoutes);
 app.use('/api', gradeCategoryRoutes);
+app.use('/api', tuitionRoutes);
 
 
 // Test route

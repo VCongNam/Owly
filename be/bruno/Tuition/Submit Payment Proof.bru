@@ -1,0 +1,26 @@
+meta {
+  name: Submit Payment Proof
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/tuition/invoices/:invoiceId/submit-proof
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{studentToken}}
+}
+
+params:path {
+  invoiceId: INVOICE_UUID
+}
+
+body:json {
+  {
+    "proofUrl": "https://pub-r2.owly.app/proofs/sample.png",
+    "amountPaid": 1600000
+  }
+}

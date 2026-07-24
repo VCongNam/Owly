@@ -1,0 +1,26 @@
+meta {
+  name: Upsert Class Tuition Config
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{baseUrl}}/api/classes/:classId/tuition-config
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{teacherToken}}
+}
+
+params:path {
+  classId: CLASS_UUID
+}
+
+body:json {
+  {
+    "amount": 200000,
+    "billingCycle": "Monthly"
+  }
+}

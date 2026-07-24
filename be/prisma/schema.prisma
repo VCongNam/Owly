@@ -263,15 +263,20 @@ model ClassTum {
 }
 
 model Invoice {
-  id        String        @id @default(uuid()) @db.Uuid
-  studentId String        @map("student_id") @db.Uuid
-  classId   String        @map("class_id") @db.Uuid
-  amount    Float
-  dueDate   DateTime      @map("due_date") @db.Timestamptz
-  status    String        @default("Unpaid") @db.VarChar(50) // Unpaid, Pending, Paid
+  id           String        @id @default(uuid()) @db.Uuid
+  studentId    String        @map("student_id") @db.Uuid
+  classId      String        @map("class_id") @db.Uuid
+  title        String?       @db.VarChar(255)
+  billingMonth String?       @map("billing_month") @db.VarChar(7)
+  sessionCount Int?          @default(0) @map("session_count")
+  amount       Float
+  dueDate      DateTime      @map("due_date") @db.Timestamptz
+  status       String        @default("Unpaid") @db.VarChar(50) // Unpaid, Pending, Paid
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz
 
-  class     Class         @relation(fields: [classId], references: [id], onDelete: Cascade)
-  student   Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  class        Class         @relation(fields: [classId], references: [id], onDelete: Cascade)
+  student      Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
   transactions Transaction[]
 
   @@map("invoices")
@@ -284,10 +289,13 @@ model Transaction {
   amountPaid        Float    @map("amount_paid")
   proofUrl          String   @map("proof_url") @db.Text // Ảnh chụp minh chứng giao dịch học sinh tải lên
   transactionStatus String   @default("Pending") @map("transaction_status") @db.VarChar(50) // Pending, Approved, Rejected
-  processedById     String   @map("processed_by_id") @db.Uuid // Giáo viên chủ nhiệm lớp trực tiếp đối soát và duyệt tiền
+  processedById     String?  @map("processed_by_id") @db.Uuid // Giáo viên chủ nhiệm lớp trực tiếp đối soát và duyệt tiền (nullable khi chờ duyệt)
+  rejectionReason   String?  @map("rejection_reason") @db.Text
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   invoice           Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  processedBy       Teacher  @relation(fields: [processedById], references: [id])
+  processedBy       Teacher? @relation(fields: [processedById], references: [id])
 
   @@map("transactions")
 }
