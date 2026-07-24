@@ -274,6 +274,18 @@ Tài liệu này lưu trữ tất cả các Kế hoạch Thực thi (Implementat
   - `GenerateInvoicesModal`: Xem trước (Preview) danh sách hóa đơn trước khi phát hành.
   - `PaymentProofModal`: Hiển thị VietQR động, ảnh minh chứng chuyển khoản, nút Duyệt/Từ chối.
 
+---
+
+## 13. Tự động hóa Đối soát Học phí qua Webhook VietQR (SePay/Casso) (Ngày 24/07/2026)
+
+### 1. Nguyên lý Hoạt động & Backend API
+- **Endpoint Webhook công khai**: Khởi tạo API `POST /api/tuition/webhook/sepay` nhận thông báo giao dịch trực tiếp từ SePay/Casso khi có biến động số dư tài khoản của Giáo viên.
+- **Xác thực chữ ký & Đối soát tự động**:
+  - Sử dụng Token bí mật để xác thực request gửi từ SePay.
+  - Sử dụng biểu thức chính quy (Regex) phân tích nội dung chuyển khoản để khớp mã hóa đơn (`invoiceId`).
+  - Tự động cập nhật hóa đơn sang `Paid` nếu số tiền chuyển khoản khớp hoặc lớn hơn số tiền trên hóa đơn, đồng thời ghi nhận bản ghi giao dịch thành công.
+
+
 
 
 

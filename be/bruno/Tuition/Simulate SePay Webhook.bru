@@ -1,0 +1,32 @@
+meta {
+  name: Simulate SePay Webhook
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/tuition/webhook/sepay
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{teacherToken}}
+}
+
+headers {
+  Authorization: ApiKey owly_secret_webhook_key
+}
+
+body:json {
+  {
+    "id": 999999,
+    "gateway": "MBBank",
+    "transactionDate": "2026-07-24 18:50:00",
+    "accountNumber": "01234567890",
+    "transferType": "in",
+    "transferAmount": 1600000,
+    "content": "HS001 HP 07/2026",
+    "referenceCode": "FT2620588888"
+  }
+}
