@@ -329,3 +329,29 @@ Tài liệu này lưu trữ tất cả các Kế hoạch Thực thi (Implementat
   - Sổ điểm tổng kết (Gradebook).
   - Giáo viên upload bulk danh sách học sinh bằng file Excel.
 
+
+---
+
+## 16. Vá Lỗi Ưu tiên Cao — Phân quyền, Error Handler, Validate (Ngày 06/08/2026)
+
+### 1. Phân quyền nộp bài (`assignmentService.js`)
+- Thêm **Guard Enrollment**: `submitAssignment()` kiểm tra học sinh có phải thành viên active (`isActive: true`) của lớp chứa bài tập trước khi cho phép nộp. Trả `403` nếu không hợp lệ.
+- Thêm **Guard Deadline**: Kiểm tra `dueDate` — trả `400` nếu bài tập đã hết hạn nộp.
+- Đổi toàn bộ `throw new Error(...)` trong service assignments → `throw new AppError(message, statusCode)` để error handler nhận đúng HTTP status code.
+
+### 2. Centralized Error Handler
+- Tạo mới `be/src/middlewares/errorHandler.js`: Global Express error handler 4-argument.
+  - `AppError` (isOperational): dùng `statusCode` và `message` gốc (tiếng Việt).
+  - `Error` thường: luôn trả `500` + message chung, ẩn chi tiết.
+  - Stack trace chỉ expose ở môi trường non-production.
+- Đăng ký `app.use(errorHandler)` vào `app.js` **sau tất cả routes**, trước `app.listen()`.
+
+### 3. Nâng cấp Validate Middleware + Pagination Schema
+- `be/src/middlewares/validate.js`: Thêm tham số `target = 'body'` hỗ trợ `'query'` | `'params'`. Dùng `safeParse` thay `parse`. Ghi lại `req[target] = result.data` để coerce/default có hiệu lực.
+- Tạo mới `be/src/validation/paginationSchema.js`: Schema tái sử dụng (`page` ≥ 1, `limit` 1–100).
+- Áp dụng `validate(paginationSchema, 'query')` vào `GET /api/assignments/class/:classId`.
+- Đơn giản hóa controller `getAssignments`: bỏ `parseInt()` thủ công, đọc trực tiếp giá trị đã coerce.
+
+### 4. Bruno Documentation
+- Cập nhật `Submit Homework.bru`: ghi chú các behavior 403/400 mới.
+- Cập nhật `Get Assignments.bru`: thêm `params:query` và docs về pagination validation bounds.

@@ -19,6 +19,7 @@ import tuitionRoutes from './features/tuition/tuitionRoutes.js';
 import sepayRoutes from './features/tuition/sepayRoutes.js';
 import uploadRoutes from './features/upload/uploadRoutes.js';
 import excelRoutes from './features/upload/excelRoutes.js';
+import { errorHandler } from './middlewares/errorHandler.js';
 
 
 dotenv.config();
@@ -96,6 +97,9 @@ app.get('/health', async (req, res) => {
     uptime: process.uptime()
   });
 });
+
+// Global error handler — PHẢI đứng sau tất cả routes để Express nhận diện là error middleware
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

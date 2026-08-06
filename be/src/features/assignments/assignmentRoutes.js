@@ -9,6 +9,7 @@ import {
   createSubmissionSchema,
   gradeSubmissionSchema,
 } from './assignmentSchema.js';
+import { paginationSchema } from '../../validation/paginationSchema.js';
 
 const router = express.Router();
 
@@ -21,7 +22,7 @@ router.use(authMiddleware);
 // Routes
 router.get('/teacher/upcoming', assignmentController.getTeacherUpcomingAssignments);
 router.post('/', validate(createAssignmentSchema), assignmentController.createAssignment);
-router.get('/class/:classId', assignmentController.getAssignments);
+router.get('/class/:classId', validate(paginationSchema, 'query'), assignmentController.getAssignments);
 router.put('/:id', validate(updateAssignmentSchema), assignmentController.updateAssignment);
 router.delete('/:id', assignmentController.deleteAssignment);
 

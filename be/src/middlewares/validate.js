@@ -1,22 +1,22 @@
 // be/src/middlewares/validate.js
-export const validate = (schema) => (req, res, next) => {
-  try {
-    // Chỉ validate req.body, nếu cần mở rộng có thể validate req.query hoặc req.params
-    schema.parse(req.body);
-    next();
-  } catch (error) {
-    if (error.name === 'ZodError') {
-      const formattedErrors = error.issues.map((err) => ({
-        field: err.path.join('.'),
-        message: err.message
-      }));
+// target: 'body' | 'query' | 'params' — mặc định là 'body'
+export const validate = (schema, target = 'body') => (req, res, next) => {
+  const result = schema.safeParse(req[target]);
 
-      return res.status(400).json({
-        success: false,
-        message: 'Dữ liệu đầu vào không hợp lệ',
-        errors: formattedErrors
-      });
-    }
-    next(error);
+  if (!result.success) {
+    const formattedErrors = result.error.issues.map((err) => ({
+      field: err.path.join('.'),
+      message: err.message
+    }));
+
+    return res.status(400).json({
+      success: false,
+      message: 'Dữ liệu đầu vào không hợp lệ',
+      errors: formattedErrors
+    });
   }
+
+  // Ghi lại dữ liệu đã được coerce/default bởi Zod để controller nhận giá trị đã chuẩn hóa
+  req[target] = result.data;
+  next();
 };

@@ -86,11 +86,9 @@ export const createAssignment = async (req, res, next) => {
 export const getAssignments = async (req, res, next) => {
   try {
     const { classId } = req.params;
+    // page và limit đã được validate và coerce thành số bởi paginationSchema
     const { page, limit } = req.query;
-    const result = await assignmentService.getAssignmentsByClassId(classId, {
-      page: page ? parseInt(page) : 1,
-      limit: limit ? parseInt(limit) : 10
-    });
+    const result = await assignmentService.getAssignmentsByClassId(classId, { page, limit });
     res.status(200).json({ success: true, data: result });
   } catch (error) {
     next(error);

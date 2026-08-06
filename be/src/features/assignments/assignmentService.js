@@ -1,4 +1,5 @@
 import { prisma } from '../../config/db.js';
+import { AppError } from '../../utils/appError.js';
 import { getOrCreateDefaultGradeCategory } from '../gradeCategories/gradeCategoryService.js';
 
 export const createAssignment = async (data) => {
@@ -77,6 +78,28 @@ export const getTeacherUpcomingAssignments = async (teacherId, limit = 5) => {
 };
 
 export const submitAssignment = async (assignmentId, studentId, content) => {
+  // Lấy thông tin bài tập để kiểm tra quyền và hạn nộp
+  const assignment = await prisma.assignment.findUnique({
+    where: { id: assignmentId },
+    select: { id: true, classId: true, dueDate: true, title: true }
+  });
+  if (!assignment) {
+    throw new AppError('Bài tập không tồn tại', 404);
+  }
+
+  // Guard 1: Kiểm tra học sinh có phải thành viên active của lớp chứa bài tập không
+  const enrollment = await prisma.classEnrollment.findFirst({
+    where: { classId: assignment.classId, studentId, isActive: true }
+  });
+  if (!enrollment) {
+    throw new AppError('Bạn không phải thành viên của lớp học này', 403);
+  }
+
+  // Guard 2: Kiểm tra hạn nộp bài
+  if (assignment.dueDate && new Date() > new Date(assignment.dueDate)) {
+    throw new AppError('Bài tập đã hết hạn nộp', 400);
+  }
+
   const existing = await prisma.submission.findFirst({
     where: { assignmentId, studentId },
     include: { feedback: true }
@@ -84,7 +107,7 @@ export const submitAssignment = async (assignmentId, studentId, content) => {
 
   if (existing) {
     if (existing.feedback) {
-      throw new Error('Bài làm đã được chấm điểm, không thể nộp lại');
+      throw new AppError('Bài làm đã được chấm điểm, không thể nộp lại', 400);
     }
 
     return await prisma.submission.update({
@@ -112,9 +135,9 @@ export const getAssignmentSubmissions = async (assignmentId, teacherId) => {
     where: { id: assignmentId },
     include: { class: true }
   });
-  if (!assignment) throw new Error('Bài tập không tồn tại');
+  if (!assignment) throw new AppError('Bài tập không tồn tại', 404);
   if (assignment.class.teacherId !== teacherId) {
-    throw new Error('Bạn không có quyền xem bài nộp của bài tập này');
+    throw new AppError('Bạn không có quyền xem bài nộp của bài tập này', 403);
   }
 
   const enrollments = await prisma.classEnrollment.findMany({
@@ -167,9 +190,9 @@ export const gradeSubmission = async (submissionId, teacherId, { grade, remarks,
       }
     }
   });
-  if (!submission) throw new Error('Bài làm không tồn tại');
+  if (!submission) throw new AppError('Bài làm không tồn tại', 404);
   if (submission.assignment.class.teacherId !== teacherId) {
-    throw new Error('Bạn không có quyền chấm bài làm này');
+    throw new AppError('Bạn không có quyền chấm bài làm này', 403);
   }
 
   return await prisma.submissionFeedback.upsert({
