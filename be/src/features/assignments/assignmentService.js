@@ -55,3 +55,126 @@ export const deleteAssignment = async (id) => {
     where: { id }
   });
 };
+
+export const getTeacherUpcomingAssignments = async (teacherId, limit = 5) => {
+  return await prisma.assignment.findMany({
+    where: {
+      class: {
+        teacherId: teacherId
+      },
+      dueDate: {
+        gte: new Date()
+      }
+    },
+    include: {
+      class: true
+    },
+    orderBy: {
+      dueDate: 'asc'
+    },
+    take: limit
+  });
+};
+
+export const submitAssignment = async (assignmentId, studentId, content) => {
+  const existing = await prisma.submission.findFirst({
+    where: { assignmentId, studentId },
+    include: { feedback: true }
+  });
+
+  if (existing) {
+    if (existing.feedback) {
+      throw new Error('Bài làm đã được chấm điểm, không thể nộp lại');
+    }
+
+    return await prisma.submission.update({
+      where: { id: existing.id },
+      data: { content, submittedAt: new Date() }
+    });
+  }
+
+  return await prisma.submission.create({
+    data: { assignmentId, studentId, content }
+  });
+};
+
+export const getMySubmission = async (assignmentId, studentId) => {
+  return await prisma.submission.findFirst({
+    where: { assignmentId, studentId },
+    include: {
+      feedback: true
+    }
+  });
+};
+
+export const getAssignmentSubmissions = async (assignmentId, teacherId) => {
+  const assignment = await prisma.assignment.findUnique({
+    where: { id: assignmentId },
+    include: { class: true }
+  });
+  if (!assignment) throw new Error('Bài tập không tồn tại');
+  if (assignment.class.teacherId !== teacherId) {
+    throw new Error('Bạn không có quyền xem bài nộp của bài tập này');
+  }
+
+  const enrollments = await prisma.classEnrollment.findMany({
+    where: { classId: assignment.classId, isActive: true },
+    include: {
+      student: {
+        include: {
+          submissions: {
+            where: { assignmentId },
+            include: { feedback: true }
+          }
+        }
+      }
+    },
+    orderBy: {
+      student: {
+        fullName: 'asc'
+      }
+    }
+  });
+
+  return enrollments.map(e => {
+    const student = e.student;
+    const submission = student.submissions[0] || null;
+    return {
+      studentId: student.id,
+      fullName: student.fullName,
+      studentCode: student.studentCode,
+      submission: submission ? {
+        id: submission.id,
+        content: submission.content,
+        submittedAt: submission.submittedAt,
+        feedback: submission.feedback ? {
+          id: submission.feedback.id,
+          grade: submission.feedback.grade,
+          remarks: submission.feedback.remarks,
+          attachmentUrl: submission.feedback.attachmentUrl
+        } : null
+      } : null
+    };
+  });
+};
+
+export const gradeSubmission = async (submissionId, teacherId, { grade, remarks, attachmentUrl }) => {
+  const submission = await prisma.submission.findUnique({
+    where: { id: submissionId },
+    include: {
+      assignment: {
+        include: { class: true }
+      }
+    }
+  });
+  if (!submission) throw new Error('Bài làm không tồn tại');
+  if (submission.assignment.class.teacherId !== teacherId) {
+    throw new Error('Bạn không có quyền chấm bài làm này');
+  }
+
+  return await prisma.submissionFeedback.upsert({
+    where: { submissionId },
+    update: { grade, remarks, attachmentUrl, gradedById: teacherId },
+    create: { submissionId, grade, remarks, attachmentUrl, gradedById: teacherId }
+  });
+};

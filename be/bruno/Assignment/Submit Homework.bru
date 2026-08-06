@@ -1,0 +1,25 @@
+meta {
+  name: Submit Homework
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/assignments/:assignmentId/submissions
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{studentToken}}
+}
+
+params:path {
+  assignmentId: ASSIGNMENT_UUID
+}
+
+body:json {
+  {
+    "content": "https://supabase-storage-url/assignments/my-work.pdf"
+  }
+}

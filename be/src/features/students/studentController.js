@@ -101,11 +101,25 @@ export const updateSelfProfile = async (req, res, next) => {
 // Lấy danh sách thành viên trong lớp học
 export const getClassMembers = async (req, res, next) => {
   try {
-    const teacherId = req.user.id;
+    const userId = req.user.id;
+    const userRole = req.user.role;
     const { classId } = req.params;
     const { page, limit, search } = req.query;
 
-    const result = await studentService.getStudentsOfTeacherClasses(teacherId, {
+    if (userRole === 'student') {
+      const result = await studentService.getClassMembersForStudent(classId, userId, {
+        page: page || 1,
+        limit: limit || 100,
+        search
+      });
+      return res.status(200).json({
+        success: true,
+        data: result
+      });
+    }
+
+    // Đối với Giáo viên: Giữ nguyên logic cũ
+    const result = await studentService.getStudentsOfTeacherClasses(userId, {
       classId,
       page: page || 1,
       limit: limit || 100, // Lấy toàn bộ thành viên lớp hoặc phân trang tùy chọn
@@ -164,6 +178,26 @@ export const createAndEnrollStudent = async (req, res, next) => {
   }
 };
 
+// Giáo viên tạo mới hàng loạt học sinh và ghi danh vào lớp
+export const bulkImportStudents = async (req, res, next) => {
+  try {
+    const teacherId = req.user.id;
+    const { classId } = req.params;
+    const { students } = req.body;
+
+    const newStudents = await studentService.bulkCreateAndEnrollStudents(classId, teacherId, students);
+    const formatted = newStudents.map(student => formatStudentDates(student));
+
+    return res.status(201).json({
+      success: true,
+      message: `Tạo tài khoản và ghi danh thành công ${newStudents.length} học viên`,
+      data: formatted
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Giáo viên hủy liên kết (Unenroll) học sinh khỏi lớp
 export const unenrollStudent = async (req, res, next) => {
   try {
@@ -192,6 +226,38 @@ export const getStudentAttendanceLog = async (req, res, next) => {
     return res.status(200).json({
       success: true,
       data: log
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Học sinh xem danh sách lớp của chính mình
+export const getMyClasses = async (req, res, next) => {
+  try {
+    const studentId = req.user.id;
+    const classes = await studentService.getMyClasses(studentId);
+
+    return res.status(200).json({
+      success: true,
+      data: classes
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Học sinh xem lịch học tổng hợp của chính mình
+export const getMySchedule = async (req, res, next) => {
+  try {
+    const studentId = req.user.id;
+    const { startDate, endDate, classId } = req.query;
+
+    const sessions = await studentService.getMySchedule(studentId, startDate, endDate, classId);
+
+    return res.status(200).json({
+      success: true,
+      data: sessions
     });
   } catch (error) {
     next(error);

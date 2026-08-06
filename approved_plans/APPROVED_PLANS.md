@@ -285,7 +285,47 @@ Tài liệu này lưu trữ tất cả các Kế hoạch Thực thi (Implementat
   - Sử dụng biểu thức chính quy (Regex) phân tích nội dung chuyển khoản để khớp mã hóa đơn (`invoiceId`).
   - Tự động cập nhật hóa đơn sang `Paid` nếu số tiền chuyển khoản khớp hoặc lớn hơn số tiền trên hóa đơn, đồng thời ghi nhận bản ghi giao dịch thành công.
 
+---
 
+## 14. Tích hợp API & Tái cấu trúc Dashboard Giáo viên (Ngày 29/07/2026)
 
+### 1. Đồng bộ API & Cơ sở dữ liệu (Backend)
+- **API Mới**:
+  - `GET /api/tuition/teacher/pending`: Lấy danh sách toàn bộ hóa đơn có trạng thái `Pending` của các lớp học do giáo viên sở hữu để duyệt học phí.
+  - `GET /api/assignments/teacher/upcoming`: Lấy danh sách toàn bộ bài tập sắp tới (dueDate >= hiện tại) của các lớp học do giáo viên phụ trách.
+- **Controller & Service**:
+  - Viết logic truy vấn Prisma liên kết các bảng lớp học và giáo viên.
 
+### 2. Tích hợp Frontend & Giao diện Dashboard Giáo viên (`TeacherDashboard`)
+- **API Services**:
+  - Thêm API calls `tuitionService.getTeacherPendingInvoices` và `assignmentService.getTeacherUpcomingAssignments`.
+- **Giao diện người dùng**:
+  - Tái cấu trúc `TeacherDashboard` trong `DashboardPage.jsx` tương tự `StudentDashboard`.
+  - Sử dụng 4 thẻ thống kê động tích hợp dữ liệu thực từ `classService`, `studentService`, `scheduleService`, `tuitionService`.
+  - Hiển thị lối tắt nhanh, lịch dạy hôm nay, hóa đơn học phí chờ duyệt và danh sách lớp học giáo viên phụ trách.
+  - Tích hợp Skeleton loading và Empty states.
+
+---
+
+## 15. Phân hệ Student Learning Portal (Ngày 29/07/2026)
+
+### 1. Đồng bộ API Backend (Prisma & Express.js)
+- **API Nộp bài & Chấm điểm (Assignments & Submissions)**:
+  - `POST /api/assignments/:assignmentId/submissions`: Học sinh nộp bài tập (tải tệp lên Cloudflare R2 và lưu link).
+  - `GET /api/assignments/:assignmentId/my-submission`: Học sinh xem bài nộp cá nhân cùng kết quả chấm điểm.
+  - `GET /api/assignments/:assignmentId/submissions`: Giáo viên lấy danh sách bài nộp của lớp để chấm.
+  - `POST /api/submissions/:submissionId/feedback`: Giáo viên chấm điểm và viết nhận xét cho bài nộp.
+- **Bảo mật & Quyền hạn (Class Members)**:
+  - Cập nhật API `GET /api/classes/:classId/members`: Bổ sung logic tự động ẩn `studentCode`, email đăng nhập, `parentPhone` của các học viên khác nếu người dùng thực hiện cuộc gọi là `student`.
+
+### 2. Giao diện Người dùng Frontend (Vite + React)
+- **Hành động & Phân quyền các Tab lớp học**:
+  - **ClassSessionsTab**: Học sinh xem lịch học và trạng thái điểm danh (Có mặt, Vắng, Muộn, Phép). Ẩn các nút hành động chỉnh sửa lịch và ẩn cột nhận xét buổi học.
+  - **ClassMembersTab**: Học sinh xem danh sách bạn cùng lớp (chỉ hiển thị Họ tên và Avatar). Ẩn mã học sinh, ẩn thông tin liên hệ và các nút xóa/điểm danh thành viên.
+  - **ClassAssignmentsTab**: Học sinh xem danh sách bài tập, hạn nộp, và nộp bài làm trực tiếp. Xem kết quả điểm số sau khi giáo viên chấm bài.
+  - **ClassTuitionTab**: Giao diện học phí riêng của học sinh: danh sách hóa đơn cá nhân, thanh toán VietQR động và nút upload Payment Proof.
+- **Tính năng lùi lại phát triển sau (Deferred)**:
+  - Xem nhận xét chi tiết buổi học (Session Feedback details).
+  - Sổ điểm tổng kết (Gradebook).
+  - Giáo viên upload bulk danh sách học sinh bằng file Excel.
 

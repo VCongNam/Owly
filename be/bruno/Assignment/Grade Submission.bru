@@ -1,0 +1,26 @@
+meta {
+  name: Grade Submission
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/assignments/submissions/:submissionId/feedback
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{teacherToken}}
+}
+
+params:path {
+  submissionId: SUBMISSION_UUID
+}
+
+body:json {
+  {
+    "grade": 9.5,
+    "remarks": "Bài làm rất tốt, lập luận chặt chẽ."
+  }
+}

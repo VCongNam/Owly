@@ -352,3 +352,43 @@ export const reviewTransaction = async (teacherId, transactionId, { status, reje
 
   return updatedTransaction;
 };
+
+export const getTeacherPendingInvoices = async (teacherId) => {
+  return await prisma.invoice.findMany({
+    where: {
+      status: 'Pending',
+      class: {
+        teacherId,
+      },
+    },
+    include: {
+      student: {
+        select: {
+          id: true,
+          fullName: true,
+          studentCode: true,
+        },
+      },
+      class: {
+        select: {
+          id: true,
+          name: true,
+          classCode: true,
+        },
+      },
+      transactions: {
+        where: {
+          transactionStatus: 'Pending',
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        take: 1,
+      },
+    },
+    orderBy: {
+      updatedAt: 'desc',
+    },
+  });
+};
+

@@ -122,7 +122,7 @@ export const createClass = async (teacherId, data) => {
   });
 };
 
-export const getClasses = async (teacherId, options = {}) => {
+export const getClasses = async (userId, userRole, options = {}) => {
   const page = Number(options.page) || 1;
   const limit = Number(options.limit) || 9;
   const search = options.search || '';
@@ -130,9 +130,17 @@ export const getClasses = async (teacherId, options = {}) => {
   const skip = (page - 1) * limit;
 
   // Xây dựng điều kiện truy vấn
-  const where = {
-    teacherId,
-  };
+  const where = {};
+  if (userRole === 'student') {
+    where.enrollments = {
+      some: {
+        studentId: userId,
+        isActive: true
+      }
+    };
+  } else {
+    where.teacherId = userId;
+  }
 
   // Lọc theo từ khóa tìm kiếm (không phân biệt hoa thường)
   if (search) {
@@ -192,7 +200,7 @@ export const getClasses = async (teacherId, options = {}) => {
   };
 };
 
-export const getClassById = async (id, teacherId) => {
+export const getClassById = async (id, userId, userRole) => {
   const classObj = await prisma.class.findUnique({
     where: { id },
     include: {
@@ -215,8 +223,17 @@ export const getClassById = async (id, teacherId) => {
 
   if (!classObj) return null;
   
-  if (classObj.teacherId !== teacherId) {
-    throw new Error('Bạn không có quyền truy cập lớp học này');
+  if (userRole === 'student') {
+    const isEnrolled = await prisma.classEnrollment.findFirst({
+      where: { classId: id, studentId: userId, isActive: true }
+    });
+    if (!isEnrolled) {
+      throw new Error('Bạn không có quyền truy cập lớp học này');
+    }
+  } else {
+    if (classObj.teacherId !== userId) {
+      throw new Error('Bạn không có quyền truy cập lớp học này');
+    }
   }
 
   return {

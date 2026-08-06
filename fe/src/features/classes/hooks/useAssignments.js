@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { notifications } from '@mantine/notifications';
 import { assignmentService } from '../services/assignments';
+import { uploadService } from '../../../services/uploadService';
 
 export function useAssignments(classId) {
   const [assignments, setAssignments] = useState([]);
@@ -42,7 +43,7 @@ export function useAssignments(classId) {
         const result = await assignmentService.createFileFromEditor(htmlContent);
         if (result?.url) attachmentUrls.push(result.url);
       } else if (mode === 'upload' && files?.length > 0) {
-        const result = await assignmentService.uploadFiles(files);
+        const result = await uploadService.uploadFiles(files, 'assignments');
         attachmentUrls = result?.attachmentUrls || [];
       }
 

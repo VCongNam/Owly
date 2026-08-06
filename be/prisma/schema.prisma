@@ -236,13 +236,14 @@ model Submission {
 }
 
 model SubmissionFeedback {
-  id           String     @id @default(uuid()) @db.Uuid
-  submissionId String     @unique @map("submission_id") @db.Uuid
-  grade        Float
-  remarks      String     @db.Text
-  gradedById   String     @map("graded_by_id") @db.Uuid // Giáo viên trực tiếp chấm điểm
+  id            String     @id @default(uuid()) @db.Uuid
+  submissionId  String     @unique @map("submission_id") @db.Uuid
+  grade         Float
+  remarks       String     @db.Text
+  attachmentUrl String?    @map("attachment_url") @db.Text
+  gradedById    String     @map("graded_by_id") @db.Uuid // Giáo viên trực tiếp chấm điểm
 
-  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submission    Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
 
   @@map("submission_feedbacks")
 }

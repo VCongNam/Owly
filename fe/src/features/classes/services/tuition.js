@@ -32,6 +32,10 @@ export const tuitionService = {
   reviewTransaction: async (transactionId, data) => {
     return await apiClient.patch(`/api/tuition/transactions/${transactionId}/review`, data);
   },
+
+  getTeacherPendingInvoices: async () => {
+    return await apiClient.get('/api/tuition/teacher/pending');
+  },
 };
 
 export default tuitionService;

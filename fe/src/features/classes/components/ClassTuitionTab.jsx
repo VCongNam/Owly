@@ -38,10 +38,45 @@ import { useClassDetails } from '../hooks/useClasses';
 import { TuitionConfigModal } from './TuitionConfigModal';
 import { GenerateInvoicesModal } from './GenerateInvoicesModal';
 import { PaymentProofModal } from './PaymentProofModal';
+import { StudentPaymentProofModal } from './StudentPaymentProofModal';
+import { useAuth } from '../../auth';
+import { tuitionService } from '../services/tuition';
 
 export function ClassTuitionTab() {
+  const { user } = useAuth();
+  const isStudent = user?.role === 'student';
+
   const { classId } = useParams();
   const { classDetail } = useClassDetails(classId);
+
+  // Teacher hook called only if not student
+  const teacherClassTuition = useClassTuition(isStudent ? null : classId);
+
+  // Student specific state
+  const [studentInvoices, setStudentInvoices] = useState([]);
+  const [loadingStudentInvoices, setLoadingStudentInvoices] = useState(false);
+  const [studentStatusFilter, setStudentStatusFilter] = useState('');
+  const [studentSelectedInvoice, setStudentSelectedInvoice] = useState(null);
+
+  const fetchStudentClassInvoices = useCallback(async () => {
+    if (!classId) return;
+    try {
+      setLoadingStudentInvoices(true);
+      const allInvoices = await tuitionService.getStudentInvoices();
+      const filtered = allInvoices.filter(inv => inv.classId === classId);
+      setStudentInvoices(filtered);
+    } catch (error) {
+      console.error('Lỗi khi tải hóa đơn học sinh:', error);
+    } finally {
+      setLoadingStudentInvoices(false);
+    }
+  }, [classId]);
+
+  useEffect(() => {
+    if (isStudent && classId) {
+      fetchStudentClassInvoices();
+    }
+  }, [isStudent, classId, fetchStudentClassInvoices]);
 
   const {
     config,
@@ -56,7 +91,22 @@ export function ClassTuitionTab() {
     fetchInvoices,
     generateInvoices,
     reviewTransaction,
-  } = useClassTuition(classId);
+  } = isStudent
+    ? {
+        config: { amount: 0 },
+        loadingConfig: false,
+        invoices: [],
+        loadingInvoices: false,
+        stats: { totalExpected: 0, totalCollected: 0, totalPending: 0, totalUnpaid: 0 },
+        unbilledPastMonths: [],
+        pagination: { totalPages: 1 },
+        submitting: false,
+        updateConfig: () => {},
+        fetchInvoices: () => {},
+        generateInvoices: () => {},
+        reviewTransaction: () => {},
+      }
+    : teacherClassTuition;
 
   const [selectedMonthDate, setSelectedMonthDate] = useState(new Date());
   const [generateModalMonthDate, setGenerateModalMonthDate] = useState(new Date());
@@ -83,6 +133,7 @@ export function ClassTuitionTab() {
 
   const handleFetch = useCallback(
     (page = 1) => {
+      if (isStudent) return;
       fetchInvoices({
         page,
         limit: 10,
@@ -91,13 +142,14 @@ export function ClassTuitionTab() {
         search: searchQuery || undefined,
       });
     },
-    [fetchInvoices, currentBillingMonth, statusFilter, searchQuery]
+    [fetchInvoices, currentBillingMonth, statusFilter, searchQuery, isStudent]
   );
 
   useEffect(() => {
+    if (isStudent) return;
     setActivePage(1);
     handleFetch(1);
-  }, [currentBillingMonth, statusFilter, handleFetch]);
+  }, [currentBillingMonth, statusFilter, handleFetch, isStudent]);
 
   const handlePageChange = (page) => {
     setActivePage(page);
@@ -118,6 +170,197 @@ export function ClassTuitionTab() {
         bankBin: classDetail.teacher.bankBin,
       }
     : {};
+
+  if (isStudent) {
+    const unpaidInvoices = studentInvoices.filter(i => i.status === 'Unpaid');
+    const pendingInvoices = studentInvoices.filter(i => i.status === 'Pending');
+    const paidInvoices = studentInvoices.filter(i => i.status === 'Paid');
+
+    const totalUnpaidAmount = unpaidInvoices.reduce((sum, i) => sum + i.amount, 0);
+    const totalPendingAmount = pendingInvoices.reduce((sum, i) => sum + i.amount, 0);
+    const totalPaidAmount = paidInvoices.reduce((sum, i) => sum + i.amount, 0);
+
+    const filteredInvoices = studentStatusFilter
+      ? studentInvoices.filter(i => i.status === studentStatusFilter)
+      : studentInvoices;
+
+    return (
+      <Stack gap="lg">
+        {/* Thẻ thống kê Học sinh */}
+        <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
+          {/* Chưa thanh toán */}
+          <Paper p="md" radius="md" withBorder style={{ backgroundColor: 'var(--card-bg)' }}>
+            <Group justify="space-between" align="flex-start">
+              <div>
+                <Text size="xs" c="dimmed" fw={600} tt="uppercase">
+                  Chưa thanh toán
+                </Text>
+                <Text size="xl" fw={700} c="red" mt={4}>
+                  {totalUnpaidAmount.toLocaleString('vi-VN')} đ
+                </Text>
+              </div>
+              <Clock size={24} weight="duotone" color="red" />
+            </Group>
+          </Paper>
+
+          {/* Chờ đối soát */}
+          <Paper p="md" radius="md" withBorder style={{ backgroundColor: 'var(--card-bg)' }}>
+            <Group justify="space-between" align="flex-start">
+              <div>
+                <Text size="xs" c="dimmed" fw={600} tt="uppercase">
+                  Chờ đối soát
+                </Text>
+                <Text size="xl" fw={700} c="orange" mt={4}>
+                  {totalPendingAmount.toLocaleString('vi-VN')} đ
+                </Text>
+              </div>
+              <Clock size={24} weight="duotone" color="orange" />
+            </Group>
+          </Paper>
+
+          {/* Đã thanh toán */}
+          <Paper p="md" radius="md" withBorder style={{ backgroundColor: 'var(--card-bg)' }}>
+            <Group justify="space-between" align="flex-start">
+              <div>
+                <Text size="xs" c="dimmed" fw={600} tt="uppercase">
+                  Đã thanh toán
+                </Text>
+                <Text size="xl" fw={700} c="teal" mt={4}>
+                  {totalPaidAmount.toLocaleString('vi-VN')} đ
+                </Text>
+              </div>
+              <CheckCircle size={24} weight="duotone" color="teal" />
+            </Group>
+          </Paper>
+        </SimpleGrid>
+
+        {/* Thanh công cụ học sinh */}
+        <Paper p="md" radius="md" withBorder style={{ backgroundColor: 'var(--card-bg)' }}>
+          <Group justify="space-between" align="center" wrap="wrap" gap="md">
+            <Select
+              placeholder="Trạng thái thanh toán"
+              value={studentStatusFilter}
+              onChange={(val) => setStudentStatusFilter(val || '')}
+              data={[
+                { value: '', label: 'Tất cả trạng thái' },
+                { value: 'Unpaid', label: 'Chưa thanh toán' },
+                { value: 'Pending', label: 'Chờ đối soát' },
+                { value: 'Paid', label: 'Đã thanh toán' },
+              ]}
+              clearable
+              size="sm"
+              style={{ width: 220 }}
+            />
+          </Group>
+        </Paper>
+
+        {/* Bảng danh sách hóa đơn cá nhân */}
+        <Paper radius="md" withBorder style={{ backgroundColor: 'var(--card-bg)', overflow: 'hidden' }}>
+          <ScrollArea>
+            <Table verticalSpacing="sm" horizontalSpacing="md" highlightOnHover style={{ minWidth: 600 }}>
+              <Table.Thead style={{ backgroundColor: 'var(--bg-color)' }}>
+                <Table.Tr>
+                  <Table.Th>Hóa đơn</Table.Th>
+                  <Table.Th>Tháng</Table.Th>
+                  <Table.Th style={{ textAlign: 'center' }}>Số buổi</Table.Th>
+                  <Table.Th style={{ textAlign: 'right' }}>Số tiền (VNĐ)</Table.Th>
+                  <Table.Th>Hạn nộp</Table.Th>
+                  <Table.Th>Trạng thái</Table.Th>
+                  <Table.Th style={{ textAlign: 'center' }}>Hành động</Table.Th>
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {loadingStudentInvoices ? (
+                  <Table.Tr>
+                    <Table.Td colSpan={7}>
+                      <Center py="xl">
+                        <Loader color="copper" size="sm" />
+                      </Center>
+                    </Table.Td>
+                  </Table.Tr>
+                ) : filteredInvoices.length === 0 ? (
+                  <Table.Tr>
+                    <Table.Td colSpan={7}>
+                      <Center py="xl">
+                        <Stack align="center" gap="xs">
+                          <CurrencyCircleDollar size={40} weight="duotone" color="var(--mantine-color-gray-4)" />
+                          <Text size="sm" c="dimmed">
+                            Không tìm thấy hóa đơn học phí nào.
+                          </Text>
+                        </Stack>
+                      </Center>
+                    </Table.Td>
+                  </Table.Tr>
+                ) : (
+                  filteredInvoices.map((inv) => {
+                    const STATUS_MAP = {
+                      Paid: { label: 'Đã thanh toán', color: 'teal' },
+                      Pending: { label: 'Chờ đối soát', color: 'orange' },
+                      Unpaid: { label: 'Chưa thanh toán', color: 'red' },
+                    };
+                    const statusInfo = STATUS_MAP[inv.status] || { label: inv.status, color: 'gray' };
+
+                    return (
+                      <Table.Tr key={inv.id}>
+                        <Table.Td>
+                          <Text size="sm" fw={600}>
+                            {inv.title || 'Hóa đơn học phí'}
+                          </Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Badge variant="dot" color="blue" size="sm">
+                            {inv.billingMonth ? `Tháng ${inv.billingMonth.split('-')[1]}/${inv.billingMonth.split('-')[0]}` : '---'}
+                          </Badge>
+                        </Table.Td>
+                        <Table.Td style={{ textAlign: 'center' }}>
+                          <Text size="sm" fw={500}>
+                            {inv.sessionCount || 0} buổi
+                          </Text>
+                        </Table.Td>
+                        <Table.Td style={{ textAlign: 'right' }}>
+                          <Text size="sm" fw={700} c="copper">
+                            {Number(inv.amount).toLocaleString('vi-VN')} đ
+                          </Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size="sm">
+                            {inv.dueDate ? dayjs(inv.dueDate).format('DD/MM/YYYY') : '---'}
+                          </Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Badge variant="light" color={statusInfo.color} size="md">
+                            {statusInfo.label}
+                          </Badge>
+                        </Table.Td>
+                        <Table.Td style={{ textAlign: 'center' }}>
+                          <Button
+                            variant={inv.status === 'Unpaid' ? 'filled' : 'light'}
+                            color={inv.status === 'Unpaid' ? 'copper' : 'gray'}
+                            size="xs"
+                            onClick={() => setStudentSelectedInvoice(inv)}
+                          >
+                            {inv.status === 'Unpaid' ? 'Thanh toán' : 'Chi tiết'}
+                          </Button>
+                        </Table.Td>
+                      </Table.Tr>
+                    );
+                  })
+                )}
+              </Table.Tbody>
+            </Table>
+          </ScrollArea>
+        </Paper>
+
+        <StudentPaymentProofModal
+          opened={!!studentSelectedInvoice}
+          onClose={() => setStudentSelectedInvoice(null)}
+          invoice={studentSelectedInvoice}
+          teacherBank={teacherBank}
+          onSuccess={fetchStudentClassInvoices}
+        />
+      </Stack>
+    );
+  }
 
   return (
     <Stack gap="lg">
@@ -286,7 +529,7 @@ export function ClassTuitionTab() {
       <Paper radius="md" withBorder style={{ backgroundColor: 'var(--card-bg)', overflow: 'hidden' }}>
         <ScrollArea>
           <Table verticalSpacing="sm" horizontalSpacing="md" highlightOnHover style={{ minWidth: 800 }}>
-            <Table.Thead style={{ backgroundColor: 'var(--mantine-color-gray-0)' }}>
+            <Table.Thead style={{ backgroundColor: 'var(--bg-color)' }}>
               <Table.Tr>
                 <Table.Th>Học viên</Table.Th>
                 <Table.Th>Tên Hóa đơn</Table.Th>

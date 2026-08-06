@@ -30,13 +30,14 @@ export const getPersonalSchedule = async (req, res) => {
   }
 };
 
-export const getClassSessions = async (req, res) => {
+export const getClassSessions = async (req, res, next) => {
   try {
-    const teacherId = req.user.id;
+    const userId = req.user.id;
+    const userRole = req.user.role;
     const { classId } = req.params;
     const { page, limit } = req.query;
 
-    const result = await scheduleService.getClassSessions(classId, teacherId, { page, limit });
+    const result = await scheduleService.getClassSessions(classId, userId, userRole, { page, limit });
 
     return res.status(200).json({
       success: true,

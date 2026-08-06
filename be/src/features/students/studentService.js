@@ -460,3 +460,347 @@ export const getStudentAttendanceLog = async (classId, studentId, teacherId) => 
     sessions: sessionLogs
   };
 };
+
+// Học sinh xem danh sách lớp mình đang học
+export const getMyClasses = async (studentId) => {
+  const enrollments = await prisma.classEnrollment.findMany({
+    where: {
+      studentId,
+      isActive: true
+    },
+    include: {
+      class: {
+        include: {
+          subject: true,
+          teacher: {
+            select: {
+              id: true,
+              fullName: true,
+              teacherCode: true
+            }
+          },
+          schedules: true,
+          _count: {
+            select: {
+              enrollments: true,
+              sessions: true,
+              assignments: true,
+              materials: true,
+              posts: true
+            }
+          }
+        }
+      }
+    },
+    orderBy: {
+      enrollmentDate: 'desc'
+    }
+  });
+
+  return enrollments
+    .map((enrollment) => {
+      const cls = enrollment.class;
+      if (!cls) return null;
+      return {
+        id: cls.id,
+        classCode: cls.classCode,
+        name: cls.name,
+        status: cls.status,
+        startDate: cls.startDate,
+        expectedEndDate: cls.expectedEndDate,
+        createdAt: cls.createdAt,
+        subject: cls.subject ? {
+          id: cls.subject.id,
+          name: cls.subject.name,
+          code: cls.subject.code
+        } : null,
+        teacher: cls.teacher,
+        schedules: cls.schedules,
+        counts: {
+          enrollments: cls._count?.enrollments || 0,
+          sessions: cls._count?.sessions || 0,
+          assignments: cls._count?.assignments || 0,
+          materials: cls._count?.materials || 0,
+          posts: cls._count?.posts || 0
+        },
+        enrollmentDate: enrollment.enrollmentDate
+      };
+    })
+    .filter(Boolean);
+};
+
+// Học sinh xem lịch học cá nhân tổng hợp từ tất cả lớp đã ghi danh
+export const getMySchedule = async (studentId, startDateStr, endDateStr, classId = null) => {
+  const start = startDateStr ? new Date(startDateStr) : null;
+  const end = endDateStr ? new Date(endDateStr) : null;
+
+  if (startDateStr && isNaN(start?.getTime())) {
+    throw new Error('Ngày bắt đầu không hợp lệ');
+  }
+  if (endDateStr && isNaN(end?.getTime())) {
+    throw new Error('Ngày kết thúc không hợp lệ');
+  }
+
+  const enrollmentWhere = {
+    studentId,
+    isActive: true
+  };
+  if (classId) {
+    enrollmentWhere.classId = classId;
+  }
+
+  const enrollments = await prisma.classEnrollment.findMany({
+    where: enrollmentWhere,
+    select: {
+      classId: true
+    }
+  });
+
+  const classIds = enrollments.map((item) => item.classId);
+  if (classIds.length === 0) return [];
+
+  const sessionWhere = {
+    classId: { in: classIds }
+  };
+  if (start) sessionWhere.date = { ...(sessionWhere.date || {}), gte: start };
+  if (end) sessionWhere.date = { ...(sessionWhere.date || {}), lte: end };
+
+  const sessions = await prisma.session.findMany({
+    where: sessionWhere,
+    include: {
+      class: {
+        select: {
+          id: true,
+          name: true,
+          classCode: true,
+          status: true
+        }
+      },
+      attendances: {
+        where: {
+          studentId
+        },
+        select: {
+          status: true
+        }
+      },
+      feedbacks: {
+        where: {
+          studentId
+        },
+        select: {
+          id: true
+        }
+      }
+    },
+    orderBy: {
+      date: 'asc'
+    }
+  });
+
+  return sessions.map((session) => ({
+    sessionId: session.id,
+    classId: session.classId,
+    className: session.class.name,
+    classCode: session.class.classCode,
+    title: session.title || 'Buổi học',
+    date: session.date,
+    status: session.status,
+    attendanceStatus: session.attendances[0]?.status || null,
+    hasAttendance: session.attendances.length > 0,
+    hasFeedback: session.feedbacks.length > 0
+  }));
+};
+
+export const getClassMembersForStudent = async (classId, studentId, options = {}) => {
+  const page = Number(options.page) || 1;
+  const limit = Number(options.limit) || 100;
+  const search = options.search || '';
+  const skip = (page - 1) * limit;
+
+  const isEnrolled = await prisma.classEnrollment.findFirst({
+    where: { classId, studentId, isActive: true }
+  });
+
+  if (!isEnrolled) {
+    throw new Error('Bạn không có quyền truy cập danh sách thành viên lớp này');
+  }
+
+  const where = {
+    classId,
+    isActive: true,
+  };
+
+  if (search) {
+    where.student = {
+      fullName: { contains: search, mode: 'insensitive' }
+    };
+  }
+
+  const totalItems = await prisma.classEnrollment.count({ where });
+  const enrollments = await prisma.classEnrollment.findMany({
+    where,
+    include: {
+      student: {
+        include: {
+          account: {
+            select: {
+              avatarUrl: true
+            }
+          }
+        }
+      }
+    },
+    skip,
+    take: limit
+  });
+
+  const items = enrollments.map(e => {
+    const student = e.student;
+    const isSelf = student.id === studentId;
+    return {
+      id: student.id,
+      fullName: student.fullName,
+      studentCode: isSelf ? student.studentCode : undefined,
+      parentPhone: isSelf ? student.parentPhone : undefined,
+      account: {
+        avatarUrl: student.account?.avatarUrl || null
+      }
+    };
+  });
+
+  return {
+    items,
+    pagination: {
+      totalItems,
+      totalPages: Math.ceil(totalItems / limit),
+      currentPage: page,
+      limit
+    }
+  };
+};
+
+export const bulkCreateAndEnrollStudents = async (classId, teacherId, studentsData) => {
+  // 1. Kiểm tra lớp học thuộc quyền giáo viên
+  const targetClass = await prisma.class.findFirst({
+    where: { id: classId, teacherId }
+  });
+
+  if (!targetClass) {
+    throw new Error('Không tìm thấy lớp học hoặc bạn không có quyền sở hữu lớp học này');
+  }
+
+  // 2. Chạy transaction để tạo hàng loạt tài khoản
+  return await prisma.$transaction(async (tx) => {
+    const createdStudents = [];
+
+    for (const studentData of studentsData) {
+      // 2.1 Kiểm tra trùng lặp theo Email cá nhân (nếu được cung cấp)
+      if (studentData.email) {
+        const existingAccount = await tx.account.findUnique({
+          where: { email: studentData.email },
+          include: { studentProfile: true }
+        });
+
+        if (existingAccount && existingAccount.studentProfile) {
+          const studentId = existingAccount.id;
+          
+          // Ghi danh vào lớp học nếu chưa có
+          const existingEnrollment = await tx.classEnrollment.findFirst({
+            where: { classId, studentId }
+          });
+          if (!existingEnrollment) {
+            await tx.classEnrollment.create({
+              data: { classId, studentId, isActive: true }
+            });
+          }
+          createdStudents.push(existingAccount.studentProfile);
+          continue; // Bỏ qua tạo tài khoản mới, tiếp tục vòng lặp
+        }
+      }
+
+      // 2.2 Kiểm tra trùng lặp theo Họ tên + Ngày sinh + Số điện thoại phụ huynh
+      const existingStudent = await tx.student.findFirst({
+        where: {
+          fullName: studentData.fullName,
+          dateOfBirth: new Date(studentData.dateOfBirth),
+          parentPhone: studentData.parentPhone
+        }
+      });
+
+      if (existingStudent) {
+        const studentId = existingStudent.id;
+        
+        // Ghi danh vào lớp học nếu chưa có
+        const existingEnrollment = await tx.classEnrollment.findFirst({
+          where: { classId, studentId }
+        });
+        if (!existingEnrollment) {
+          await tx.classEnrollment.create({
+            data: { classId, studentId, isActive: true }
+          });
+        }
+        createdStudents.push(existingStudent);
+        continue; // Bỏ qua tạo tài khoản mới, tiếp tục vòng lặp
+      }
+
+      const studentCode = await generateStudentCode(tx);
+      const email = studentData.email || `${studentCode.toLowerCase()}@owly.vn`;
+      const password = 'Owly@123456'; // Mật khẩu mặc định
+
+      // 3. Tạo tài khoản trong Supabase Auth bằng Admin API
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          role: 'student',
+          full_name: studentData.fullName
+        }
+      });
+
+      if (authError) {
+        throw new Error(`Lỗi khởi tạo tài khoản ${studentData.fullName} trên Auth Server: ${authError.message}`);
+      }
+
+      const studentId = authData.user.id;
+
+      // 4. Tạo Account cục bộ
+      await tx.account.create({
+        data: {
+          id: studentId,
+          email,
+          phone: studentData.phone || null,
+          passwordHash: 'EXTERNAL_SUPABASE_AUTH',
+          isActive: true
+        }
+      });
+
+      // 5. Tạo Student cục bộ
+      const student = await tx.student.create({
+        data: {
+          id: studentId,
+          studentCode,
+          fullName: studentData.fullName,
+          dateOfBirth: new Date(studentData.dateOfBirth),
+          parentPhone: studentData.parentPhone,
+          createdById: teacherId
+        }
+      });
+
+      // 6. Ghi danh học viên vào lớp học hiện tại
+      await tx.classEnrollment.create({
+        data: {
+          classId,
+          studentId,
+          isActive: true
+        }
+      });
+
+      createdStudents.push(student);
+    }
+
+    return createdStudents;
+  });
+};
+

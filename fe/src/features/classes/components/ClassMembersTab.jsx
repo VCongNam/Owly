@@ -8,11 +8,13 @@ import {
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
-import { Plus, Trash, MagnifyingGlass, UserPlus, Users, Phone, CalendarBlank, Warning, Copy, Check, ChartBar } from '@phosphor-icons/react';
+import { Plus, Trash, MagnifyingGlass, UserPlus, Users, Phone, CalendarBlank, Warning, Copy, Check, ChartBar, UploadSimple } from '@phosphor-icons/react';
 import { notifications } from '@mantine/notifications';
 import { studentService } from '../../students/services/studentService';
 import { ConfirmModal } from '../../../shared';
 import classes from './ClassMembersTab.module.css';
+import { useAuth } from '../../auth';
+import { ImportStudentsModal } from './ImportStudentsModal';
 
 // ── Helper: Badge màu theo trạng thái điểm danh ─────────────────────────────
 const STATUS_CONFIG = {
@@ -322,12 +324,15 @@ function AttendanceLogModal({ opened, onClose, student, classId }) {
 
 // ── Main Component ───────────────────────────────────────────────────────────
 export function ClassMembersTab() {
+  const { user } = useAuth();
+  const isStudent = user?.role === 'student';
   const { classId } = useParams();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(false);
 
   // Modal states
   const [modalOpened, setModalOpened] = useState(false);
+  const [importExcelOpened, setImportExcelOpened] = useState(false);
   const [activeTab, setActiveTab] = useState('existing'); // existing | new
   const [createdStudent, setCreatedStudent] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -503,49 +508,56 @@ HƯỚNG DẪN ĐĂNG NHẬP:
           </Avatar>
           <div>
             <Text size="sm" fw={600}>{student.fullName}</Text>
-            <Text size="xs" c="dimmed">
-              Ngày sinh: {student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString('vi-VN') : 'Chưa rõ'}
-            </Text>
+            {!isStudent && student.dateOfBirth && (
+              <Text size="xs" c="dimmed">
+                Ngày sinh: {new Date(student.dateOfBirth).toLocaleDateString('vi-VN')}
+              </Text>
+            )}
           </div>
         </Group>
       </Table.Td>
-      <Table.Td>
-        <Text size="sm" c="dimmed">{student.account?.email || 'Chưa cập nhật'}</Text>
-      </Table.Td>
-      <Table.Td>
-        <Group gap={4}>
-          <Phone size={13} color="var(--accent-color)" />
-          <Text size="sm">{student.parentPhone}</Text>
-        </Group>
-      </Table.Td>
-      <Table.Td>
-        <Group gap={4} justify="flex-end">
-          {/* UC-35: Nút xem nhật ký điểm danh */}
-          <Tooltip label="Xem nhật ký điểm danh" withArrow>
-            <ActionIcon
-              variant="subtle"
-              color="copper"
-              size="sm"
-              onClick={() => setAttendanceLogStudent(student)}
-            >
-              <CalendarBlank size={15} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="Hủy học (Xóa khỏi lớp)" withArrow>
-            <ActionIcon
-              variant="subtle"
-              color="red"
-              size="sm"
-              onClick={() => {
-                setStudentToUnenroll(student);
-                setUnenrollConfirmOpened(true);
-              }}
-            >
-              <Trash size={15} />
-            </ActionIcon>
-          </Tooltip>
-        </Group>
-      </Table.Td>
+      {!isStudent && (
+        <Table.Td>
+          <Text size="sm" c="dimmed">{student.account?.email || 'Chưa cập nhật'}</Text>
+        </Table.Td>
+      )}
+      {!isStudent && (
+        <Table.Td>
+          <Group gap={4}>
+            <Phone size={13} color="var(--accent-color)" />
+            <Text size="sm">{student.parentPhone}</Text>
+          </Group>
+        </Table.Td>
+      )}
+      {!isStudent && (
+        <Table.Td>
+          <Group gap={4} justify="flex-end">
+            <Tooltip label="Xem nhật ký điểm danh" withArrow>
+              <ActionIcon
+                variant="subtle"
+                color="copper"
+                size="sm"
+                onClick={() => setAttendanceLogStudent(student)}
+              >
+                <CalendarBlank size={15} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="Hủy học (Xóa khỏi lớp)" withArrow>
+              <ActionIcon
+                variant="subtle"
+                color="red"
+                size="sm"
+                onClick={() => {
+                  setStudentToUnenroll(student);
+                  setUnenrollConfirmOpened(true);
+                }}
+              >
+                <Trash size={15} />
+              </ActionIcon>
+            </Tooltip>
+          </Group>
+        </Table.Td>
+      )}
     </Table.Tr>
   ));
 
@@ -557,13 +569,25 @@ HƯỚNG DẪN ĐĂNG NHẬP:
           <Title order={3} style={{ fontSize: '20px', fontWeight: 700 }}>Danh sách Học viên</Title>
           <Text size="sm" c="dimmed">{members.length} học viên tham gia lớp này</Text>
         </div>
-        <Button
-          leftSection={<Plus size={16} weight="bold" />}
-          color="copper"
-          onClick={() => setModalOpened(true)}
-        >
-          Thêm học viên
-        </Button>
+        {!isStudent && (
+          <Group gap="xs">
+            <Button
+              leftSection={<UploadSimple size={16} />}
+              variant="light"
+              color="copper"
+              onClick={() => setImportExcelOpened(true)}
+            >
+              Nhập từ Excel
+            </Button>
+            <Button
+              leftSection={<Plus size={16} weight="bold" />}
+              color="copper"
+              onClick={() => setModalOpened(true)}
+            >
+              Thêm học viên
+            </Button>
+          </Group>
+        )}
       </Group>
 
       {/* ── Members Table ───────────────────────── */}
@@ -577,9 +601,9 @@ HƯỚNG DẪN ĐĂNG NHẬP:
             <Table.Thead>
               <Table.Tr>
                 <Table.Th>Học viên</Table.Th>
-                <Table.Th>Email liên hệ</Table.Th>
-                <Table.Th>SĐT Phụ huynh</Table.Th>
-                <Table.Th />
+                {!isStudent && <Table.Th>Email liên hệ</Table.Th>}
+                {!isStudent && <Table.Th>SĐT Phụ huynh</Table.Th>}
+                {!isStudent && <Table.Th />}
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>{rows}</Table.Tbody>
@@ -822,6 +846,13 @@ HƯỚNG DẪN ĐĂNG NHẬP:
         cancelLabel="Hủy bỏ"
         color="red"
         loading={unenrolling}
+      />
+      
+      <ImportStudentsModal
+        opened={importExcelOpened}
+        onClose={() => setImportExcelOpened(false)}
+        classId={classId}
+        onSuccess={fetchMembers}
       />
     </Stack>
   );

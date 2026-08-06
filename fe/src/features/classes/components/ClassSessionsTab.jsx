@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Group, Button, Table, Badge, ActionIcon, Menu, Text, Card, Center, Loader, Box, Stack, Pagination } from '@mantine/core';
+import { Group, Button, Table, Badge, ActionIcon, Menu, Text, Card, Center, Loader, Box, Stack, Pagination, Tooltip } from '@mantine/core';
 import { Calendar, Plus, DotsThreeVertical, NotePencil, Prohibit, CheckSquare, Chats } from '@phosphor-icons/react';
 import { useSchedule } from '../../schedule/hooks/useSchedule';
 import { ScheduleSetupModal } from '../../schedule/components/ScheduleSetupModal';
@@ -8,6 +8,7 @@ import { notifications } from '@mantine/notifications';
 import { ConfirmModal } from '../../../shared';
 import AttendanceModal from '../../attendance/components/AttendanceModal';
 import SessionFeedbackModal from '../../schedule/components/SessionFeedbackModal';
+import { useAuth } from '../../auth';
 
 
 // Helper quy đổi JS Date sang định dạng Thứ và Ngày Giờ Tiếng Việt
@@ -34,6 +35,8 @@ const formatSessionDateTime = (dateStr) => {
 };
 
 export function ClassSessionsTab({ classDetail }) {
+  const { user } = useAuth();
+  const isStudent = user?.role === 'student';
   const classId = classDetail.id;
   const { sessions, loading, pagination, fetchClassSessions, setupRecurring, createSession, updateSession } = useSchedule();
   
@@ -50,6 +53,38 @@ export function ClassSessionsTab({ classDetail }) {
   const [feedbackOpened, setFeedbackOpened] = useState(false);
   const [feedbackSessionId, setFeedbackSessionId] = useState(null);
   const [feedbackSessionTitle, setFeedbackSessionTitle] = useState('');
+
+  const ATTENDANCE_STATUS_MAP = {
+    Present: { label: 'Có mặt', color: 'teal' },
+    Absent: { label: 'Vắng mặt', color: 'red' },
+    Late: { label: 'Đi muộn', color: 'orange' },
+    Excused: { label: 'Có phép', color: 'blue' }
+  };
+
+  const getStudentAttendanceBadge = (session) => {
+    if (session.status === 'Cancelled') {
+      return <Badge color="gray" variant="light">N/A</Badge>;
+    }
+    if (!session.attendance) {
+      if (session.hasAttendance) {
+        return <Badge color="gray" variant="light">Chưa điểm danh</Badge>;
+      }
+      const sessionTime = new Date(session.date).getTime();
+      const now = new Date().getTime();
+      if (sessionTime < now) {
+        return <Badge color="orange" variant="light">Chờ điểm danh</Badge>;
+      }
+      return <Badge color="gray" variant="light">Chưa diễn ra</Badge>;
+    }
+    const cfg = ATTENDANCE_STATUS_MAP[session.attendance.status] || { label: session.attendance.status, color: 'gray' };
+    return (
+      <Tooltip label={session.attendance.notes || undefined} disabled={!session.attendance.notes}>
+        <Badge color={cfg.color} variant="light">
+          {cfg.label}
+        </Badge>
+      </Tooltip>
+    );
+  };
 
   const loadData = useCallback((page = 1) => {
     fetchClassSessions(classId, page);
@@ -132,31 +167,35 @@ export function ClassSessionsTab({ classDetail }) {
       {/* ── Header Actions ────────────────────── */}
       <Group justify="space-between" mb="lg">
         <div>
-          <Text fw={600} size="lg">Quản lý các Buổi học</Text>
-          <Text size="xs" c="dimmed">Xem danh sách buổi học, cấu hình lịch lặp lại hàng tuần hoặc tạo lịch học bù</Text>
+          <Text fw={600} size="lg">{isStudent ? 'Lịch học lớp' : 'Quản lý các Buổi học'}</Text>
+          <Text size="xs" c="dimmed">
+            {isStudent ? 'Xem danh sách các buổi học và thông tin chuyên cần của bạn' : 'Xem danh sách buổi học, cấu hình lịch lặp lại hàng tuần hoặc tạo lịch học bù'}
+          </Text>
         </div>
-        <Group gap="xs">
-          <Button
-            size="sm"
-            variant="light"
-            color="copper"
-            leftSection={<Calendar size={16} />}
-            onClick={() => setRecurringOpened(true)}
-          >
-            Lịch học định kỳ
-          </Button>
-          <Button
-            size="sm"
-            color="copper"
-            leftSection={<Plus size={16} />}
-            onClick={() => {
-              setSelectedSession(null);
-              setSessionFormOpened(true);
-            }}
-          >
-            Tạo buổi lẻ/bù
-          </Button>
-        </Group>
+        {!isStudent && (
+          <Group gap="xs">
+            <Button
+              size="sm"
+              variant="light"
+              color="copper"
+              leftSection={<Calendar size={16} />}
+              onClick={() => setRecurringOpened(true)}
+            >
+              Lịch học định kỳ
+            </Button>
+            <Button
+              size="sm"
+              color="copper"
+              leftSection={<Plus size={16} />}
+              onClick={() => {
+                setSelectedSession(null);
+                setSessionFormOpened(true);
+              }}
+            >
+              Tạo buổi lẻ/bù
+            </Button>
+          </Group>
+        )}
       </Group>
 
       {/* ── Table / Cards List ────────────────── */}
@@ -170,7 +209,7 @@ export function ClassSessionsTab({ classDetail }) {
             <Calendar size={48} weight="duotone" color="var(--accent-color)" />
             <Text fw={600}>Chưa có buổi học nào</Text>
             <Text size="sm" c="dimmed" ta="center">
-              Nhấp "Lịch học định kỳ" để thiết lập lịch tuần tự động sinh hoặc "Tạo buổi lẻ/bù" để thêm buổi học mới.
+              {isStudent ? 'Hiện chưa có lịch học nào được sắp xếp cho lớp này.' : 'Nhấp "Lịch học định kỳ" để thiết lập lịch tuần tự động sinh hoặc "Tạo buổi lẻ/bù" để thêm buổi học mới.'}
             </Text>
           </Stack>
         </Card>
@@ -185,8 +224,8 @@ export function ClassSessionsTab({ classDetail }) {
                   <Table.Th>Thời gian</Table.Th>
                   <Table.Th>Trạng thái</Table.Th>
                   <Table.Th style={{ width: 120 }}>Điểm danh</Table.Th>
-                  <Table.Th style={{ width: 120 }}>Nhận xét</Table.Th>
-                  <Table.Th style={{ textAlign: 'right', paddingRight: 16 }}>Hành động</Table.Th>
+                  {!isStudent && <Table.Th style={{ width: 120 }}>Nhận xét</Table.Th>}
+                  {!isStudent && <Table.Th style={{ textAlign: 'right', paddingRight: 16 }}>Hành động</Table.Th>}
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
@@ -205,7 +244,9 @@ export function ClassSessionsTab({ classDetail }) {
                     </Table.Td>
                     <Table.Td>{getStatusBadge(session)}</Table.Td>
                     <Table.Td>
-                      {session.status !== 'Cancelled' ? (
+                      {isStudent ? (
+                        getStudentAttendanceBadge(session)
+                      ) : session.status !== 'Cancelled' ? (
                         (() => {
                           const sessionTime = new Date(session.date).getTime();
                           const now = new Date().getTime();
@@ -229,54 +270,58 @@ export function ClassSessionsTab({ classDetail }) {
                         <Text size="xs" c="dimmed">—</Text>
                       )}
                     </Table.Td>
-                    <Table.Td>
-                      {session.status !== 'Cancelled' ? (
-                        <Button
-                          size="xs"
-                          variant={session.hasFeedback ? "light" : "outline"}
-                          color={session.hasFeedback ? "green" : "gray"}
-                          leftSection={<Chats size={12} />}
-                          onClick={() => {
-                            setFeedbackSessionId(session.id);
-                            setFeedbackSessionTitle(session.title || `Buổi học ${idx + 1}`);
-                            setFeedbackOpened(true);
-                          }}
-                        >
-                          {session.hasFeedback ? 'Đã nhận xét' : 'Nhận xét'}
-                        </Button>
-                      ) : (
-                        <Text size="xs" c="dimmed">—</Text>
-                      )}
-                    </Table.Td>
-                    <Table.Td style={{ textAlign: 'right', paddingRight: 16 }}>
-                      <Menu shadow="md" width={160} position="bottom-end">
-                        <Menu.Target>
-                          <ActionIcon variant="subtle" color="gray">
-                            <DotsThreeVertical size={16} weight="bold" />
-                          </ActionIcon>
-                        </Menu.Target>
-                        <Menu.Dropdown>
-                          <Menu.Item
-                            leftSection={<NotePencil size={14} />}
+                    {!isStudent && (
+                      <Table.Td>
+                        {session.status !== 'Cancelled' ? (
+                          <Button
+                            size="xs"
+                            variant={session.hasFeedback ? "light" : "outline"}
+                            color={session.hasFeedback ? "green" : "gray"}
+                            leftSection={<Chats size={12} />}
                             onClick={() => {
-                              setSelectedSession(session);
-                              setSessionFormOpened(true);
+                              setFeedbackSessionId(session.id);
+                              setFeedbackSessionTitle(session.title || `Buổi học ${idx + 1}`);
+                              setFeedbackOpened(true);
                             }}
                           >
-                            Chỉnh sửa
-                          </Menu.Item>
-                          {session.status !== 'Cancelled' && (
+                            {session.hasFeedback ? 'Đã nhận xét' : 'Nhận xét'}
+                          </Button>
+                        ) : (
+                          <Text size="xs" c="dimmed">—</Text>
+                        )}
+                      </Table.Td>
+                    )}
+                    {!isStudent && (
+                      <Table.Td style={{ textAlign: 'right', paddingRight: 16 }}>
+                        <Menu shadow="md" width={160} position="bottom-end">
+                          <Menu.Target>
+                            <ActionIcon variant="subtle" color="gray">
+                              <DotsThreeVertical size={16} weight="bold" />
+                            </ActionIcon>
+                          </Menu.Target>
+                          <Menu.Dropdown>
                             <Menu.Item
-                              color="red"
-                              leftSection={<Prohibit size={14} />}
-                              onClick={() => handleCancelSession(session)}
+                              leftSection={<NotePencil size={14} />}
+                              onClick={() => {
+                                setSelectedSession(session);
+                                setSessionFormOpened(true);
+                              }}
                             >
-                              Hủy buổi học
+                              Chỉnh sửa
                             </Menu.Item>
-                          )}
-                        </Menu.Dropdown>
-                      </Menu>
-                    </Table.Td>
+                            {session.status !== 'Cancelled' && (
+                              <Menu.Item
+                                color="red"
+                                leftSection={<Prohibit size={14} />}
+                                onClick={() => handleCancelSession(session)}
+                              >
+                                Hủy buổi học
+                              </Menu.Item>
+                            )}
+                          </Menu.Dropdown>
+                        </Menu>
+                      </Table.Td>
+                    )}
                   </Table.Tr>
                 ))}
               </Table.Tbody>

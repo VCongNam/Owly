@@ -15,3 +15,13 @@ export const updateAssignmentSchema = z.object({
   maxPoints: z.coerce.number().min(0).optional(),
   attachmentUrls: z.array(z.string().url('URL đính kèm không hợp lệ')).optional()
 });
+
+export const createSubmissionSchema = z.object({
+  content: z.string().min(1, 'Nội dung nộp bài (liên kết tệp) không được để trống')
+});
+
+export const gradeSubmissionSchema = z.object({
+  grade: z.coerce.number().min(0, 'Điểm số không được nhỏ hơn 0'),
+  remarks: z.string().min(1, 'Nhận xét chấm bài không được để trống'),
+  attachmentUrl: z.string().url('URL tệp chữa bài không hợp lệ').optional().nullable()
+});

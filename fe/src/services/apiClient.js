@@ -44,7 +44,10 @@ const processQueue = (error, token = null) => {
 apiClient.interceptors.response.use(
   (response) => {
     // Return the data field directly if the API payload matches standards
-    return response.data?.data ?? response.data;
+    if (response.data && response.data.data !== undefined) {
+      return response.data.data;
+    }
+    return response.data;
   },
   async (error) => {
     const originalRequest = error.config;

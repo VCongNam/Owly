@@ -6,8 +6,12 @@ import { ClassCard } from './ClassCard';
 import { ClassFormModal } from './ClassFormModal';
 import { useClasses } from '../hooks/useClasses';
 import classesCss from './ClassListPage.module.css';
+import { useAuth } from '../../auth';
 
 export function ClassListPage() {
+  const { user } = useAuth();
+  const isStudent = user?.role === 'student';
+
   const [searchValue, setSearchValue] = useState('');
   const [debouncedSearch] = useDebouncedValue(searchValue, 300);
   
@@ -54,9 +58,11 @@ export function ClassListPage() {
           <Title order={2} className={classesCss.pageTitle}>Lớp của tôi</Title>
           <Text size="sm" c="dimmed">{pagination.totalItems} lớp đang hoạt động</Text>
         </div>
-        <Button leftSection={<Plus size={16} weight="bold" />} color="copper" onClick={handleCreateClick}>
-          Tạo lớp mới
-        </Button>
+        {!isStudent && (
+          <Button leftSection={<Plus size={16} weight="bold" />} color="copper" onClick={handleCreateClick}>
+            Tạo lớp mới
+          </Button>
+        )}
       </Group>
 
       <TextInput
@@ -106,9 +112,9 @@ export function ClassListPage() {
               <GraduationCap size={32} weight="duotone" />
             </ThemeIcon>
             <Text c="dimmed" ta="center">
-              {searchValue ? `Không tìm thấy lớp nào với "${searchValue}"` : 'Chưa có lớp học nào. Hãy tạo lớp đầu tiên!'}
+              {searchValue ? `Không tìm thấy lớp nào với "${searchValue}"` : (isStudent ? 'Bạn chưa được ghi danh vào lớp học nào.' : 'Chưa có lớp học nào. Hãy tạo lớp đầu tiên!')}
             </Text>
-            {!searchValue && (
+            {!searchValue && !isStudent && (
               <Button leftSection={<Plus size={16} />} variant="light" color="copper" onClick={handleCreateClick}>
                 Tạo lớp mới
               </Button>

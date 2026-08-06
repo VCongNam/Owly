@@ -2,6 +2,7 @@ import { Badge, Card, Group, Text, ThemeIcon, ActionIcon, Menu, Stack } from '@m
 import { GraduationCap, Users, DotsThreeVertical, PencilSimple, Archive, ArrowRight, Calendar, Bank } from '@phosphor-icons/react';
 import { Link } from 'react-router-dom';
 import classes from './ClassCard.module.css';
+import { useAuth } from '../../auth';
 
 const STATUS_MAP = {
   Scheduled: { label: 'Lên lịch', color: 'blue' },
@@ -11,6 +12,8 @@ const STATUS_MAP = {
 };
 
 export function ClassCard({ cls, onEdit, onArchive }) {
+  const { user } = useAuth();
+  const isStudent = user?.role === 'student';
   const isArchived = cls.status === 'Archived';
   const color = isArchived ? 'gray' : 'copper';
   const statusConfig = STATUS_MAP[cls.status] || { label: cls.status, color: 'copper' };
@@ -57,21 +60,23 @@ export function ClassCard({ cls, onEdit, onArchive }) {
             </div>
           </Group>
 
-          <Menu shadow="md" width={180} position="bottom-end">
-            <Menu.Target>
-              <ActionIcon variant="subtle" color="gray" size="sm" style={{ flexShrink: 0 }}>
-                <DotsThreeVertical size={16} />
-              </ActionIcon>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Item leftSection={<PencilSimple size={14} />} onClick={() => onEdit?.(cls)}>
-                Chỉnh sửa
-              </Menu.Item>
-              <Menu.Item leftSection={<Archive size={14} />} color="orange" onClick={() => onArchive?.(cls)}>
-                {isArchived ? 'Khôi phục lớp' : 'Lưu trữ lớp'}
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
+          {!isStudent && (
+            <Menu shadow="md" width={180} position="bottom-end">
+              <Menu.Target>
+                <ActionIcon variant="subtle" color="gray" size="sm" style={{ flexShrink: 0 }}>
+                  <DotsThreeVertical size={16} />
+                </ActionIcon>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Item leftSection={<PencilSimple size={14} />} onClick={() => onEdit?.(cls)}>
+                  Chỉnh sửa
+                </Menu.Item>
+                <Menu.Item leftSection={<Archive size={14} />} color="orange" onClick={() => onArchive?.(cls)}>
+                  {isArchived ? 'Khôi phục lớp' : 'Lưu trữ lớp'}
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+          )}
         </Group>
 
         {/* Info Stack */}

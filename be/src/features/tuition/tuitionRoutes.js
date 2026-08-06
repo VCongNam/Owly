@@ -15,6 +15,7 @@ router.post('/classes/:classId/invoices/generate', tuitionController.generateMon
 router.get('/classes/:classId/invoices', tuitionController.getClassInvoices);
 
 // Xem hóa đơn cá nhân & nộp minh chứng (Dành cho Học sinh / Phụ huynh)
+router.get('/tuition/teacher/pending', tuitionController.getTeacherPendingInvoices);
 router.get('/tuition/my-invoices', tuitionController.getStudentInvoices);
 router.post('/tuition/invoices/:invoiceId/submit-proof', tuitionController.submitPaymentProof);
 

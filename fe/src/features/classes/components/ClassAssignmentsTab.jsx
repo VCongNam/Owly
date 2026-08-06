@@ -12,6 +12,8 @@ import { useAssignments } from '../hooks/useAssignments';
 import { ConfirmModal } from '../../../shared';
 import { AssignmentUploadModal } from './AssignmentUploadModal';
 import { GradeCategoriesModal } from './GradeCategoriesModal';
+import { AssignmentSubmissionModal } from './AssignmentSubmissionModal';
+import { AssignmentGradingPanel } from './AssignmentGradingPanel';
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '—';
@@ -46,6 +48,19 @@ export function ClassAssignmentsTab() {
 
   // Grade Categories Config modal
   const [categoriesModalOpened, setCategoriesModalOpened] = useState(false);
+
+  // Submission modals states
+  const [submissionModalOpened, setSubmissionModalOpened] = useState(false);
+  const [selectedAssignmentForSubmission, setSelectedAssignmentForSubmission] = useState(null);
+  const [selectedAssignmentForSubmissions, setSelectedAssignmentForSubmissions] = useState(null);
+
+  // Experimental confirm modal state (dành riêng cho tính năng soạn thảo Rich Text)
+  const [experimentalConfirmOpened, setExperimentalConfirmOpened] = useState(false);
+
+  const handleConfirmExperimental = () => {
+    setExperimentalConfirmOpened(false);
+    navigate(`/classes/${classId}/assignments/create`);
+  };
 
   const handleOpenDeleteConfirm = (item) => {
     setAssignmentToDelete(item);
@@ -94,20 +109,56 @@ export function ClassAssignmentsTab() {
         <Table.Td style={{ width: 100 }}>
           <Text size="sm" ta="center">{item.maxPoints}</Text>
         </Table.Td>
-        <Table.Td style={{ width: 80 }}>
-          <Group gap={8} justify="flex-end">
-            {isTeacher && (
-              <Tooltip label="Xóa bài tập" withArrow>
-                <ActionIcon variant="subtle" color="red" size="sm" onClick={() => handleOpenDeleteConfirm(item)}>
-                  <Trash size={16} />
-                </ActionIcon>
-              </Tooltip>
+        <Table.Td style={{ minWidth: 150 }}>
+          <Group gap={8} justify="flex-end" wrap="nowrap">
+            {isTeacher ? (
+              <>
+                <Button
+                  size="xs"
+                  variant="light"
+                  color="copper"
+                  onClick={() => {
+                    setSelectedAssignmentForSubmissions(item);
+                  }}
+                >
+                  Bài nộp
+                </Button>
+                <Tooltip label="Xóa bài tập" withArrow>
+                  <ActionIcon variant="subtle" color="red" size="sm" onClick={() => handleOpenDeleteConfirm(item)}>
+                    <Trash size={16} />
+                  </ActionIcon>
+                </Tooltip>
+              </>
+            ) : (
+              <Button
+                size="xs"
+                variant="light"
+                color="copper"
+                onClick={() => {
+                  setSelectedAssignmentForSubmission(item);
+                  setSubmissionModalOpened(true);
+                }}
+              >
+                Nộp bài & Điểm số
+              </Button>
             )}
           </Group>
         </Table.Td>
       </Table.Tr>
     );
   });
+
+  if (selectedAssignmentForSubmissions) {
+    return (
+      <AssignmentGradingPanel
+        assignment={selectedAssignmentForSubmissions}
+        onBack={() => {
+          setSelectedAssignmentForSubmissions(null);
+          fetchAssignments(pagination.currentPage);
+        }}
+      />
+    );
+  }
 
   return (
     <Stack gap="lg">
@@ -145,7 +196,7 @@ export function ClassAssignmentsTab() {
               <Menu.Dropdown>
                 <Menu.Item 
                   leftSection={<FileText size={16} />}
-                  onClick={() => navigate(`/classes/${classId}/assignments/create`)}
+                  onClick={() => setExperimentalConfirmOpened(true)}
                 >
                   Soạn thảo bài tập
                 </Menu.Item>
@@ -204,7 +255,7 @@ export function ClassAssignmentsTab() {
                 <Button
                   leftSection={<FileText size={16} weight="bold" />}
                   color="copper"
-                  onClick={() => navigate(`/classes/${classId}/assignments/create`)}
+                  onClick={() => setExperimentalConfirmOpened(true)}
                 >
                   Soạn thảo bài tập
                 </Button>
@@ -263,6 +314,31 @@ export function ClassAssignmentsTab() {
         cancelLabel="Hủy"
         color="red"
         loading={deleting}
+      />
+
+      {submissionModalOpened && selectedAssignmentForSubmission && (
+        <AssignmentSubmissionModal
+          opened={submissionModalOpened}
+          onClose={() => {
+            setSubmissionModalOpened(false);
+            setSelectedAssignmentForSubmission(null);
+          }}
+          assignment={selectedAssignmentForSubmission}
+        />
+      )}
+
+
+
+      {/* Modal Xác nhận Tính năng Thử nghiệm */}
+      <ConfirmModal
+        opened={experimentalConfirmOpened}
+        onClose={() => setExperimentalConfirmOpened(false)}
+        onConfirm={handleConfirmExperimental}
+        title="Tính năng thử nghiệm"
+        message="Đây là tính năng soạn thảo nâng cao đang trong quá trình thử nghiệm (Beta), có thể phát sinh lỗi ngoài ý muốn. Bạn có chắc chắn muốn tiếp tục không?"
+        confirmLabel="Tiếp tục"
+        cancelLabel="Hủy bỏ"
+        color="orange"
       />
     </Stack>
   );

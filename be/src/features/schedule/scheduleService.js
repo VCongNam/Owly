@@ -78,12 +78,11 @@ export const getPersonalSchedule = async (teacherId, startDateStr, endDateStr) =
 /**
  * Lấy danh sách toàn bộ các buổi học của một lớp cụ thể
  */
-export const getClassSessions = async (classId, teacherId, options = {}) => {
+export const getClassSessions = async (classId, userId, userRole, options = {}) => {
   const page = Number(options.page) || 1;
   const limit = Number(options.limit) || 10;
   const skip = (page - 1) * limit;
 
-  // Xác thực quyền sở hữu lớp học
   const targetClass = await prisma.class.findUnique({
     where: { id: classId }
   });
@@ -92,8 +91,17 @@ export const getClassSessions = async (classId, teacherId, options = {}) => {
     throw new AppError('Lớp học không tồn tại', 404);
   }
 
-  if (targetClass.teacherId !== teacherId) {
-    throw new AppError('Bạn không có quyền quản lý lịch học lớp này', 403);
+  if (userRole === 'student') {
+    const enrollment = await prisma.classEnrollment.findFirst({
+      where: { classId, studentId: userId, isActive: true }
+    });
+    if (!enrollment) {
+      throw new AppError('Bạn không tham gia lớp học này', 403);
+    }
+  } else {
+    if (targetClass.teacherId !== userId) {
+      throw new AppError('Bạn không có quyền quản lý lịch học lớp này', 403);
+    }
   }
 
   const totalItems = await prisma.session.count({
@@ -103,7 +111,14 @@ export const getClassSessions = async (classId, teacherId, options = {}) => {
   const sessions = await prisma.session.findMany({
     where: { classId },
     include: {
-      attendances: {
+      attendances: userRole === 'student' ? {
+        where: { studentId: userId },
+        select: {
+          id: true,
+          status: true,
+          notes: true
+        }
+      } : {
         select: {
           id: true
         }
@@ -127,7 +142,11 @@ export const getClassSessions = async (classId, teacherId, options = {}) => {
     date: session.date,
     status: session.status,
     hasAttendance: session.attendances.length > 0,
-    hasFeedback: session.feedbacks.length > 0
+    hasFeedback: session.feedbacks.length > 0,
+    attendance: userRole === 'student' && session.attendances.length > 0 ? {
+      status: session.attendances[0].status,
+      notes: session.attendances[0].notes
+    } : null
   }));
 
   return {

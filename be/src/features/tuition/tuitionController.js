@@ -116,3 +116,17 @@ export const reviewTransaction = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getTeacherPendingInvoices = async (req, res, next) => {
+  try {
+    const teacherId = req.user.id;
+    const invoices = await tuitionService.getTeacherPendingInvoices(teacherId);
+    return res.json({
+      success: true,
+      data: invoices,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

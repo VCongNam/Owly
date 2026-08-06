@@ -1,4 +1,5 @@
 import express from 'express';
+// Reloading server to load regenerated Prisma client
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { supabase } from './config/supabase.js';
@@ -16,6 +17,8 @@ import postRoutes from './features/posts/postRoutes.js';
 import gradeCategoryRoutes from './features/gradeCategories/gradeCategoryRoutes.js';
 import tuitionRoutes from './features/tuition/tuitionRoutes.js';
 import sepayRoutes from './features/tuition/sepayRoutes.js';
+import uploadRoutes from './features/upload/uploadRoutes.js';
+import excelRoutes from './features/upload/excelRoutes.js';
 
 
 dotenv.config();
@@ -36,6 +39,8 @@ app.use('/api/students', studentRoutes);
 app.use('/api', scheduleRoutes);
 app.use('/api/sessions/:sessionId/attendances', attendanceRoutes);
 app.use('/api/assignments', assignmentRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/utils/excel', excelRoutes);
 app.use('/api', materialRoutes);
 app.use('/api', postRoutes);
 app.use('/api', gradeCategoryRoutes);

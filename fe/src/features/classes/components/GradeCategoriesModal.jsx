@@ -187,7 +187,7 @@ export function GradeCategoriesModal({ classId, opened, onClose, onCategoriesUpd
                   {categories.map((cat) => (
                     <Table.Tr key={cat.id} bg={editingId === cat.id ? 'var(--mantine-color-copper-0)' : undefined}>
                       <Table.Td>
-                        <Text size="sm" fw={600}>{cat.name}</Text>
+                        <Text size="md" fw={600}>{cat.name}</Text>
                       </Table.Td>
                       <Table.Td ta="center">
                         <Badge variant="light" color="copper" size="sm">
@@ -210,7 +210,7 @@ export function GradeCategoriesModal({ classId, opened, onClose, onCategoriesUpd
                             <ActionIcon
                               variant="subtle"
                               color="red"
-                              size="sm"
+                              size="md"
                               disabled={categories.length <= 1}
                               onClick={() => handleOpenDeleteConfirm(cat)}
                             >
@@ -229,7 +229,7 @@ export function GradeCategoriesModal({ classId, opened, onClose, onCategoriesUpd
           <Divider label={editingId ? 'Chỉnh sửa danh mục' : 'Thêm danh mục mới'} labelPosition="left" />
 
           {/* Form Add/Edit */}
-          <Paper p="sm" withBorder radius="sm" bg="var(--mantine-color-gray-0)">
+          <Paper p="md" withBorder radius="sm">
             <Stack gap="xs">
               <Group grow align="flex-start">
                 <TextInput
@@ -237,7 +237,7 @@ export function GradeCategoriesModal({ classId, opened, onClose, onCategoriesUpd
                   placeholder="Ví dụ: Kiểm tra 15p, Giữa kỳ..."
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  size="sm"
+                  size="md"
                   required
                 />
                 <NumberInput
@@ -248,7 +248,7 @@ export function GradeCategoriesModal({ classId, opened, onClose, onCategoriesUpd
                   min={0}
                   max={100}
                   suffix="%"
-                  size="sm"
+                  size="md"
                   required
                 />
               </Group>

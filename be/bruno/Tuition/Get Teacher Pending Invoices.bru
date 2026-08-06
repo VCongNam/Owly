@@ -1,0 +1,15 @@
+meta {
+  name: Get Teacher Pending Invoices
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/api/tuition/teacher/pending
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{teacherToken}}
+}

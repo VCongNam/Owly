@@ -9,11 +9,13 @@ const router = express.Router();
 // Tất cả các route của học viên đều yêu cầu đăng nhập
 router.use(authMiddleware);
 
-// Lấy danh sách học viên của các lớp do giáo viên phụ trách
+// Góc nhìn giáo viên
 router.get('/', studentController.getStudents);
-
-// Tìm kiếm học viên trên toàn hệ thống để thêm vào lớp
 router.get('/search-directory', studentController.searchDirectory);
+
+// Góc nhìn học sinh
+router.get('/me/classes', studentController.getMyClasses);
+router.get('/me/schedule', studentController.getMySchedule);
 
 // Học sinh tự cập nhật thông tin cá nhân của mình
 router.put('/profile/self', validate(studentUpdateProfileSchema), studentController.updateSelfProfile);

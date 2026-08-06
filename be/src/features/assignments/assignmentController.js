@@ -4,9 +4,57 @@ import { v4 as uuidv4 } from 'uuid';
 import { prisma } from '../../config/db.js';
 import { R2_CONFIG } from '../../config/r2.js';
 
+const requireTeacher = (req) => {
+  if (req.user?.role !== 'teacher') {
+    throw new Error('Chỉ giáo viên mới có quyền thực hiện thao tác này');
+  }
+};
+
+const requireStudent = (req) => {
+  if (req.user?.role !== 'student') {
+    throw new Error('Chỉ học sinh mới có quyền thực hiện thao tác này');
+  }
+};
+
+const assertTeacherOwnsClass = async (teacherId, classId) => {
+  const classRecord = await prisma.class.findUnique({
+    where: { id: classId },
+    select: { teacherId: true }
+  });
+
+  if (!classRecord) {
+    throw new Error('Lớp học không tồn tại');
+  }
+
+  if (classRecord.teacherId !== teacherId) {
+    throw new Error('Bạn không có quyền thao tác trên lớp học này');
+  }
+};
+
+const assertTeacherOwnsAssignment = async (teacherId, assignmentId) => {
+  const assignment = await prisma.assignment.findUnique({
+    where: { id: assignmentId },
+    select: {
+      class: {
+        select: { teacherId: true }
+      }
+    }
+  });
+
+  if (!assignment) {
+    throw new Error('Bài tập không tồn tại');
+  }
+
+  if (assignment.class.teacherId !== teacherId) {
+    throw new Error('Bạn không có quyền thao tác trên bài tập này');
+  }
+};
+
 export const createAssignment = async (req, res, next) => {
   try {
+    requireTeacher(req);
     const data = req.body;
+    await assertTeacherOwnsClass(req.user.id, data.classId);
     const assignment = await assignmentService.createAssignment(data);
 
     // Tự động đăng bài viết thông báo có bài tập mới lên Bảng tin (Class Stream)
@@ -51,8 +99,10 @@ export const getAssignments = async (req, res, next) => {
 
 export const updateAssignment = async (req, res, next) => {
   try {
+    requireTeacher(req);
     const { id } = req.params;
     const data = req.body;
+    await assertTeacherOwnsAssignment(req.user.id, id);
     const assignment = await assignmentService.updateAssignment(id, data);
     res.status(200).json({ success: true, data: assignment });
   } catch (error) {
@@ -62,7 +112,9 @@ export const updateAssignment = async (req, res, next) => {
 
 export const deleteAssignment = async (req, res, next) => {
   try {
+    requireTeacher(req);
     const { id } = req.params;
+    await assertTeacherOwnsAssignment(req.user.id, id);
     const deletedAssignment = await assignmentService.deleteAssignment(id);
 
     // Xóa các file đính kèm trên Cloudflare R2
@@ -90,27 +142,9 @@ export const deleteAssignment = async (req, res, next) => {
   }
 };
 
-export const uploadFiles = async (req, res, next) => {
-  try {
-    const files = req.files;
-    if (!files || files.length === 0) throw new Error('Không tìm thấy file');
-
-    const attachmentUrls = [];
-    for (const file of files) {
-      const fileExt = file.originalname.split('.').pop();
-      const fileName = `assignments/${uuidv4()}.${fileExt}`;
-      const url = await uploadFileToR2(file.buffer, fileName, file.mimetype);
-      attachmentUrls.push(url);
-    }
-
-    res.status(200).json({ success: true, data: { attachmentUrls } });
-  } catch (error) {
-    next(error);
-  }
-};
-
 export const createFileFromEditor = async (req, res, next) => {
   try {
+    requireTeacher(req);
     const { htmlContent } = req.body;
     if (!htmlContent) throw new Error('Nội dung không được để trống');
 
@@ -143,3 +177,91 @@ export const createFileFromEditor = async (req, res, next) => {
     next(error);
   }
 };
+
+export const getTeacherUpcomingAssignments = async (req, res, next) => {
+  try {
+    requireTeacher(req);
+    const teacherId = req.user.id;
+    const limit = req.query.limit ? parseInt(req.query.limit) : 5;
+    const assignments = await assignmentService.getTeacherUpcomingAssignments(teacherId, limit);
+    return res.status(200).json({
+      success: true,
+      data: assignments,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const submitAssignment = async (req, res, next) => {
+  try {
+    requireStudent(req);
+    const { assignmentId } = req.params;
+    const studentId = req.user.id;
+    const { content } = req.body;
+
+    const submission = await assignmentService.submitAssignment(assignmentId, studentId, content);
+
+    return res.status(201).json({
+      success: true,
+      message: 'Nộp bài tập thành công',
+      data: submission
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getMySubmission = async (req, res, next) => {
+  try {
+    requireStudent(req);
+    const { assignmentId } = req.params;
+    const studentId = req.user.id;
+
+    const submission = await assignmentService.getMySubmission(assignmentId, studentId);
+
+    return res.status(200).json({
+      success: true,
+      data: submission
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAssignmentSubmissions = async (req, res, next) => {
+  try {
+    requireTeacher(req);
+    const { assignmentId } = req.params;
+    const teacherId = req.user.id;
+
+    const submissions = await assignmentService.getAssignmentSubmissions(assignmentId, teacherId);
+
+    return res.status(200).json({
+      success: true,
+      data: submissions
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const gradeSubmission = async (req, res, next) => {
+  try {
+    requireTeacher(req);
+    const { submissionId } = req.params;
+    const teacherId = req.user.id;
+    const { grade, remarks, attachmentUrl } = req.body;
+
+    const feedback = await assignmentService.gradeSubmission(submissionId, teacherId, { grade, remarks, attachmentUrl });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Chấm điểm bài làm thành công',
+      data: feedback
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

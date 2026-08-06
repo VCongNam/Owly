@@ -7,7 +7,6 @@ import {
   CalendarCheck,
   Archive,
   UserCircle,
-  LockKey,
   SignOut,
   CaretLeft,
   CaretRight,
@@ -62,7 +61,7 @@ const STUDENT_NAV_SECTIONS = [
     label: 'LỚP HỌC',
     items: [
       { icon: GraduationCap, label: 'Lớp học của tôi', to: '/classes' },
-      { icon: CalendarCheck, label: 'Lịch & Điểm danh', to: '/schedule' },
+      { icon: CalendarCheck, label: 'Lịch học', to: '/schedule' },
     ],
   },
   {
@@ -104,29 +103,18 @@ export function Sidebar({ onOpenFeedback }) {
 
   return (
     <nav className={classes.sidebar} data-collapsed={collapsed}>
-      {/* ── Logo ─────────────────────────────── */}
-      <div className={classes.logo}>
-        <div className={classes.logoInner}>
-          <span style={{ fontSize: 24, lineHeight: 1, flexShrink: 0 }}>🦉</span>
-          <span className={classes.logoText}>Owly</span>
-        </div>
-        <button
-          className={classes.collapseBtn}
-          onClick={() => setCollapsed((v) => !v)}
-          title={collapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
-        >
-          {collapsed
-            ? <CaretRight size={16} weight="bold" />
-            : <CaretLeft size={16} weight="bold" />
-          }
-        </button>
-      </div>
-
-      {/* ── Profile mini ─────────────────────── */}
+      {/* ── Profile mini & Collapse Button ────── */}
       {collapsed ? (
         <Tooltip label={avatarName} position="right" withArrow offset={8}>
-          <div className={classes.profile} style={{ justifyContent: 'center', padding: '12px 0' }}>
+          <div className={classes.profile} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '12px 0' }}>
             <Avatar src={user?.account?.avatarUrl} name={avatarName} size={32} radius="xl" color="copper" />
+            <button
+              className={classes.collapseBtn}
+              onClick={() => setCollapsed((v) => !v)}
+              title="Mở rộng sidebar"
+            >
+              <CaretRight size={16} weight="bold" />
+            </button>
           </div>
         </Tooltip>
       ) : (
@@ -149,6 +137,14 @@ export function Sidebar({ onOpenFeedback }) {
               )}
             </div>
           </div>
+          <button
+            className={classes.collapseBtn}
+            onClick={() => setCollapsed((v) => !v)}
+            title="Thu gọn sidebar"
+            style={{ marginLeft: '8px' }}
+          >
+            <CaretLeft size={16} weight="bold" />
+          </button>
         </div>
       )}
 

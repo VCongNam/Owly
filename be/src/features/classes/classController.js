@@ -3,6 +3,13 @@ import { formatToVietnamTime } from '../../utils/dateHelper.js';
 
 export const createClass = async (req, res) => {
   try {
+    if (req.user.role === 'student') {
+      return res.status(403).json({
+        success: false,
+        message: 'Học sinh không có quyền tạo lớp học'
+      });
+    }
+
     const teacherId = req.user.id;
     const data = req.body;
 
@@ -31,10 +38,11 @@ export const createClass = async (req, res) => {
 
 export const getClasses = async (req, res) => {
   try {
-    const teacherId = req.user.id;
+    const userId = req.user.id;
+    const userRole = req.user.role;
     const { page, limit, search, status } = req.query;
 
-    const result = await classService.getClasses(teacherId, {
+    const result = await classService.getClasses(userId, userRole, {
       page,
       limit,
       search,
@@ -66,10 +74,11 @@ export const getClasses = async (req, res) => {
 
 export const getClassById = async (req, res) => {
   try {
-    const teacherId = req.user.id;
+    const userId = req.user.id;
+    const userRole = req.user.role;
     const { id } = req.params;
     
-    const classObj = await classService.getClassById(id, teacherId);
+    const classObj = await classService.getClassById(id, userId, userRole);
 
     if (!classObj) {
       return res.status(404).json({

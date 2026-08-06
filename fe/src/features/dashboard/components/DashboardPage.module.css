@@ -6,6 +6,39 @@
   margin-top: 2px;
 }
 
+.heroCard,
+.studentHeroCard {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.9fr);
+  gap: 16px;
+  align-items: stretch;
+  padding: 20px;
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent-color) 12%, transparent), transparent 32%),
+    var(--card-bg);
+}
+
+.studentHeroCard {
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent-color) 14%, transparent), transparent 30%),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-color) 4%, var(--card-bg)), var(--card-bg));
+}
+
+.heroCopy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.heroSideCard {
+  background: color-mix(in srgb, var(--bg-color) 80%, var(--card-bg)) !important;
+  border-color: var(--border-color) !important;
+}
+
 .statCard {
   text-decoration: none;
   color: inherit;
@@ -50,4 +83,20 @@
 
 .listItem:hover {
   background: color-mix(in srgb, var(--accent-color) 6%, var(--bg-color)) !important;
+}
+
+@media (max-width: 768px) {
+  .heroCard,
+  .studentHeroCard {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .pageTitle {
+    font-size: 22px;
+  }
+
+  .statValue {
+    font-size: 28px;
+  }
 }
