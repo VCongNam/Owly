@@ -355,3 +355,50 @@ Tài liệu này lưu trữ tất cả các Kế hoạch Thực thi (Implementat
 ### 4. Bruno Documentation
 - Cập nhật `Submit Homework.bru`: ghi chú các behavior 403/400 mới.
 - Cập nhật `Get Assignments.bru`: thêm `params:query` và docs về pagination validation bounds.
+
+
+---
+
+## 17. Kế hoạch Chuẩn hóa & Nâng cấp 5 Giai đoạn Toàn diện (Ngày 06/08/2026)
+
+Kế hoạch 5 giai đoạn nhằm chuẩn hóa dự án Owly từ 70% lên mức sẵn sàng phát hành (Production-Ready) với độ an toàn cao, 0 lỗi lint và test tự động.
+
+### Giai đoạn 1: Khóa các lỗ hổng backend & Chuẩn hóa phân quyền
+- **Auth Helpers dùng chung (`src/utils/authHelpers.js`)**:
+  - `assertClassAccess(userId, userRole, classId)`: Kiểm tra sở hữu lớp (Teacher) hoặc ghi danh active (Student). Trả `404` nếu không tìm thấy lớp, `403` nếu không có quyền.
+  - `requireTeacher(req)` & `requireStudent(req)`: Phân quyền vai trò trả `AppError(..., 403)`.
+- **Phân quyền danh sách bài tập**: Áp dụng `assertClassAccess` cho API `GET /api/assignments/class/:classId`.
+- **Ràng buộc điểm chấm**: Kiểm tra `0 <= grade <= maxPoints` trong `gradeSubmission()`.
+- **Chuẩn hóa Error Handling**: Chuyển toàn bộ `throw new Error()` thành `AppError(message, statusCode)` trên toàn bộ 9 controllers/services backend để Global Error Handler xử lý đúng HTTP status code (400, 401, 403, 404, 409).
+
+### Giai đoạn 2: Chuẩn hóa Validation Zod
+- Tạo bộ schema dùng chung trong `be/src/validation/`:
+  - `commonSchema.js`: `idParamsSchema`, `classIdParamsSchema`, `assignmentIdParamsSchema`, `upcomingLimitSchema`.
+  - `paginationSchema.js`: `page` (min 1, default 1), `limit` (min 1, max 100, default 10).
+- Áp dụng middleware `validate(schema, target)` vào routes của 7 phân hệ: Assignments, Classes, Students, Schedule, Materials, Posts, Tuition.
+- Điều kiện nghiệm thu: `page=0`, `limit=101`, ID sai định dạng UUID đều trả HTTP 400 kèm JSON định dạng thống nhất.
+
+### Giai đoạn 3: Hoàn thiện Bruno & Security Test Suite
+- Bổ sung các request còn thiếu: Update/Delete Assignment, Get Class Sessions, Bulk Import Students, Download Student Template, Get My Invoices, Upload file dùng chung.
+- Tạo thư mục kiểm thử phân quyền chéo `be/bruno/Security/`:
+  - `Student Access Foreign Class.bru`
+  - `Student Submit Foreign Assignment.bru`
+  - `Teacher Grade Foreign Submission.bru`
+  - `Student Submit Foreign Invoice.bru`
+  - `Teacher Review Foreign Transaction.bru`
+- Điều kiện nghiệm thu: Toàn bộ kịch bản happy path thành công; toàn bộ kịch bản truy cập chéo trả 403/404.
+
+### Giai đoạn 4: Làm sạch Frontend (Clean ESLint - 0 Errors)
+- Sửa triệt để 70 vấn đề (62 errors, 8 warnings) khi chạy `pnpm lint` ở thư mục `fe`.
+- Xóa import/biến không dùng, sửa dependency array của React hooks.
+- Tái cấu trúc logic reset state trong effect (dùng `key` component hoặc handler mở/đóng modal).
+- Chuẩn hóa việc sử dụng `Date.now()` trong render.
+- Điều kiện nghiệm thu: `pnpm lint` chạy thành công với 0 errors và 0 warnings.
+
+### Giai đoạn 5: Thêm Test tự động (Vitest + Supertest)
+- Tách Express configuration và Server listen: `be/src/app.js` (export app) và `be/src/server.js` (gọi `app.listen`).
+- Thiết lập cấu trúc test `be/tests/`:
+  - `helpers/`: `auth.js` (mock JWT token), `fixtures.js` (data mẫu).
+  - `integration/`: `auth.test.js`, `classes.test.js`, `assignments.test.js`, `tuition.test.js`.
+  - `unit/`: `validation.test.js`.
+- Điều kiện nghiệm thu: Chạy `npm test` thành công 100% kiểm thử tích hợp cho Auth, Roles, Class Access, Submissions, Grading & Tuition.
