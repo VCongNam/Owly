@@ -407,14 +407,17 @@ Kế hoạch 5 giai đoạn nhằm chuẩn hóa dự án Owly từ 70% lên mứ
 
 ## 18. Triển khai Giai đoạn 1 & Giai đoạn 2: Sửa đổi & Chuẩn hóa Validation (Ngày 08/08/2026)
 
-- **Giai đoạn 1 (Sẵn sàng nghiệm thu - ~95%)**:
+- **Giai đoạn 1 (Đã triển khai phần trọng yếu, chưa nghiệm thu - ~85%)**:
   - Đã chuyển toàn bộ các controller trả lỗi thủ công (`classController`, `scheduleController`, `attendanceController`) sang dùng `next(error)` để Global Error Handler format đồng bộ lỗi dạng JSON thống nhất và không lộ stack trace trong production.
   - Sửa `classService.js` để ném lỗi `AppError` 404 (không tìm thấy) và 403 (không sở hữu) một cách chính xác thay vì gộp chung và trả về `null`.
   - Thay thế việc ném raw error + gán status code thủ công trong `gradeCategoryService.js` thành `AppError` chuẩn hóa.
-- **Giai đoạn 2 (Sẵn sàng nghiệm thu - ~70%)**:
+  - Review sau triển khai xác nhận Auth, Profile, Subjects, SePay và một số middleware/controller vẫn còn response lỗi thủ công hoặc raw `error.message`; cần tiếp tục chuẩn hóa trước khi nghiệm thu toàn Phase 1.
+- **Giai đoạn 2 (Đã triển khai phần trọng yếu, chưa nghiệm thu - ~70%)**:
   - Tạo mới và mở rộng [commonSchema.js](file:///d:/Study/Owly/be/src/validation/commonSchema.js) định nghĩa đầy đủ Single parameter, Combined parameters (tránh Zod strip params trên route nhiều params), và các Query validation schemas.
   - Áp dụng parameter validation cho tất cả các routes nhận UUID của 7 phân hệ.
   - Đưa body validation của phân hệ Học phí (Tuition) về route middleware thay vì gọi `.parse` thủ công ở controller, tránh trả lỗi 500 do Zod error.
   - Áp dụng pagination và filter validation trên tất cả 8 danh sách endpoints chính, đồng thời định nghĩa `studentScheduleQuerySchema` cho `/me/schedule`.
   - Loại bỏ việc parsing page/limit thủ công trong controllers.
-  - Bổ sung 8 request test Bruno mới tại thư mục `be/bruno/Validation` để phục vụ regression test cho validation.
+  - Bổ sung 8 request Bruno mới tại thư mục `be/bruno/Validation` để kiểm tra validation thủ công.
+  - Review sau triển khai xác nhận `studentScheduleQuerySchema` mới kiểm tra định dạng ngày bằng regex, chưa chặn ngày không tồn tại hoặc `startDate > endDate`.
+  - Các request Bruno Validation chưa có assertion tự động và một số request còn hardcode UUID; chưa được coi là regression test suite cho đến khi bổ sung `tests {}` và biến environment/fixture.

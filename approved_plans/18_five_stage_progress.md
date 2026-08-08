@@ -10,15 +10,15 @@
 
 | Giai đoạn | Tiến độ ước tính | Trạng thái |
 |---|---:|---|
-| 1. Khóa lỗ hổng backend & chuẩn hóa phân quyền | ~95% | Đã triển khai — Sẵn sàng nghiệm thu |
-| 2. Chuẩn hóa Validation Zod | ~70% | Đã triển khai — Sẵn sàng nghiệm thu |
+| 1. Khóa lỗ hổng backend & chuẩn hóa phân quyền | ~85% | Đã triển khai phần trọng yếu — Chưa nghiệm thu |
+| 2. Chuẩn hóa Validation Zod | ~70% | Đã triển khai phần trọng yếu — Chưa nghiệm thu |
 | 3. Hoàn thiện Bruno & Security Test Suite | ~15% | Đang triển khai bước đầu |
 | 4. Làm sạch Frontend | 0% | Chưa triển khai |
 | 5. Thêm Test tự động | 0% | Chưa triển khai |
 
-**Tiến độ tổng thể của riêng kế hoạch 5 giai đoạn:** khoảng **38–40%**.
+**Tiến độ tổng thể của riêng kế hoạch 5 giai đoạn:** khoảng **33–35%**.
 
-> **Lưu ý (08/08/2026):** Đợt review thực tế xác nhận Phase 1 chưa đủ điều kiện nghiệm thu. Vẫn còn các controller tự xử lý lỗi thay vì dùng `next(error)` + Global Error Handler: `classController.js`, `scheduleController.js`, `attendanceController.js`. `gradeCategoryService.js` vẫn dùng `err.statusCode` thay vì `AppError`. `/supabase-check` trong `app.js` tự trả `error.message` không qua handler. Phase 2: `commonSchema.js` đã tạo nhưng thiếu các UUID param schemas và toàn bộ routes nhận UUID chưa validate params.
+> **Lưu ý review mới nhất (08/08/2026):** Năm hạng mục còn lại đã được triển khai đúng tại `classController`, `classService`, `scheduleController`, `attendanceController`, `gradeCategoryService` và `/supabase-check`. Tuy nhiên Phase 1 chưa thể nghiệm thu toàn hệ thống vì Auth, Profile, Subjects, SePay và một số middleware/controller khác vẫn tự trả lỗi hoặc đưa raw `error.message` vào response. Phase 2 đã bao phủ các route trọng yếu, nhưng validation ngày mới kiểm tra hình thức; 8 request Bruno trong `be/bruno/Validation/` chưa có assertion tự động và một số request còn hardcode UUID phụ thuộc dữ liệu local.
 
 > Tiến độ trên phản ánh trạng thái code tại ngày 08/08/2026. Một giai đoạn chỉ được đánh dấu hoàn tất khi đáp ứng đầy đủ điều kiện nghiệm thu, không chỉ dựa trên việc đã có file hoặc code khởi tạo.
 
@@ -55,8 +55,10 @@
 - [x] Sửa `attendanceController.js`: cùng pattern — thay catch handler tự trả response bằng `next(error)`.
 - [x] Sửa `gradeCategoryService.js` `deleteGradeCategory`: thay `err.statusCode = 400` bằng `throw new AppError(..., 400)`.
 - [x] Sửa `/supabase-check` trong `app.js`: thay `res.status(500).json({ error: error.message })` bằng `next(error)` hoặc trả response an toàn không lộ message.
+- [ ] Rà soát và chuẩn hóa các response lỗi còn lại trong Auth, Profile, Subjects, SePay và `authMiddleware`; không trả raw `error.message` cho lỗi hệ thống.
+- [ ] Bảo đảm toàn bộ lỗi nghiệp vụ đi qua `AppError`/Global Error Handler hoặc middleware validation có response format thống nhất.
 
-*Lưu ý: Toàn bộ Phase 1 đã được sửa đổi và kiểm tra cú pháp thành công, hiện đang chờ người dùng chạy suite Bruno để nghiệm thu.*
+*Kết quả kiểm tra: các file route/schema thay đổi đã qua `node --check`. Đây mới là kiểm tra cú pháp; chưa thay thế kiểm thử API phân quyền, error response và dữ liệu thực tế.*
 
 ### 2.3. Điều kiện nghiệm thu
 
@@ -102,6 +104,10 @@
   - Tuition.
 - [x] Loại bỏ `parseInt(req.query...)` thủ công trong controller sau khi route đã coerce bằng Zod.
 - [x] Rà soát tất cả API trả danh sách để bảo đảm có `items` và `pagination`, ngoại trừ danh mục nhỏ và cố định (nhóm được miễn trừ đã liệt kê trong Implementation Plan).
+- [ ] Nâng `studentScheduleQuerySchema` từ kiểm tra regex sang kiểm tra ngày tồn tại thực tế và ràng buộc `startDate <= endDate`.
+- [ ] Thêm `tests {}`/assertion status và response body cho 8 request trong `be/bruno/Validation/`; hiện tại đây mới là request kiểm thử thủ công.
+- [ ] Thay UUID hardcode trong các request Bruno phụ thuộc dữ liệu bằng biến environment/fixture (`classId`, `transactionId`, v.v.).
+- [ ] Nghiệm thu lại các API danh sách được miễn pagination; không miễn các danh sách có thể tăng không giới hạn nếu chưa có giới hạn kỹ thuật.
 
 ### 3.3. Điều kiện nghiệm thu
 
@@ -115,6 +121,8 @@ Các trường hợp sau phải trả HTTP `400` cùng response JSON thống nh�
 - `limit=abc`.
 - ID sai định dạng UUID.
 - Body thiếu trường bắt buộc hoặc sai kiểu dữ liệu.
+- Ngày sai thực tế (ví dụ `2026-99-99`) hoặc `startDate > endDate` trả `400`.
+- Bruno Validation tự fail khi status/response không đúng kỳ vọng và không phụ thuộc ID local hardcode.
 
 ---
 
@@ -125,6 +133,8 @@ Các trường hợp sau phải trả HTTP `400` cùng response JSON thống nh�
 - [x] Cập nhật `Assignment/Get Assignments.bru` cho pagination.
 - [x] Cập nhật `Assignment/Submit Homework.bru` cho enrollment và deadline guard.
 - [x] Bộ Bruno hiện có bao phủ phần lớn happy path của Auth, Classes, Students, Schedule, Attendance, Materials, Posts, Assignments, Grade Categories, Tuition và Feedback.
+- [x] Tạo 8 request kiểm tra validation thủ công tại `be/bruno/Validation/`.
+- [ ] Bổ sung assertion tự động và biến môi trường cho 8 request Validation trước khi coi là regression test suite.
 
 ### 4.2. Request Bruno còn thiếu
 
