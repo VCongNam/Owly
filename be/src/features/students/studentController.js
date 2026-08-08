@@ -1,5 +1,6 @@
 import * as studentService from './studentService.js';
 import { formatToVietnamTime } from '../../utils/dateHelper.js';
+import { assertClassAccess } from '../../utils/authHelpers.js';
 
 // Format helper cho ngày sinh và ngày tạo
 const formatStudentDates = (student) => {
@@ -105,6 +106,9 @@ export const getClassMembers = async (req, res, next) => {
     const userRole = req.user.role;
     const { classId } = req.params;
     const { page, limit, search } = req.query;
+
+    // Xác thực quyền truy cập lớp học của người dùng hiện tại
+    await assertClassAccess(userId, userRole, classId);
 
     if (userRole === 'student') {
       const result = await studentService.getClassMembersForStudent(classId, userId, {

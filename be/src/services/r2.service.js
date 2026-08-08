@@ -1,5 +1,6 @@
 import { PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { r2Client, R2_CONFIG } from '../config/r2.js';
+import { AppError } from '../utils/appError.js';
 
 /**
  * Upload file/buffer lên Cloudflare R2
@@ -10,7 +11,7 @@ import { r2Client, R2_CONFIG } from '../config/r2.js';
  */
 export const uploadFileToR2 = async (fileBuffer, fileName, mimeType) => {
   if (!fileBuffer || !fileName) {
-    throw new Error('Nội dung file (Buffer) và tên file không được để trống.');
+    throw new AppError('Nội dung file (Buffer) và tên file không được để trống.', 400);
   }
 
   const command = new PutObjectCommand({
@@ -42,7 +43,7 @@ export const uploadFileToR2 = async (fileBuffer, fileName, mimeType) => {
  */
 export const deleteFileFromR2 = async (fileName) => {
   if (!fileName) {
-    throw new Error('Tên file cần xóa không được để trống.');
+    throw new AppError('Tên file cần xóa không được để trống.', 400);
   }
 
   const command = new DeleteObjectCommand({

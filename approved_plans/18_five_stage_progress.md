@@ -10,13 +10,15 @@
 
 | Giai đoạn | Tiến độ ước tính | Trạng thái |
 |---|---:|---|
-| 1. Khóa lỗ hổng backend & chuẩn hóa phân quyền | 90% | Gần hoàn tất |
-| 2. Chuẩn hóa Validation Zod | 15% | Đang triển khai |
-| 3. Hoàn thiện Bruno & Security Test Suite | 15% | Đang triển khai bước đầu |
+| 1. Khóa lỗ hổng backend & chuẩn hóa phân quyền | ~95% | Đã triển khai — Sẵn sàng nghiệm thu |
+| 2. Chuẩn hóa Validation Zod | ~70% | Đã triển khai — Sẵn sàng nghiệm thu |
+| 3. Hoàn thiện Bruno & Security Test Suite | ~15% | Đang triển khai bước đầu |
 | 4. Làm sạch Frontend | 0% | Chưa triển khai |
 | 5. Thêm Test tự động | 0% | Chưa triển khai |
 
-**Tiến độ tổng thể của riêng kế hoạch 5 giai đoạn:** khoảng **30–35%**.
+**Tiến độ tổng thể của riêng kế hoạch 5 giai đoạn:** khoảng **38–40%**.
+
+> **Lưu ý (08/08/2026):** Đợt review thực tế xác nhận Phase 1 chưa đủ điều kiện nghiệm thu. Vẫn còn các controller tự xử lý lỗi thay vì dùng `next(error)` + Global Error Handler: `classController.js`, `scheduleController.js`, `attendanceController.js`. `gradeCategoryService.js` vẫn dùng `err.statusCode` thay vì `AppError`. `/supabase-check` trong `app.js` tự trả `error.message` không qua handler. Phase 2: `commonSchema.js` đã tạo nhưng thiếu các UUID param schemas và toàn bộ routes nhận UUID chưa validate params.
 
 > Tiến độ trên phản ánh trạng thái code tại ngày 08/08/2026. Một giai đoạn chỉ được đánh dấu hoàn tất khi đáp ứng đầy đủ điều kiện nghiệm thu, không chỉ dựa trên việc đã có file hoặc code khởi tạo.
 
@@ -42,19 +44,19 @@
 - [x] Kiểm tra điểm chấm thỏa mãn `0 <= grade <= maxPoints`.
 - [x] Tạo Global Error Handler và đăng ký sau tất cả routes.
 - [x] Chuyển phần lớn lỗi nghiệp vụ backend sang `AppError`.
+- [x] Chuyển các `throw new Error()` trong `r2.service.js` sang `AppError`.
+- [x] Áp dụng `assertClassAccess` kiểm tra phân quyền lớp học cho: Posts, Materials, Sessions, Session Feedback, Tuition, Invoices, Class Members.
+- [x] Validate và giới hạn `limit` của `GET /api/assignments/teacher/upcoming` dùng Zod `upcomingLimitSchema`.
 
-### 2.2. Phần còn lại
+### 2.2. Phần còn lại (chưa nghiệm thu)
 
-- [ ] Chuyển hai `throw new Error()` còn lại trong `be/src/services/r2.service.js` sang `AppError` phù hợp.
-- [ ] Áp dụng `assertClassAccess` hoặc helper phân quyền tương đương cho:
-  - Posts.
-  - Materials.
-  - Sessions và Session Feedback.
-  - Tuition và Invoices.
-  - Class Members.
-- [ ] Validate và giới hạn `limit` của `GET /api/assignments/teacher/upcoming`.
-- [ ] Rà soát tất cả endpoint nhận `classId`, bảo đảm không endpoint nào chỉ kiểm tra đăng nhập mà bỏ qua quyền truy cập lớp.
-- [ ] Chạy đầy đủ ca kiểm thử truy cập chéo giữa hai giáo viên và hai học sinh.
+- [x] Sửa `classController.js`: thay toàn bộ `res.status(4xx/5xx).json()` trong catch block bằng `next(error)` (sau khi service đã ném `AppError`).
+- [x] Sửa `scheduleController.js`: thay `error.statusCode || 500` + `res.status(...).json()` bằng `next(error)`.
+- [x] Sửa `attendanceController.js`: cùng pattern — thay catch handler tự trả response bằng `next(error)`.
+- [x] Sửa `gradeCategoryService.js` `deleteGradeCategory`: thay `err.statusCode = 400` bằng `throw new AppError(..., 400)`.
+- [x] Sửa `/supabase-check` trong `app.js`: thay `res.status(500).json({ error: error.message })` bằng `next(error)` hoặc trả response an toàn không lộ message.
+
+*Lưu ý: Toàn bộ Phase 1 đã được sửa đổi và kiểm tra cú pháp thành công, hiện đang chờ người dùng chạy suite Bruno để nghiệm thu.*
 
 ### 2.3. Điều kiện nghiệm thu
 
@@ -79,26 +81,27 @@
 
 ### 3.2. Phần còn lại
 
-- [ ] Tạo `be/src/validation/commonSchema.js`.
-- [ ] Bổ sung các schema dùng chung:
-  - `idParamsSchema`.
-  - `classIdParamsSchema`.
-  - `assignmentIdParamsSchema`.
-  - `submissionIdParamsSchema`.
-  - `sessionIdParamsSchema`.
-  - `transactionIdParamsSchema`.
-  - `upcomingLimitSchema`.
-- [ ] Áp dụng validation `params` cho tất cả route nhận ID.
-- [ ] Áp dụng validation `query` và pagination cho các phân hệ:
+- [x] Tạo `be/src/validation/commonSchema.js` (đã tạo, hiện có `upcomingLimitSchema`).
+- [x] Bổ sung `upcomingLimitSchema` và áp dụng cho `GET /api/assignments/teacher/upcoming`.
+- [x] Bổ sung các UUID param schemas vào `commonSchema.js`:
+  - `idParamsSchema` (`{ id: z.string().uuid() }`).
+  - `classIdParamsSchema` (`{ classId: z.string().uuid() }`).
+  - `assignmentIdParamsSchema` (`{ assignmentId: z.string().uuid() }`).
+  - `submissionIdParamsSchema` (`{ submissionId: z.string().uuid() }`).
+  - `sessionIdParamsSchema` (`{ sessionId: z.string().uuid() }`).
+  - `transactionIdParamsSchema` (`{ transactionId: z.string().uuid() }`).
+  - Bổ sung thêm `invoiceIdParamsSchema`, `postIdParamsSchema` và các combined-param schemas.
+- [x] Áp dụng validation `params` cho tất cả route nhận ID.
+- [x] Áp dụng validation `query` và pagination cho các phân hệ:
   - Assignments.
   - Classes.
-  - Students.
+  - Students (gồm `studentScheduleQuerySchema` cho `/me/schedule`).
   - Schedule.
   - Materials.
   - Posts.
   - Tuition.
-- [ ] Loại bỏ `parseInt(req.query...)` thủ công trong controller sau khi route đã coerce bằng Zod.
-- [ ] Rà soát tất cả API trả danh sách để bảo đảm có `items` và `pagination`, ngoại trừ danh mục nhỏ và cố định.
+- [x] Loại bỏ `parseInt(req.query...)` thủ công trong controller sau khi route đã coerce bằng Zod.
+- [x] Rà soát tất cả API trả danh sách để bảo đảm có `items` và `pagination`, ngoại trừ danh mục nhỏ và cố định (nhóm được miễn trừ đã liệt kê trong Implementation Plan).
 
 ### 3.3. Điều kiện nghiệm thu
 

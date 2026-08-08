@@ -222,7 +222,7 @@ export const getClassById = async (id, userId, userRole) => {
     }
   });
 
-  if (!classObj) return null;
+  if (!classObj) throw new AppError('Không tìm thấy lớp học', 404);
   
   if (userRole === 'student') {
     const isEnrolled = await prisma.classEnrollment.findFirst({
@@ -246,7 +246,8 @@ export const getClassById = async (id, userId, userRole) => {
 export const updateClass = async (id, teacherId, data) => {
   // Lấy ra class hiện tại để tính toán status chính xác
   const existingClass = await prisma.class.findUnique({ where: { id } });
-  if (!existingClass || existingClass.teacherId !== teacherId) return null;
+  if (!existingClass) throw new AppError('Không tìm thấy lớp học', 404);
+  if (existingClass.teacherId !== teacherId) throw new AppError('Bạn không có quyền sửa lớp học này', 403);
 
   const newStartDate = data.startDate || existingClass.startDate;
   const newExpectedEndDate = data.expectedEndDate !== undefined ? data.expectedEndDate : existingClass.expectedEndDate;
@@ -340,7 +341,8 @@ export const updateClass = async (id, teacherId, data) => {
 
 export const deleteClass = async (id, teacherId) => {
   const existingClass = await prisma.class.findUnique({ where: { id } });
-  if (!existingClass || existingClass.teacherId !== teacherId) return null;
+  if (!existingClass) throw new AppError('Không tìm thấy lớp học', 404);
+  if (existingClass.teacherId !== teacherId) throw new AppError('Bạn không có quyền xóa lớp học này', 403);
 
   return await prisma.class.delete({
     where: { id }

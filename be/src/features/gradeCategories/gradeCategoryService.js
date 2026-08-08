@@ -1,4 +1,5 @@
 import { prisma } from '../../config/db.js';
+import { AppError } from '../../utils/appError.js';
 
 export const getOrCreateDefaultGradeCategory = async (classId) => {
   let categories = await prisma.gradeCategory.findMany({
@@ -71,9 +72,7 @@ export const deleteGradeCategory = async (classId, id) => {
   });
 
   if (count <= 1) {
-    const err = new Error('Lớp học phải giữ ít nhất 1 danh mục đầu điểm.');
-    err.statusCode = 400;
-    throw err;
+    throw new AppError('Lớp học phải giữ ít nhất 1 danh mục đầu điểm.', 400);
   }
 
   const defaultCategories = await getOrCreateDefaultGradeCategory(classId);

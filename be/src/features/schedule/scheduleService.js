@@ -1,5 +1,6 @@
 import { prisma } from '../../config/db.js';
 import { AppError } from '../../utils/appError.js';
+import { assertClassAccess } from '../../utils/authHelpers.js';
 
 // Helper: Quy đổi ngày trong tuần của JavaScript sang chuẩn Prisma (2 = Thứ 2, 8 = Chủ nhật)
 const getPrismaDayOfWeek = (jsDay) => {
@@ -83,26 +84,7 @@ export const getClassSessions = async (classId, userId, userRole, options = {}) 
   const limit = Number(options.limit) || 10;
   const skip = (page - 1) * limit;
 
-  const targetClass = await prisma.class.findUnique({
-    where: { id: classId }
-  });
-
-  if (!targetClass) {
-    throw new AppError('Lớp học không tồn tại', 404);
-  }
-
-  if (userRole === 'student') {
-    const enrollment = await prisma.classEnrollment.findFirst({
-      where: { classId, studentId: userId, isActive: true }
-    });
-    if (!enrollment) {
-      throw new AppError('Bạn không tham gia lớp học này', 403);
-    }
-  } else {
-    if (targetClass.teacherId !== userId) {
-      throw new AppError('Bạn không có quyền quản lý lịch học lớp này', 403);
-    }
-  }
+  await assertClassAccess(userId, userRole, classId);
 
   const totalItems = await prisma.session.count({
     where: { classId }

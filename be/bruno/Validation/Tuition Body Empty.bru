@@ -1,0 +1,23 @@
+meta {
+  name: Tuition Body Empty
+  type: http
+  seq: 7
+}
+
+put {
+  url: {{baseUrl}}/api/classes/b3c4d3bf-db82-4fad-b1fe-314ed3c26d85/tuition-config
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+body:json {
+  {}
+}

@@ -55,7 +55,7 @@ app.get('/', (req, res) => {
 });
 
 // Supabase Connection Check route
-app.get('/supabase-check', async (req, res) => {
+app.get('/supabase-check', async (req, res, next) => {
   try {
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
@@ -84,7 +84,7 @@ app.get('/supabase-check', async (req, res) => {
         : 'Supabase is not configured yet. Please update the .env file.'
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 });
 

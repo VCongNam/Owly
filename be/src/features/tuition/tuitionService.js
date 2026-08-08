@@ -1,7 +1,11 @@
 import { prisma } from '../../config/db.js';
 import dayjs from 'dayjs';
+import { AppError } from '../../utils/appError.js';
+import { assertClassAccess } from '../../utils/authHelpers.js';
 
-export const getClassTuitionConfig = async (classId) => {
+export const getClassTuitionConfig = async (classId, userId, userRole) => {
+  await assertClassAccess(userId, userRole, classId);
+
   const config = await prisma.classTum.findUnique({
     where: { classId },
   });
@@ -13,7 +17,9 @@ export const getClassTuitionConfig = async (classId) => {
   };
 };
 
-export const upsertClassTuitionConfig = async (classId, { amount, billingCycle }) => {
+export const upsertClassTuitionConfig = async (classId, teacherId, { amount, billingCycle }) => {
+  await assertClassAccess(teacherId, 'teacher', classId);
+
   const config = await prisma.classTum.upsert({
     where: { classId },
     update: { amount, billingCycle: billingCycle || 'Monthly' },
@@ -27,27 +33,11 @@ export const generateMonthlyInvoices = async (classId, teacherId, { billingMonth
   // 0. Chặn phát hành hóa đơn cho các tháng trong tương lai (sau tháng hiện tại)
   const currentMonthStr = dayjs().format('YYYY-MM');
   if (billingMonth > currentMonthStr) {
-    const error = new Error('Không thể phát hành hóa đơn học phí cho các tháng trong tương lai');
-    error.statusCode = 400;
-    throw error;
+    throw new AppError('Không thể phát hành hóa đơn học phí cho các tháng trong tương lai', 400);
   }
 
   // 1. Kiểm tra lớp học có tồn tại và thuộc về giáo viên không
-  const cls = await prisma.class.findUnique({
-    where: { id: classId },
-  });
-
-  if (!cls) {
-    const error = new Error('Không tìm thấy lớp học');
-    error.statusCode = 404;
-    throw error;
-  }
-
-  if (cls.teacherId !== teacherId) {
-    const error = new Error('Bạn không có quyền thực hiện thao tác này trên lớp học');
-    error.statusCode = 403;
-    throw error;
-  }
+  const cls = await assertClassAccess(teacherId, 'teacher', classId);
 
   // 2. Xác định đơn giá/buổi
   let rate = amountPerSession;
@@ -83,9 +73,7 @@ export const generateMonthlyInvoices = async (classId, teacherId, { billingMonth
   });
 
   if (enrollments.length === 0) {
-    const error = new Error('Lớp học chưa có học viên nào đang tham gia');
-    error.statusCode = 400;
-    throw error;
+    throw new AppError('Lớp học chưa có học viên nào đang tham gia', 400);
   }
 
   const [month, year] = [monthStr, yearStr];
@@ -149,7 +137,9 @@ export const generateMonthlyInvoices = async (classId, teacherId, { billingMonth
   };
 };
 
-export const getClassInvoices = async (classId, { page = 1, limit = 10, billingMonth, status, search }) => {
+export const getClassInvoices = async (classId, userId, userRole, { page = 1, limit = 10, billingMonth, status, search }) => {
+  await assertClassAccess(userId, userRole, classId);
+
   const skip = (page - 1) * limit;
 
   const whereClause = {
@@ -283,15 +273,11 @@ export const submitPaymentProof = async (studentId, invoiceId, { proofUrl, amoun
   });
 
   if (!invoice) {
-    const error = new Error('Không tìm thấy hóa đơn');
-    error.statusCode = 404;
-    throw error;
+    throw new AppError('Không tìm thấy hóa đơn', 404);
   }
 
   if (invoice.studentId !== studentId) {
-    const error = new Error('Bạn không có quyền thực hiện thanh toán cho hóa đơn này');
-    error.statusCode = 403;
-    throw error;
+    throw new AppError('Bạn không có quyền thực hiện thanh toán cho hóa đơn này', 403);
   }
 
   const transaction = await prisma.transaction.create({
@@ -323,15 +309,11 @@ export const reviewTransaction = async (teacherId, transactionId, { status, reje
   });
 
   if (!transaction) {
-    const error = new Error('Không tìm thấy giao dịch');
-    error.statusCode = 404;
-    throw error;
+    throw new AppError('Không tìm thấy giao dịch', 404);
   }
 
   if (transaction.invoice.class.teacherId !== teacherId) {
-    const error = new Error('Bạn không có quyền duyệt giao dịch của lớp học này');
-    error.statusCode = 403;
-    throw error;
+    throw new AppError('Bạn không có quyền duyệt giao dịch của lớp học này', 403);
   }
 
   const updatedTransaction = await prisma.transaction.update({

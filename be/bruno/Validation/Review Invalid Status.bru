@@ -1,0 +1,25 @@
+meta {
+  name: Review Invalid Status
+  type: http
+  seq: 8
+}
+
+patch {
+  url: {{baseUrl}}/api/tuition/transactions/b3c4d3bf-db82-4fad-b1fe-314ed3c26d85/review
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+body:json {
+  {
+    "status": "Dunno"
+  }
+}

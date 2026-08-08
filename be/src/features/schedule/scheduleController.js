@@ -1,7 +1,7 @@
 import * as scheduleService from './scheduleService.js';
 import { getSessionsQuerySchema } from './scheduleSchema.js';
 
-export const getPersonalSchedule = async (req, res) => {
+export const getPersonalSchedule = async (req, res, next) => {
   try {
     const teacherId = req.user.id;
     // Validate queries
@@ -22,11 +22,7 @@ export const getPersonalSchedule = async (req, res) => {
       data: sessions
     });
   } catch (error) {
-    const statusCode = error.statusCode || 500;
-    return res.status(statusCode).json({
-      success: false,
-      message: error.message || 'Lấy lịch dạy thất bại'
-    });
+    next(error);
   }
 };
 
@@ -44,15 +40,11 @@ export const getClassSessions = async (req, res, next) => {
       data: result
     });
   } catch (error) {
-    const statusCode = error.statusCode || 500;
-    return res.status(statusCode).json({
-      success: false,
-      message: error.message || 'Lấy danh sách buổi học của lớp thất bại'
-    });
+    next(error);
   }
 };
 
-export const setupRecurringSchedule = async (req, res) => {
+export const setupRecurringSchedule = async (req, res, next) => {
   try {
     const teacherId = req.user.id;
     const { classId } = req.params;
@@ -66,15 +58,11 @@ export const setupRecurringSchedule = async (req, res) => {
       data: result
     });
   } catch (error) {
-    const statusCode = error.statusCode || 500;
-    return res.status(statusCode).json({
-      success: false,
-      message: error.message || 'Cấu hình lịch học thất bại'
-    });
+    next(error);
   }
 };
 
-export const createManualSession = async (req, res) => {
+export const createManualSession = async (req, res, next) => {
   try {
     const teacherId = req.user.id;
     const { classId } = req.params;
@@ -88,15 +76,11 @@ export const createManualSession = async (req, res) => {
       data: newSession
     });
   } catch (error) {
-    const statusCode = error.statusCode || 500;
-    return res.status(statusCode).json({
-      success: false,
-      message: error.message || 'Tạo buổi học thất bại'
-    });
+    next(error);
   }
 };
 
-export const updateSession = async (req, res) => {
+export const updateSession = async (req, res, next) => {
   try {
     const teacherId = req.user.id;
     const { sessionId } = req.params;
@@ -110,10 +94,6 @@ export const updateSession = async (req, res) => {
       data: updatedSession
     });
   } catch (error) {
-    const statusCode = error.statusCode || 500;
-    return res.status(statusCode).json({
-      success: false,
-      message: error.message || 'Cập nhật buổi học thất bại'
-    });
+    next(error);
   }
 };

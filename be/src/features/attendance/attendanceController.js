@@ -14,11 +14,7 @@ export const attendanceController = {
         data: attendances
       });
     } catch (error) {
-      const statusCode = error.statusCode || 500;
-      res.status(statusCode).json({
-        status: 'error',
-        message: error.message || 'Lấy danh sách điểm danh thất bại'
-      });
+      next(error);
     }
   },
 
@@ -41,12 +37,7 @@ export const attendanceController = {
         message: result.message
       });
     } catch (error) {
-      const statusCode = error.statusCode || 500;
-      res.status(statusCode).json({
-        status: 'error',
-        message: error.message || 'Lưu điểm danh thất bại'
-      });
+      next(error);
     }
   }
 };
-

@@ -1,0 +1,15 @@
+meta {
+  name: Invalid ClassId Param on Assignment
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/assignments/class/not-a-uuid
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}

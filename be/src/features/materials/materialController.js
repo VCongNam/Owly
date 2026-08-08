@@ -2,39 +2,27 @@ import { prisma } from '../../config/db.js';
 import { uploadFileToR2, deleteFileFromR2 } from '../../services/r2.service.js';
 import { R2_CONFIG } from '../../config/r2.js';
 import { createMaterialSchema } from './materialSchema.js';
+import { AppError } from '../../utils/appError.js';
+import { assertClassAccess } from '../../utils/authHelpers.js';
 
 // UC: Tải lên tài liệu học tập (Chỉ Giáo viên của lớp - Hỗ trợ tải lên nhiều file)
 export const uploadMaterial = async (req, res, next) => {
   try {
     const { classId } = req.params;
     const userId = req.user.id;
+    const userRole = req.user.role;
     const files = req.files;
 
     // 1. Kiểm tra tài khoản có phải giáo viên và sở hữu lớp học này không
-    const cls = await prisma.class.findUnique({
-      where: { id: classId }
-    });
+    await assertClassAccess(userId, userRole, classId);
 
-    if (!cls) {
-      return res.status(404).json({
-        success: false,
-        message: 'Lớp học không tồn tại.'
-      });
-    }
-
-    if (cls.teacherId !== userId) {
-      return res.status(403).json({
-        success: false,
-        message: 'Bạn không có quyền tải lên tài liệu cho lớp học này.'
-      });
+    if (userRole !== 'teacher') {
+      throw new AppError('Bạn không có quyền tải lên tài liệu cho lớp học này.', 403);
     }
 
     // 2. Validate files
     if (!files || files.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Vui lòng chọn ít nhất một tài liệu để tải lên.'
-      });
+      throw new AppError('Vui lòng chọn ít nhất một tài liệu để tải lên.', 400);
     }
 
     // 3. Validate body (title, description)
@@ -114,38 +102,13 @@ export const getClassMaterials = async (req, res, next) => {
   try {
     const { classId } = req.params;
     const userId = req.user.id;
+    const userRole = req.user.role;
 
-    // 1. Kiểm tra lớp học tồn tại
-    const cls = await prisma.class.findUnique({
-      where: { id: classId },
-      include: {
-        enrollments: {
-          where: { studentId: userId, isActive: true }
-        }
-      }
-    });
-
-    if (!cls) {
-      return res.status(404).json({
-        success: false,
-        message: 'Lớp học không tồn tại.'
-      });
-    }
-
-    // 2. Kiểm tra quyền truy cập: giáo viên dạy lớp hoặc học viên trong lớp
-    const isTeacher = cls.teacherId === userId;
-    const isStudent = cls.enrollments.length > 0;
-
-    if (!isTeacher && !isStudent) {
-      return res.status(403).json({
-        success: false,
-        message: 'Bạn không có quyền truy cập tài liệu của lớp học này.'
-      });
-    }
+    // 1. Kiểm tra quyền truy cập: giáo viên dạy lớp hoặc học viên trong lớp
+    await assertClassAccess(userId, userRole, classId);
 
     // 3. Phân trang
-    const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
+    const { page, limit } = req.query;
     const skip = (page - 1) * limit;
 
     const totalItems = await prisma.classMaterial.count({
@@ -184,6 +147,7 @@ export const deleteMaterial = async (req, res, next) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
+    const userRole = req.user.role;
 
     // 1. Tìm tài liệu
     const material = await prisma.classMaterial.findUnique({
@@ -192,18 +156,14 @@ export const deleteMaterial = async (req, res, next) => {
     });
 
     if (!material) {
-      return res.status(404).json({
-        success: false,
-        message: 'Tài liệu không tồn tại.'
-      });
+      throw new AppError('Tài liệu không tồn tại.', 404);
     }
 
-    // 2. Kiểm tra xem người dùng có phải là giáo viên của lớp học này không
+    // 2. Kiểm tra quyền truy cập lớp và vai trò giáo viên
+    await assertClassAccess(userId, userRole, material.classId);
+
     if (material.class.teacherId !== userId) {
-      return res.status(403).json({
-        success: false,
-        message: 'Bạn không có quyền xóa tài liệu của lớp học này.'
-      });
+      throw new AppError('Bạn không có quyền xóa tài liệu của lớp học này.', 403);
     }
 
     // 3. Xóa file vật lý trên Cloudflare R2

@@ -1,5 +1,6 @@
 import { prisma } from '../../config/db.js';
 import { AppError } from '../../utils/appError.js';
+import { assertClassAccess } from '../../utils/authHelpers.js';
 
 /**
  * Lấy danh sách nhận xét buổi học (Left join tất cả học sinh đang ghi danh)
@@ -25,9 +26,7 @@ export const getSessionFeedbacks = async (sessionId, teacherId) => {
   }
 
   // 2. Xác thực quyền giáo viên phụ trách lớp học
-  if (session.class.teacherId !== teacherId) {
-    throw new AppError('Bạn không có quyền quản lý nhận xét của buổi học này', 403);
-  }
+  await assertClassAccess(teacherId, 'teacher', session.class.id);
 
   // 3. Lấy tất cả học sinh ghi danh trong lớp này
   const enrollments = await prisma.classEnrollment.findMany({
@@ -107,9 +106,7 @@ export const upsertSessionFeedbacks = async (sessionId, teacherId, feedbacks) =>
     throw new AppError('Buổi học không tồn tại', 404);
   }
 
-  if (session.class.teacherId !== teacherId) {
-    throw new AppError('Bạn không có quyền quản lý nhận xét của buổi học này', 403);
-  }
+  await assertClassAccess(teacherId, 'teacher', session.class.id);
 
   // 2. Chạy transaction để lưu hàng loạt
   return await prisma.$transaction(async (tx) => {

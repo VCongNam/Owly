@@ -155,7 +155,7 @@ export const getTeacherUpcomingAssignments = async (req, res, next) => {
   try {
     requireTeacher(req);
     const teacherId = req.user.id;
-    const limit = req.query.limit ? parseInt(req.query.limit) : 5;
+    const { limit } = req.query;
     const assignments = await assignmentService.getTeacherUpcomingAssignments(teacherId, limit);
     return res.status(200).json({
       success: true,

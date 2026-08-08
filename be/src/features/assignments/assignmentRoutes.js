@@ -10,6 +10,13 @@ import {
   gradeSubmissionSchema,
 } from './assignmentSchema.js';
 import { paginationSchema } from '../../validation/paginationSchema.js';
+import {
+  upcomingLimitSchema,
+  idParamsSchema,
+  classIdParamsSchema,
+  assignmentIdParamsSchema,
+  submissionIdParamsSchema,
+} from '../../validation/commonSchema.js';
 
 const router = express.Router();
 
@@ -20,17 +27,42 @@ const upload = multer({ storage: multer.memoryStorage() });
 router.use(authMiddleware);
 
 // Routes
-router.get('/teacher/upcoming', assignmentController.getTeacherUpcomingAssignments);
+router.get('/teacher/upcoming', validate(upcomingLimitSchema, 'query'), assignmentController.getTeacherUpcomingAssignments);
 router.post('/', validate(createAssignmentSchema), assignmentController.createAssignment);
-router.get('/class/:classId', validate(paginationSchema, 'query'), assignmentController.getAssignments);
-router.put('/:id', validate(updateAssignmentSchema), assignmentController.updateAssignment);
-router.delete('/:id', assignmentController.deleteAssignment);
+router.get('/class/:classId',
+  validate(classIdParamsSchema, 'params'),
+  validate(paginationSchema, 'query'),
+  assignmentController.getAssignments
+);
+router.put('/:id',
+  validate(idParamsSchema, 'params'),
+  validate(updateAssignmentSchema),
+  assignmentController.updateAssignment
+);
+router.delete('/:id',
+  validate(idParamsSchema, 'params'),
+  assignmentController.deleteAssignment
+);
 
 // Submissions & Grading routes
-router.post('/:assignmentId/submissions', validate(createSubmissionSchema), assignmentController.submitAssignment);
-router.get('/:assignmentId/my-submission', assignmentController.getMySubmission);
-router.get('/:assignmentId/submissions', assignmentController.getAssignmentSubmissions);
-router.post('/submissions/:submissionId/feedback', validate(gradeSubmissionSchema), assignmentController.gradeSubmission);
+router.post('/:assignmentId/submissions',
+  validate(assignmentIdParamsSchema, 'params'),
+  validate(createSubmissionSchema),
+  assignmentController.submitAssignment
+);
+router.get('/:assignmentId/my-submission',
+  validate(assignmentIdParamsSchema, 'params'),
+  assignmentController.getMySubmission
+);
+router.get('/:assignmentId/submissions',
+  validate(assignmentIdParamsSchema, 'params'),
+  assignmentController.getAssignmentSubmissions
+);
+router.post('/submissions/:submissionId/feedback',
+  validate(submissionIdParamsSchema, 'params'),
+  validate(gradeSubmissionSchema),
+  assignmentController.gradeSubmission
+);
 
 // Upload routes
 router.post('/create-file-from-editor', assignmentController.createFileFromEditor);

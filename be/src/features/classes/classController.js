@@ -1,14 +1,10 @@
 import * as classService from './classService.js';
 import { formatToVietnamTime } from '../../utils/dateHelper.js';
+import { requireTeacher } from '../../utils/authHelpers.js';
 
-export const createClass = async (req, res) => {
+export const createClass = async (req, res, next) => {
   try {
-    if (req.user.role === 'student') {
-      return res.status(403).json({
-        success: false,
-        message: 'Học sinh không có quyền tạo lớp học'
-      });
-    }
+    requireTeacher(req);
 
     const teacherId = req.user.id;
     const data = req.body;
@@ -29,14 +25,11 @@ export const createClass = async (req, res) => {
       data: formattedClass
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Tạo lớp học thất bại'
-    });
+    next(error);
   }
 };
 
-export const getClasses = async (req, res) => {
+export const getClasses = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const userRole = req.user.role;
@@ -65,27 +58,17 @@ export const getClasses = async (req, res) => {
       }
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Lấy danh sách lớp học thất bại'
-    });
+    next(error);
   }
 };
 
-export const getClassById = async (req, res) => {
+export const getClassById = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const userRole = req.user.role;
     const { id } = req.params;
     
     const classObj = await classService.getClassById(id, userId, userRole);
-
-    if (!classObj) {
-      return res.status(404).json({
-        success: false,
-        message: 'Không tìm thấy lớp học'
-      });
-    }
 
     // Format ngày
     const formattedClass = {
@@ -100,30 +83,17 @@ export const getClassById = async (req, res) => {
       data: formattedClass
     });
   } catch (error) {
-    if (error.message.includes('không có quyền')) {
-      return res.status(403).json({ success: false, message: error.message });
-    }
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Lấy thông tin lớp học thất bại'
-    });
+    next(error);
   }
 };
 
-export const updateClass = async (req, res) => {
+export const updateClass = async (req, res, next) => {
   try {
     const teacherId = req.user.id;
     const { id } = req.params;
     const data = req.body;
 
     const updatedClass = await classService.updateClass(id, teacherId, data);
-
-    if (!updatedClass) {
-      return res.status(404).json({
-        success: false,
-        message: 'Không tìm thấy lớp học hoặc bạn không có quyền sửa'
-      });
-    }
 
     // Format ngày
     const formattedClass = {
@@ -139,42 +109,22 @@ export const updateClass = async (req, res) => {
       data: formattedClass
     });
   } catch (error) {
-    if (error.message.includes('không có quyền')) {
-      return res.status(403).json({ success: false, message: error.message });
-    }
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Cập nhật lớp học thất bại'
-    });
+    next(error);
   }
 };
 
-export const deleteClass = async (req, res) => {
+export const deleteClass = async (req, res, next) => {
   try {
     const teacherId = req.user.id;
     const { id } = req.params;
 
-    const deletedClass = await classService.deleteClass(id, teacherId);
-
-    if (!deletedClass) {
-      return res.status(404).json({
-        success: false,
-        message: 'Không tìm thấy lớp học hoặc bạn không có quyền xóa'
-      });
-    }
+    await classService.deleteClass(id, teacherId);
 
     return res.status(200).json({
       success: true,
       message: 'Xóa lớp học thành công'
     });
   } catch (error) {
-    if (error.message.includes('không có quyền')) {
-      return res.status(403).json({ success: false, message: error.message });
-    }
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Xóa lớp học thất bại'
-    });
+    next(error);
   }
 };
-

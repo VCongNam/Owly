@@ -2,37 +2,21 @@ import { prisma } from '../../config/db.js';
 import { uploadFileToR2, deleteFileFromR2 } from '../../services/r2.service.js';
 import { R2_CONFIG } from '../../config/r2.js';
 import { createPostSchema, createCommentSchema } from './postSchema.js';
-
-// Helper: Kiểm tra thành viên lớp học (Học sinh có ghi danh hay Giáo viên của lớp)
-const verifyClassMember = async (classId, userId) => {
-  const cls = await prisma.class.findUnique({
-    where: { id: classId },
-    include: {
-      enrollments: {
-        where: { studentId: userId, isActive: true }
-      }
-    }
-  });
-  if (!cls) return { exists: false };
-  const isTeacher = cls.teacherId === userId;
-  const isStudent = cls.enrollments.length > 0;
-  return { exists: true, isTeacher, isStudent, teacherId: cls.teacherId };
-};
+import { AppError } from '../../utils/appError.js';
+import { assertClassAccess } from '../../utils/authHelpers.js';
 
 // UC-41: Đăng thông báo mới (Chỉ Giáo viên của lớp)
 export const createPost = async (req, res, next) => {
   try {
     const { classId } = req.params;
     const userId = req.user.id;
+    const userRole = req.user.role;
     const files = req.files || [];
 
     // 1. Kiểm tra lớp và quyền sở hữu (chỉ giáo viên của lớp được đăng thông báo)
-    const { exists, isTeacher } = await verifyClassMember(classId, userId);
-    if (!exists) {
-      return res.status(404).json({ success: false, message: 'Lớp học không tồn tại.' });
-    }
-    if (!isTeacher) {
-      return res.status(403).json({ success: false, message: 'Chỉ giáo viên của lớp mới được đăng thông báo.' });
+    await assertClassAccess(userId, userRole, classId);
+    if (userRole !== 'teacher') {
+      throw new AppError('Chỉ giáo viên của lớp mới được đăng thông báo.', 403);
     }
 
     // 2. Validate nội dung
@@ -97,19 +81,13 @@ export const getClassPosts = async (req, res, next) => {
   try {
     const { classId } = req.params;
     const userId = req.user.id;
+    const userRole = req.user.role;
 
     // 1. Xác thực thành viên
-    const { exists, isTeacher, isStudent } = await verifyClassMember(classId, userId);
-    if (!exists) {
-      return res.status(404).json({ success: false, message: 'Lớp học không tồn tại.' });
-    }
-    if (!isTeacher && !isStudent) {
-      return res.status(403).json({ success: false, message: 'Bạn không có quyền xem thông tin lớp học này.' });
-    }
+    await assertClassAccess(userId, userRole, classId);
 
     // 2. Phân trang
-    const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
+    const { page, limit } = req.query;
     const skip = (page - 1) * limit;
 
     const totalItems = await prisma.post.count({ where: { classId } });
@@ -159,6 +137,7 @@ export const getPostDetails = async (req, res, next) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
+    const userRole = req.user.role;
 
     // 1. Tìm bài viết và thông tin lớp
     const post = await prisma.post.findUnique({
@@ -167,14 +146,11 @@ export const getPostDetails = async (req, res, next) => {
     });
 
     if (!post) {
-      return res.status(404).json({ success: false, message: 'Bài đăng không tồn tại.' });
+      throw new AppError('Bài đăng không tồn tại.', 404);
     }
 
     // 2. Xác thực thành viên
-    const { isTeacher, isStudent } = await verifyClassMember(post.classId, userId);
-    if (!isTeacher && !isStudent) {
-      return res.status(403).json({ success: false, message: 'Bạn không có quyền truy cập bài đăng này.' });
-    }
+    await assertClassAccess(userId, userRole, post.classId);
 
     // 3. Tăng số lượt xem (views) và lấy chi tiết cùng các bình luận
     const updatedPost = await prisma.post.update({
@@ -222,6 +198,7 @@ export const toggleComments = async (req, res, next) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
+    const userRole = req.user.role;
 
     const post = await prisma.post.findUnique({
       where: { id },
@@ -229,11 +206,13 @@ export const toggleComments = async (req, res, next) => {
     });
 
     if (!post) {
-      return res.status(404).json({ success: false, message: 'Bài đăng không tồn tại.' });
+      throw new AppError('Bài đăng không tồn tại.', 404);
     }
 
+    await assertClassAccess(userId, userRole, post.classId);
+
     if (post.class.teacherId !== userId) {
-      return res.status(403).json({ success: false, message: 'Chỉ giáo viên của lớp mới được bật/tắt bình luận bài đăng.' });
+      throw new AppError('Chỉ giáo viên của lớp mới được bật/tắt bình luận bài đăng.', 403);
     }
 
     const updatedPost = await prisma.post.update({
@@ -258,6 +237,7 @@ export const deletePost = async (req, res, next) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
+    const userRole = req.user.role;
 
     const post = await prisma.post.findUnique({
       where: { id },
@@ -265,11 +245,13 @@ export const deletePost = async (req, res, next) => {
     });
 
     if (!post) {
-      return res.status(404).json({ success: false, message: 'Bài đăng không tồn tại.' });
+      throw new AppError('Bài đăng không tồn tại.', 404);
     }
 
+    await assertClassAccess(userId, userRole, post.classId);
+
     if (post.class.teacherId !== userId) {
-      return res.status(403).json({ success: false, message: 'Bạn không có quyền xóa bài đăng này.' });
+      throw new AppError('Bạn không có quyền xóa bài đăng này.', 403);
     }
 
     // Xóa file đính kèm trên Cloudflare R2
@@ -309,6 +291,7 @@ export const createComment = async (req, res, next) => {
   try {
     const { postId } = req.params;
     const userId = req.user.id;
+    const userRole = req.user.role;
 
     // 1. Kiểm tra bài viết
     const post = await prisma.post.findUnique({
@@ -317,18 +300,15 @@ export const createComment = async (req, res, next) => {
     });
 
     if (!post) {
-      return res.status(404).json({ success: false, message: 'Bài đăng không tồn tại.' });
+      throw new AppError('Bài đăng không tồn tại.', 404);
     }
 
     // 2. Kiểm tra quyền thành viên
-    const { isTeacher, isStudent } = await verifyClassMember(post.classId, userId);
-    if (!isTeacher && !isStudent) {
-      return res.status(403).json({ success: false, message: 'Bạn không có quyền truy cập bài viết này.' });
-    }
+    await assertClassAccess(userId, userRole, post.classId);
 
     // 3. Kiểm tra bài viết có mở bình luận không
     if (!post.commentsEnabled) {
-      return res.status(400).json({ success: false, message: 'Tính năng bình luận của bài viết này đã bị khóa bởi giáo viên.' });
+      throw new AppError('Tính năng bình luận của bài viết này đã bị khóa bởi giáo viên.', 400);
     }
 
     // 4. Validate
@@ -377,6 +357,7 @@ export const deleteComment = async (req, res, next) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
+    const userRole = req.user.role;
 
     const comment = await prisma.comment.findUnique({
       where: { id },
@@ -388,14 +369,16 @@ export const deleteComment = async (req, res, next) => {
     });
 
     if (!comment) {
-      return res.status(404).json({ success: false, message: 'Bình luận không tồn tại.' });
+      throw new AppError('Bình luận không tồn tại.', 404);
     }
+
+    await assertClassAccess(userId, userRole, comment.post.classId);
 
     const isAuthor = comment.authorId === userId;
     const isTeacher = comment.post.class.teacherId === userId;
 
     if (!isAuthor && !isTeacher) {
-      return res.status(403).json({ success: false, message: 'Bạn không có quyền xóa bình luận này.' });
+      throw new AppError('Bạn không có quyền xóa bình luận này.', 403);
     }
 
     await prisma.comment.delete({ where: { id } });
@@ -415,15 +398,10 @@ export const getUpcomingAssignments = async (req, res, next) => {
   try {
     const { classId } = req.params;
     const userId = req.user.id;
+    const userRole = req.user.role;
 
     // 1. Xác thực thành viên
-    const { exists, isTeacher, isStudent } = await verifyClassMember(classId, userId);
-    if (!exists) {
-      return res.status(404).json({ success: false, message: 'Lớp học không tồn tại.' });
-    }
-    if (!isTeacher && !isStudent) {
-      return res.status(403).json({ success: false, message: 'Bạn không có quyền truy cập thông tin lớp này.' });
-    }
+    await assertClassAccess(userId, userRole, classId);
 
     const now = new Date();
 
