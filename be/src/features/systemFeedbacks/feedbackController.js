@@ -1,5 +1,6 @@
 import { prisma } from '../../config/db.js';
 import { supabase } from '../../config/supabase.js';
+import { AppError } from '../../utils/appError.js';
 
 export const createFeedback = async (req, res, next) => {
   try {
@@ -53,7 +54,7 @@ export const uploadImage = async (req, res, next) => {
   try {
     const files = req.files;
     const userId = req.user.id;
-    if (!files || files.length === 0) throw new Error('Không tìm thấy file ảnh');
+    if (!files || files.length === 0) throw new AppError('Không tìm thấy file ảnh', 400);
 
     const attachmentUrls = [];
 
@@ -70,7 +71,8 @@ export const uploadImage = async (req, res, next) => {
           upsert: true
         });
 
-      if (error) throw new Error(`Upload lỗi: ${error.message}`);
+      if (error) throw new AppError(`Upload lỗi: ${error.message}`, 500);
+
 
       const { data: publicUrlData } = supabase
         .storage

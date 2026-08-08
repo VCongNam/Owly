@@ -1,4 +1,5 @@
 import { prisma } from '../../config/db.js';
+import { AppError } from '../../utils/appError.js';
 
 // Hàm xác định trạng thái dựa trên thời gian
 export const determineStatus = (startDate, expectedEndDate, existingStatus = null) => {
@@ -228,11 +229,11 @@ export const getClassById = async (id, userId, userRole) => {
       where: { classId: id, studentId: userId, isActive: true }
     });
     if (!isEnrolled) {
-      throw new Error('Bạn không có quyền truy cập lớp học này');
+      throw new AppError('Bạn không có quyền truy cập lớp học này', 403);
     }
   } else {
     if (classObj.teacherId !== userId) {
-      throw new Error('Bạn không có quyền truy cập lớp học này');
+      throw new AppError('Bạn không có quyền truy cập lớp học này', 403);
     }
   }
 

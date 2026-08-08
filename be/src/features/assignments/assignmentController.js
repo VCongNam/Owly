@@ -3,58 +3,14 @@ import * as assignmentService from './assignmentService.js';
 import { v4 as uuidv4 } from 'uuid';
 import { prisma } from '../../config/db.js';
 import { R2_CONFIG } from '../../config/r2.js';
-
-const requireTeacher = (req) => {
-  if (req.user?.role !== 'teacher') {
-    throw new Error('Chỉ giáo viên mới có quyền thực hiện thao tác này');
-  }
-};
-
-const requireStudent = (req) => {
-  if (req.user?.role !== 'student') {
-    throw new Error('Chỉ học sinh mới có quyền thực hiện thao tác này');
-  }
-};
-
-const assertTeacherOwnsClass = async (teacherId, classId) => {
-  const classRecord = await prisma.class.findUnique({
-    where: { id: classId },
-    select: { teacherId: true }
-  });
-
-  if (!classRecord) {
-    throw new Error('Lớp học không tồn tại');
-  }
-
-  if (classRecord.teacherId !== teacherId) {
-    throw new Error('Bạn không có quyền thao tác trên lớp học này');
-  }
-};
-
-const assertTeacherOwnsAssignment = async (teacherId, assignmentId) => {
-  const assignment = await prisma.assignment.findUnique({
-    where: { id: assignmentId },
-    select: {
-      class: {
-        select: { teacherId: true }
-      }
-    }
-  });
-
-  if (!assignment) {
-    throw new Error('Bài tập không tồn tại');
-  }
-
-  if (assignment.class.teacherId !== teacherId) {
-    throw new Error('Bạn không có quyền thao tác trên bài tập này');
-  }
-};
+import { AppError } from '../../utils/appError.js';
+import { requireTeacher, requireStudent, assertClassAccess } from '../../utils/authHelpers.js';
 
 export const createAssignment = async (req, res, next) => {
   try {
     requireTeacher(req);
     const data = req.body;
-    await assertTeacherOwnsClass(req.user.id, data.classId);
+    await assertClassAccess(req.user.id, 'teacher', data.classId);
     const assignment = await assignmentService.createAssignment(data);
 
     // Tự động đăng bài viết thông báo có bài tập mới lên Bảng tin (Class Stream)
@@ -86,6 +42,8 @@ export const createAssignment = async (req, res, next) => {
 export const getAssignments = async (req, res, next) => {
   try {
     const { classId } = req.params;
+    // Kiểm tra phân quyền: teacher phải sở hữu lớp, student phải có enrollment
+    await assertClassAccess(req.user.id, req.user.role, classId);
     // page và limit đã được validate và coerce thành số bởi paginationSchema
     const { page, limit } = req.query;
     const result = await assignmentService.getAssignmentsByClassId(classId, { page, limit });
@@ -100,9 +58,17 @@ export const updateAssignment = async (req, res, next) => {
     requireTeacher(req);
     const { id } = req.params;
     const data = req.body;
-    await assertTeacherOwnsAssignment(req.user.id, id);
-    const assignment = await assignmentService.updateAssignment(id, data);
-    res.status(200).json({ success: true, data: assignment });
+    // Kiểm tra bài tập tồn tại và thuộc lớp do giáo viên sở hữu
+    const assignment = await prisma.assignment.findUnique({
+      where: { id },
+      select: { class: { select: { teacherId: true } } }
+    });
+    if (!assignment) throw new AppError('Bài tập không tồn tại', 404);
+    if (assignment.class.teacherId !== req.user.id) {
+      throw new AppError('Bạn không có quyền thao tác trên bài tập này', 403);
+    }
+    const updated = await assignmentService.updateAssignment(id, data);
+    res.status(200).json({ success: true, data: updated });
   } catch (error) {
     next(error);
   }
@@ -112,7 +78,16 @@ export const deleteAssignment = async (req, res, next) => {
   try {
     requireTeacher(req);
     const { id } = req.params;
-    await assertTeacherOwnsAssignment(req.user.id, id);
+    // Kiểm tra bài tập tồn tại và thuộc lớp do giáo viên sở hữu
+    const assignment = await prisma.assignment.findUnique({
+      where: { id },
+      select: { class: { select: { teacherId: true } }, attachmentUrls: true }
+    });
+    if (!assignment) throw new AppError('Bài tập không tồn tại', 404);
+    if (assignment.class.teacherId !== req.user.id) {
+      throw new AppError('Bạn không có quyền thao tác trên bài tập này', 403);
+    }
+
     const deletedAssignment = await assignmentService.deleteAssignment(id);
 
     // Xóa các file đính kèm trên Cloudflare R2
@@ -144,7 +119,7 @@ export const createFileFromEditor = async (req, res, next) => {
   try {
     requireTeacher(req);
     const { htmlContent } = req.body;
-    if (!htmlContent) throw new Error('Nội dung không được để trống');
+    if (!htmlContent) throw new AppError('Nội dung không được để trống', 400);
 
     const fileName = `assignments/doc-${uuidv4()}.html`;
     const buffer = Buffer.from(htmlContent, 'utf-8');

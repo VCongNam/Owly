@@ -1,10 +1,11 @@
 import { uploadFileToR2 } from '../../services/r2.service.js';
 import { v4 as uuidv4 } from 'uuid';
+import { AppError } from '../../utils/appError.js';
 
 export const uploadFiles = async (req, res, next) => {
   try {
     const files = req.files;
-    if (!files || files.length === 0) throw new Error('Không tìm thấy file');
+    if (!files || files.length === 0) throw new AppError('Không tìm thấy file', 400);
 
     // Xác định thư mục đích lưu trữ (mặc định là general)
     const folder = req.body.folder || req.query.folder || 'general';

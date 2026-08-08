@@ -1,5 +1,6 @@
 import { prisma } from '../../config/db.js';
 import { supabase } from '../../config/supabase.js';
+import { AppError } from '../../utils/appError.js';
 
 // Hàm helper để sinh mã giáo viên tự động (ví dụ: GV001, GV002...)
 const generateTeacherCode = async (tx) => {
@@ -33,11 +34,11 @@ export const signUpTeacher = async (email, password, fullName, phone, specializa
   });
 
   if (authError) {
-    throw new Error(authError.message);
+    throw new AppError(authError.message, 400);
   }
 
   if (!authData.user) {
-    throw new Error('Failed to retrieve user from authentication provider');
+    throw new AppError('Failed to retrieve user from authentication provider', 500);
   }
 
   const userId = authData.user.id;
@@ -108,7 +109,7 @@ export const createTeacherProfile = async (userData) => {
   });
 
   if (existingAccount) {
-    throw new Error('Tài khoản đã tồn tại');
+    throw new AppError('Tài khoản đã tồn tại', 409);
   }
 
   return await prisma.$transaction(async (tx) => {
@@ -253,7 +254,7 @@ export const signInUser = async (email, password, role) => {
     if (student && student.account) {
       resolvedEmail = student.account.email;
     } else if (role === 'student') {
-      throw new Error('Tên đăng nhập hoặc mật khẩu không chính xác');
+      throw new AppError('Tên đăng nhập hoặc mật khẩu không chính xác', 401);
     }
   }
 
@@ -268,17 +269,17 @@ export const signInUser = async (email, password, role) => {
     if (error.message.includes('Invalid login credentials')) {
       userFriendlyMessage = 'Tên đăng nhập hoặc mật khẩu không chính xác';
     }
-    throw new Error(userFriendlyMessage);
+    throw new AppError(userFriendlyMessage, 401);
   }
 
   const profile = await getMyProfile(data.user.id);
 
   if (!profile) {
-    throw new Error('Tài khoản chưa được tạo hồ sơ');
+    throw new AppError('Tài khoản chưa được tạo hồ sơ', 404);
   }
 
   if (role && profile.role !== role) {
-    throw new Error(`Tài khoản này không đăng ký vai trò ${role === 'teacher' ? 'Giáo viên' : 'Học sinh'}`);
+    throw new AppError(`Tài khoản này không đăng ký vai trò ${role === 'teacher' ? 'Giáo viên' : 'Học sinh'}`, 403);
   }
 
   return {
@@ -318,7 +319,7 @@ export const exchangeGoogleCode = async (code) => {
 
   const googleTokens = await tokenRes.json();
   if (googleTokens.error) {
-    throw new Error(`Google token exchange thất bại: ${googleTokens.error_description || googleTokens.error}`);
+    throw new AppError(`Google token exchange thất bại: ${googleTokens.error_description || googleTokens.error}`, 401);
   }
 
   // 2. Đổi Google ID token → Supabase session (không qua Supabase OAuth callback)
@@ -340,8 +341,9 @@ export const exchangeGoogleCode = async (code) => {
 
   const supabaseData = await supabaseRes.json();
   if (supabaseData.error || supabaseData.error_code) {
-    throw new Error(
-      supabaseData.message || supabaseData.error_description || 'Supabase không thể xác thực Google token'
+    throw new AppError(
+      supabaseData.message || supabaseData.error_description || 'Supabase không thể xác thực Google token',
+      401
     );
   }
 
@@ -403,7 +405,7 @@ export const refreshSession = async (refreshToken) => {
   });
 
   if (error || !data.session) {
-    throw new Error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
+    throw new AppError('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại', 401);
   }
 
   return {
@@ -416,7 +418,7 @@ export const refreshSession = async (refreshToken) => {
 export const signOutTeacher = async (token) => {
   const { error } = await supabase.auth.admin.signOut(token);
   if (error) {
-    throw new Error(error.message);
+    throw new AppError(error.message, 500);
   }
   return true;
 };
@@ -426,7 +428,7 @@ export const changeTeacherPassword = async (userId, newPassword) => {
     password: newPassword
   });
   if (error) {
-    throw new Error(error.message);
+    throw new AppError(error.message, 500);
   }
   return data;
 };
@@ -436,7 +438,7 @@ export const forgotTeacherPassword = async (email, redirectTo) => {
     redirectTo
   });
   if (error) {
-    throw new Error(error.message);
+    throw new AppError(error.message, 500);
   }
   return data;
 };

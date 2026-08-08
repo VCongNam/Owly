@@ -1,4 +1,5 @@
 import { prisma } from '../../config/db.js';
+import { AppError } from '../../utils/appError.js';
 import { supabase } from '../../config/supabase.js';
 import { getMyProfile as getAuthProfile } from '../auth/authService.js';
 
@@ -16,7 +17,7 @@ export const updateProfile = async (userId, data) => {
     }
   });
 
-  if (!account) throw new Error('Tài khoản không tồn tại');
+  if (!account) throw new AppError('Tài khoản không tồn tại', 404);
 
   await prisma.$transaction(async (tx) => {
     if (account.teacherProfile) {
@@ -82,7 +83,7 @@ export const updateProfile = async (userId, data) => {
           where: { email }
         });
         if (existing) {
-          throw new Error('Email này đã được sử dụng bởi một tài khoản khác');
+          throw new AppError('Email này đã được sử dụng bởi một tài khoản khác', 409);
         }
 
         // Cập nhật email đăng nhập bên Supabase Auth
@@ -90,7 +91,7 @@ export const updateProfile = async (userId, data) => {
           email
         });
         if (authError) {
-          throw new Error(`Không thể cập nhật email xác thực: ${authError.message}`);
+          throw new AppError(`Không thể cập nhật email xác thực: ${authError.message}`, 500);
         }
       }
 
@@ -117,7 +118,7 @@ export const updateProfile = async (userId, data) => {
 };
 
 export const uploadAvatar = async (userId, file) => {
-  if (!file) throw new Error('Không tìm thấy file ảnh');
+  if (!file) throw new AppError('Không tìm thấy file ảnh', 400);
 
   // Đổi tên file để tránh trùng lặp
   const fileExt = file.originalname.split('.').pop();
@@ -134,7 +135,7 @@ export const uploadAvatar = async (userId, file) => {
     });
 
   if (error) {
-    throw new Error(`Upload lỗi: ${error.message}`);
+    throw new AppError(`Upload lỗi: ${error.message}`, 500);
   }
 
   // Lấy Public URL của ảnh vừa upload

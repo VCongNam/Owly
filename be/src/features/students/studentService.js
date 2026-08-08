@@ -1,5 +1,6 @@
 import { prisma } from '../../config/db.js';
 import { supabase } from '../../config/supabase.js';
+import { AppError } from '../../utils/appError.js';
 
 // Tự động sinh mã học viên kế tiếp dạng HS001, HS002...
 export const generateStudentCode = async (tx) => {
@@ -134,7 +135,7 @@ export const enrollExistingStudent = async (classId, studentId, teacherId) => {
   });
 
   if (!targetClass) {
-    throw new Error('Không tìm thấy lớp học hoặc bạn không có quyền sở hữu lớp học này');
+    throw new AppError('Không tìm thấy lớp học hoặc bạn không có quyền sở hữu lớp học này', 404);
   }
 
   // 2. Kiểm tra học sinh có tồn tại trong hệ thống không
@@ -143,7 +144,7 @@ export const enrollExistingStudent = async (classId, studentId, teacherId) => {
   });
 
   if (!student) {
-    throw new Error('Học viên không tồn tại trên hệ thống');
+    throw new AppError('Học viên không tồn tại trên hệ thống', 404);
   }
 
   // 3. Kiểm tra xem học sinh đã được ghi danh vào lớp này chưa
@@ -157,7 +158,7 @@ export const enrollExistingStudent = async (classId, studentId, teacherId) => {
   });
 
   if (existingEnrollment) {
-    throw new Error('Học viên đã đăng ký học lớp này rồi');
+    throw new AppError('Học viên đã đăng ký học lớp này rồi', 409);
   }
 
   // 4. Tạo ghi danh mới
@@ -181,7 +182,7 @@ export const createAndEnrollStudent = async (classId, teacherId, studentData) =>
   });
 
   if (!targetClass) {
-    throw new Error('Không tìm thấy lớp học hoặc bạn không có quyền sở hữu lớp học này');
+    throw new AppError('Không tìm thấy lớp học hoặc bạn không có quyền sở hữu lớp học này', 404);
   }
 
   // 2. Chạy transaction để tự sinh mã và tạo dữ liệu đồng bộ
@@ -202,7 +203,7 @@ export const createAndEnrollStudent = async (classId, teacherId, studentData) =>
     });
 
     if (authError) {
-      throw new Error(`Lỗi khởi tạo tài khoản trên Auth Server: ${authError.message}`);
+      throw new AppError(`Lỗi khởi tạo tài khoản trên Auth Server: ${authError.message}`, 500);
     }
 
     const studentId = authData.user.id;
@@ -250,7 +251,7 @@ export const unenrollStudentFromClass = async (classId, studentId, teacherId) =>
   });
 
   if (!targetClass) {
-    throw new Error('Không tìm thấy lớp học hoặc bạn không có quyền sở hữu lớp học này');
+    throw new AppError('Không tìm thấy lớp học hoặc bạn không có quyền sở hữu lớp học này', 404);
   }
 
   // 2. Thực hiện xóa liên kết ClassEnrollment
@@ -264,7 +265,7 @@ export const unenrollStudentFromClass = async (classId, studentId, teacherId) =>
   });
 
   if (!enrollment) {
-    throw new Error('Học viên không có liên kết ghi danh với lớp học này');
+    throw new AppError('Học viên không có liên kết ghi danh với lớp học này', 404);
   }
 
   return await prisma.classEnrollment.delete({
@@ -284,7 +285,7 @@ export const studentUpdateOwnProfile = async (studentId, data) => {
   });
 
   if (!student) {
-    throw new Error('Học viên không tồn tại trên hệ thống');
+    throw new AppError('Học viên không tồn tại trên hệ thống', 404);
   }
 
   // Nếu có cập nhật email cá nhân thật
@@ -295,7 +296,7 @@ export const studentUpdateOwnProfile = async (studentId, data) => {
     });
 
     if (existing && existing.id !== studentId) {
-      throw new Error('Email này đã được sử dụng bởi một tài khoản khác');
+      throw new AppError('Email này đã được sử dụng bởi một tài khoản khác', 409);
     }
 
     // Cập nhật thông tin email đăng nhập trong Supabase Auth qua Admin API
@@ -304,7 +305,7 @@ export const studentUpdateOwnProfile = async (studentId, data) => {
     });
 
     if (authError) {
-      throw new Error(`Lỗi cập nhật email trên Auth Server: ${authError.message}`);
+      throw new AppError(`Lỗi cập nhật email trên Auth Server: ${authError.message}`, 500);
     }
   }
 
@@ -363,7 +364,7 @@ export const getStudentById = async (id, teacherId) => {
   const isCreatedByTeacher = student.createdById === teacherId;
 
   if (!isEnrolledInTeacherClasses && !isCreatedByTeacher) {
-    throw new Error('Bạn không có quyền truy cập thông tin học viên này');
+    throw new AppError('Bạn không có quyền truy cập thông tin học viên này', 403);
   }
 
   return student;
@@ -377,7 +378,7 @@ export const getStudentAttendanceLog = async (classId, studentId, teacherId) => 
   });
 
   if (!targetClass) {
-    throw new Error('Không tìm thấy lớp học hoặc bạn không có quyền truy cập lớp học này');
+    throw new AppError('Không tìm thấy lớp học hoặc bạn không có quyền truy cập lớp học này', 404);
   }
 
   // 2. Xác thực học sinh có ghi danh trong lớp không
@@ -391,7 +392,7 @@ export const getStudentAttendanceLog = async (classId, studentId, teacherId) => 
   });
 
   if (!enrollment) {
-    throw new Error('Học viên không tham gia lớp học này');
+    throw new AppError('Học viên không tham gia lớp học này', 404);
   }
 
   // 3. Lấy toàn bộ buổi học của lớp (sắp xếp theo ngày tăng dần)
@@ -535,10 +536,10 @@ export const getMySchedule = async (studentId, startDateStr, endDateStr, classId
   const end = endDateStr ? new Date(endDateStr) : null;
 
   if (startDateStr && isNaN(start?.getTime())) {
-    throw new Error('Ngày bắt đầu không hợp lệ');
+    throw new AppError('Ngày bắt đầu không hợp lệ', 400);
   }
   if (endDateStr && isNaN(end?.getTime())) {
-    throw new Error('Ngày kết thúc không hợp lệ');
+    throw new AppError('Ngày kết thúc không hợp lệ', 400);
   }
 
   const enrollmentWhere = {
@@ -623,7 +624,7 @@ export const getClassMembersForStudent = async (classId, studentId, options = {}
   });
 
   if (!isEnrolled) {
-    throw new Error('Bạn không có quyền truy cập danh sách thành viên lớp này');
+    throw new AppError('Bạn không có quyền truy cập danh sách thành viên lớp này', 403);
   }
 
   const where = {
@@ -687,7 +688,7 @@ export const bulkCreateAndEnrollStudents = async (classId, teacherId, studentsDa
   });
 
   if (!targetClass) {
-    throw new Error('Không tìm thấy lớp học hoặc bạn không có quyền sở hữu lớp học này');
+    throw new AppError('Không tìm thấy lớp học hoặc bạn không có quyền sở hữu lớp học này', 404);
   }
 
   // 2. Chạy transaction để tạo hàng loạt tài khoản
@@ -760,7 +761,7 @@ export const bulkCreateAndEnrollStudents = async (classId, teacherId, studentsDa
       });
 
       if (authError) {
-        throw new Error(`Lỗi khởi tạo tài khoản ${studentData.fullName} trên Auth Server: ${authError.message}`);
+        throw new AppError(`Lỗi khởi tạo tài khoản ${studentData.fullName} trên Auth Server: ${authError.message}`, 500);
       }
 
       const studentId = authData.user.id;

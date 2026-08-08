@@ -195,9 +195,19 @@ export const gradeSubmission = async (submissionId, teacherId, { grade, remarks,
     throw new AppError('Bạn không có quyền chấm bài làm này', 403);
   }
 
+  // Ràng buộc điểm chấm: 0 <= grade <= maxPoints
+  const maxPoints = submission.assignment.maxPoints;
+  if (grade < 0) {
+    throw new AppError('Điểm số không được nhỏ hơn 0', 400);
+  }
+  if (maxPoints !== null && maxPoints !== undefined && grade > maxPoints) {
+    throw new AppError(`Điểm số không được vượt quá điểm tối đa (${maxPoints})`, 400);
+  }
+
   return await prisma.submissionFeedback.upsert({
     where: { submissionId },
     update: { grade, remarks, attachmentUrl, gradedById: teacherId },
     create: { submissionId, grade, remarks, attachmentUrl, gradedById: teacherId }
   });
 };
+
