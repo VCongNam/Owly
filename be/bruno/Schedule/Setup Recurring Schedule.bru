@@ -1,0 +1,42 @@
+meta {
+  name: Setup Recurring Schedule
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/classes/:classId/schedules
+  body: json
+  auth: bearer
+}
+
+params:path {
+  classId: replace-with-class-id
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "schedules": [
+      {
+        "dayOfWeek": 2,
+        "startTime": "08:30",
+        "endTime": "10:30",
+        "room": "Phòng 101"
+      },
+      {
+        "dayOfWeek": 4,
+        "startTime": "14:00",
+        "endTime": "16:00",
+        "room": "Phòng 202"
+      }
+    ],
+    "generationRange": {
+      "startDate": "2026-07-20T00:00:00+07:00",
+      "endDate": "2026-08-20T00:00:00+07:00"
+    }
+  }
+}

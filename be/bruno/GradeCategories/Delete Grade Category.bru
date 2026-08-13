@@ -1,0 +1,20 @@
+meta {
+  name: Delete Grade Category
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/api/classes/:classId/grade-categories/:id
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{teacherToken}}
+}
+
+params:path {
+  classId: CLASS_UUID
+  id: CATEGORY_UUID
+}

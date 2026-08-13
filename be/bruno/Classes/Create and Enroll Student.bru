@@ -1,0 +1,23 @@
+meta {
+  name: Create and Enroll Student
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/classes/replace-with-class-uuid/members/create-new
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "fullName": "Nguyễn Văn A",
+    "dateOfBirth": "2010-10-15T00:00:00Z",
+    "parentPhone": "0912345678"
+  }
+}

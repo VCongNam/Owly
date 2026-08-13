@@ -1,0 +1,36 @@
+meta {
+  name: Upsert Attendances
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{baseUrl}}/api/sessions/:sessionId/attendances
+  body: json
+  auth: bearer
+}
+
+params:path {
+  sessionId: replace-with-session-id
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "attendances": [
+      {
+        "studentId": "replace-with-student-id-1",
+        "status": "Present",
+        "notes": "Đi học đầy đủ"
+      },
+      {
+        "studentId": "replace-with-student-id-2",
+        "status": "Absent",
+        "notes": "Ốm có xin phép"
+      }
+    ]
+  }
+}

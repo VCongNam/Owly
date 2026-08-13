@@ -1,0 +1,21 @@
+meta {
+  name: "Refresh Token"
+  type: "http"
+  seq: 5
+}
+
+post {
+  url: "{{base_url}}/api/auth/refresh-token"
+  body: "json"
+  auth: "none"
+}
+
+headers {
+  Content-Type: "application/json"
+}
+
+body:json {
+  {
+    "refreshToken": "{{refresh_token}}"
+  }
+}

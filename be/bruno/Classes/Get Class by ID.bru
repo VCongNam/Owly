@@ -1,0 +1,19 @@
+meta {
+  name: Get Class by ID
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/classes/:id
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+params:path {
+  id: ID_CUA_LOP_HOC_TREN_DB
+}

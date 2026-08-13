@@ -1,9 +1,27 @@
 import express from 'express';
+// Reloading server to load regenerated Prisma client
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { supabase } from './config/supabase.js';
-import authRoutes from './routes/authRoutes.js';
-import subjectRoutes from './routes/subjectRoutes.js';
+import authRoutes from './features/auth/authRoutes.js';
+import subjectRoutes from './features/subjects/subjectRoutes.js';
+import classRoutes from './features/classes/classRoutes.js';
+import profileRoutes from './features/profile/profileRoutes.js';
+import feedbackRoutes from './features/systemFeedbacks/feedbackRoutes.js';
+import studentRoutes from './features/students/studentRoutes.js';
+import scheduleRoutes from './features/schedule/scheduleRoutes.js';
+import attendanceRoutes from './features/attendance/attendanceRoutes.js';
+import assignmentRoutes from './features/assignments/assignmentRoutes.js';
+import materialRoutes from './features/materials/materialRoutes.js';
+import postRoutes from './features/posts/postRoutes.js';
+import gradeCategoryRoutes from './features/gradeCategories/gradeCategoryRoutes.js';
+import tuitionRoutes from './features/tuition/tuitionRoutes.js';
+import sepayRoutes from './features/tuition/sepayRoutes.js';
+import uploadRoutes from './features/upload/uploadRoutes.js';
+import excelRoutes from './features/upload/excelRoutes.js';
+import { errorHandler } from './middlewares/errorHandler.js';
+import { AppError } from './utils/appError.js';
+
 
 dotenv.config();
 
@@ -16,6 +34,23 @@ app.use(express.json());
 // Register routes
 app.use('/api/auth', authRoutes);
 app.use('/api/subjects', subjectRoutes);
+app.use('/api/classes', classRoutes);
+app.use('/api/profile', profileRoutes);
+app.use('/api/feedbacks', feedbackRoutes);
+app.use('/api/students', studentRoutes);
+// Webhook SePay không dùng hệ thống auth — PHẢI mount TRƯỚC mọi router có router.use(authMiddleware)
+// vì những router đó chặn mọi request /api/* ngay cả khi không có route khớp
+app.use('/api', sepayRoutes);
+app.use('/api', scheduleRoutes);
+app.use('/api/sessions/:sessionId/attendances', attendanceRoutes);
+app.use('/api/assignments', assignmentRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/utils/excel', excelRoutes);
+app.use('/api', materialRoutes);
+app.use('/api', postRoutes);
+app.use('/api', gradeCategoryRoutes);
+app.use('/api', tuitionRoutes);
+
 
 // Test route
 app.get('/', (req, res) => {
@@ -23,7 +58,7 @@ app.get('/', (req, res) => {
 });
 
 // Supabase Connection Check route
-app.get('/supabase-check', async (req, res) => {
+app.get('/supabase-check', async (req, res, next) => {
   try {
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
@@ -52,7 +87,7 @@ app.get('/supabase-check', async (req, res) => {
         : 'Supabase is not configured yet. Please update the .env file.'
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    next(error);
   }
 });
 
@@ -66,8 +101,16 @@ app.get('/health', async (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+// Route 404 Catch-All — đứng sau tất cả routes, trước errorHandler
+// Mọi request đến API không tồn tại sẽ nhận JSON chuẩn thay vì response mặc định của Express
+app.use((req, res, next) => {
+  next(new AppError('Đường dẫn API không tồn tại', 404));
 });
 
+// Global error handler — PHẢI đứng sau tất cả routes để Express nhận diện là error middleware
+app.use(errorHandler);
+
 export default app;
+
+
+

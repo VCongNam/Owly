@@ -1,0 +1,19 @@
+meta {
+  name: Get My Submission
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/assignments/:assignmentId/my-submission
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{studentToken}}
+}
+
+params:path {
+  assignmentId: ASSIGNMENT_UUID
+}

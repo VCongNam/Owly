@@ -1,0 +1,61 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mantine-spacing-lg);
+}
+
+.tableWrapper {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow-x: auto;
+  background: var(--card-bg);
+}
+
+.table {
+  background: var(--card-bg);
+}
+
+.tableRow {
+  transition: background 0.15s ease;
+}
+
+.tableRow:hover {
+  background-color: rgba(0, 0, 0, 0.015);
+}
+
+.uploadArea {
+  border: 2px dashed var(--border-color);
+  border-radius: 8px;
+  padding: var(--mantine-spacing-xl);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.uploadArea:hover {
+  border-color: var(--accent-color);
+  background-color: rgba(0, 0, 0, 0.005);
+}
+
+.materialCard {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--card-bg);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.materialCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+}
+
+.iconWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background-color: var(--mantine-color-copper-0);
+  color: var(--mantine-color-copper-6);
+}

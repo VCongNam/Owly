@@ -1,0 +1,26 @@
+meta {
+  name: Create Assignment
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/assignments
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{teacherToken}}
+}
+
+body:json {
+  {
+    "classId": "CLASS_UUID",
+    "gradeCategoryId": "CATEGORY_UUID",
+    "title": "Bài tập mới",
+    "dueDate": "2026-08-01T23:59:59Z",
+    "maxPoints": 10,
+    "attachmentUrls": ["https://r2.example.com/file1.pdf"]
+  }
+}

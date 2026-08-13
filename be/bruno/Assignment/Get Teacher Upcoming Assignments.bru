@@ -1,0 +1,15 @@
+meta {
+  name: Get Teacher Upcoming Assignments
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/assignments/teacher/upcoming?limit=5
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{teacherToken}}
+}

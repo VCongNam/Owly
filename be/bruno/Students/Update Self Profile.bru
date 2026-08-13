@@ -1,0 +1,24 @@
+meta {
+  name: Update Self Profile
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/students/profile/self
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "fullName": "Nguyễn Văn An",
+    "dateOfBirth": "2010-10-15T00:00:00Z",
+    "parentPhone": "0987654321",
+    "phone": "0912345678"
+  }
+}

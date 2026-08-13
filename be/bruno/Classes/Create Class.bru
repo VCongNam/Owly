@@ -1,0 +1,22 @@
+meta {
+  name: Create Class
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/classes
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "Toán Học Lớp 10",
+    "startDate": "2026-09-05T00:00:00Z"
+  }
+}

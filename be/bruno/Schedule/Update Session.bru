@@ -1,0 +1,28 @@
+meta {
+  name: Update Session
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/classes/:classId/sessions/:sessionId
+  body: json
+  auth: bearer
+}
+
+params:path {
+  classId: replace-with-class-id
+  sessionId: replace-with-session-id
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "title": "Chuyên đề Hình học phẳng (Cập nhật)",
+    "date": "2026-07-25T10:00:00+07:00",
+    "status": "Scheduled"
+  }
+}

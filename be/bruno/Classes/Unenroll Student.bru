@@ -1,0 +1,15 @@
+meta {
+  name: Unenroll Student
+  type: http
+  seq: 9
+}
+
+delete {
+  url: {{baseUrl}}/api/classes/replace-with-class-uuid/members/replace-with-student-uuid
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}

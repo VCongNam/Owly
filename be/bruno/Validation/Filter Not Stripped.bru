@@ -1,0 +1,15 @@
+meta {
+  name: Filter Not Stripped
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/classes/b3c4d3bf-db82-4fad-b1fe-314ed3c26d85/invoices?billingMonth=2026-06&status=Paid
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}

@@ -1,0 +1,32 @@
+meta {
+  name: Get Assignments by Class
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/assignments/class/:classId
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{teacherToken}}
+}
+
+params:path {
+  classId: CLASS_UUID
+}
+
+params:query {
+  page: 1
+  limit: 10
+}
+
+docs {
+  # Phân trang (cập nhật 06/08/2026)
+  Validation áp dụng qua paginationSchema:
+  - page: số nguyên >= 1, mặc định 1
+  - limit: số nguyên 1–100, mặc định 10
+  Gửi page=0 hoặc limit=999 sẽ nhận 400 Bad Request
+}

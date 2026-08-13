@@ -12,16 +12,23 @@ generator client {
 // ==========================================
 
 model Account {
-  id           String   @id @default(uuid()) @db.Uuid
-  email        String   @unique @db.VarChar(255)
-  passwordHash String   @map("password_hash") @db.VarChar(255)
-  isActive     Boolean  @default(true) @map("is_active")
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id               String    @id @default(uuid()) @db.Uuid
+  email            String    @unique @db.VarChar(255)
+  passwordHash     String    @map("password_hash") @db.VarChar(255)
+  isActive         Boolean   @default(true) @map("is_active")
+  packageType      String    @default("Free") @map("package_type") @db.VarChar(50)
+  packageExpiresAt DateTime? @map("package_expires_at") @db.Timestamptz
+  phone            String?   @db.VarChar(50)
+  avatarUrl        String?   @map("avatar_url") @db.Text
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
   adminProfile   SystemAdmin?
   teacherProfile Teacher?
   studentProfile Student?
+  systemFeedbacks SystemFeedback[]
+  posts           Post[]
+  comments        Comment[]
 
   @@map("accounts")
 }
@@ -39,6 +46,12 @@ model Teacher {
   teacherCode    String            @unique @map("teacher_code") @db.VarChar(50)
   fullName       String            @map("full_name") @db.VarChar(255)
   account        Account           @relation(fields: [id], references: [id], onDelete: Cascade)
+  bankName       String?           @map("bank_name") @db.VarChar(100)
+  bankAccountNo  String?           @map("bank_account_no") @db.VarChar(50)
+  bankAccountName String?          @map("bank_account_name") @db.VarChar(150)
+  bankBin         String?           @map("bank_bin") @db.VarChar(20)
+  bio             String?           @db.Text
+  metadata        Json?             @map("metadata")
   
   classes              Class[]
   createdStudents      Student[]         @relation("TeacherCreatedStudents")
@@ -78,14 +91,17 @@ model Class {
   classCode       String            @unique @map("class_code") @db.VarChar(50)
   name            String            @db.VarChar(255)
   teacherId       String            @map("teacher_id") @db.Uuid // Giáo viên sở hữu và quản lý lớp này
-  status          String            @default("Active") @db.VarChar(50) // Active, Completed, Archived
+  status          String            @default("OnGoing") @db.VarChar(50) // Scheduled, OnGoing, Completed, Archived
   startDate       DateTime          @map("start_date") @db.Timestamptz
+  expectedEndDate DateTime?         @map("expected_end_date") @db.Timestamptz
+  subjectId       String?           @map("subject_id") @db.Uuid
   createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz
   
   // Cột JSON linh hoạt để lưu các thuộc tính mở rộng phát sinh sau này mà không sợ vỡ DB
   extraProperties Json?             @map("extra_properties")
 
   teacher         Teacher           @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  subject         Subject?          @relation(fields: [subjectId], references: [id], onDelete: SetNull)
   enrollments     ClassEnrollment[]
   schedules       ClassSchedule[]
   sessions        Session[]
@@ -93,6 +109,8 @@ model Class {
   assignments     Assignment[]
   tuitionConfig   ClassTum?
   invoices        Invoice[]
+  materials       ClassMaterial[]
+  posts           Post[]
 
   @@map("classes")
 }
@@ -117,7 +135,7 @@ model ClassSchedule {
   dayOfWeek Int    @map("day_of_week") // 2 = Thứ 2, 3 = Thứ 3...
   startTime String @map("start_time") @db.VarChar(5) // Định dạng chuỗi lặp "HH:mm"
   endTime   String @map("end_time") @db.VarChar(5)   // Định dạng chuỗi lặp "HH:mm"
-  room      String @db.VarChar(100)
+  room      String? @db.VarChar(100)
 
   class     Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
 
@@ -194,6 +212,7 @@ model Assignment {
   title           String        @db.VarChar(255)
   dueDate         DateTime      @map("due_date") @db.Timestamptz
   maxPoints       Float         @map("max_points")
+  attachmentUrls  String[]      @map("attachment_urls")
 
   class           Class         @relation(fields: [classId], references: [id], onDelete: Cascade)
   category        GradeCategory @relation(fields: [gradeCategoryId], references: [id], onDelete: Cascade)
@@ -217,13 +236,14 @@ model Submission {
 }
 
 model SubmissionFeedback {
-  id           String     @id @default(uuid()) @db.Uuid
-  submissionId String     @unique @map("submission_id") @db.Uuid
-  grade        Float
-  remarks      String     @db.Text
-  gradedById   String     @map("graded_by_id") @db.Uuid // Giáo viên trực tiếp chấm điểm
+  id            String     @id @default(uuid()) @db.Uuid
+  submissionId  String     @unique @map("submission_id") @db.Uuid
+  grade         Float
+  remarks       String     @db.Text
+  attachmentUrl String?    @map("attachment_url") @db.Text
+  gradedById    String     @map("graded_by_id") @db.Uuid // Giáo viên trực tiếp chấm điểm
 
-  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submission    Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
 
   @@map("submission_feedbacks")
 }
@@ -244,15 +264,20 @@ model ClassTum {
 }
 
 model Invoice {
-  id        String        @id @default(uuid()) @db.Uuid
-  studentId String        @map("student_id") @db.Uuid
-  classId   String        @map("class_id") @db.Uuid
-  amount    Float
-  dueDate   DateTime      @map("due_date") @db.Timestamptz
-  status    String        @default("Unpaid") @db.VarChar(50) // Unpaid, Pending, Paid
+  id           String        @id @default(uuid()) @db.Uuid
+  studentId    String        @map("student_id") @db.Uuid
+  classId      String        @map("class_id") @db.Uuid
+  title        String?       @db.VarChar(255)
+  billingMonth String?       @map("billing_month") @db.VarChar(7)
+  sessionCount Int?          @default(0) @map("session_count")
+  amount       Float
+  dueDate      DateTime      @map("due_date") @db.Timestamptz
+  status       String        @default("Unpaid") @db.VarChar(50) // Unpaid, Pending, Paid
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz
 
-  class     Class         @relation(fields: [classId], references: [id], onDelete: Cascade)
-  student   Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  class        Class         @relation(fields: [classId], references: [id], onDelete: Cascade)
+  student      Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
   transactions Transaction[]
 
   @@map("invoices")
@@ -265,10 +290,13 @@ model Transaction {
   amountPaid        Float    @map("amount_paid")
   proofUrl          String   @map("proof_url") @db.Text // Ảnh chụp minh chứng giao dịch học sinh tải lên
   transactionStatus String   @default("Pending") @map("transaction_status") @db.VarChar(50) // Pending, Approved, Rejected
-  processedById     String   @map("processed_by_id") @db.Uuid // Giáo viên chủ nhiệm lớp trực tiếp đối soát và duyệt tiền
+  processedById     String?  @map("processed_by_id") @db.Uuid // Giáo viên chủ nhiệm lớp trực tiếp đối soát và duyệt tiền (nullable khi chờ duyệt)
+  rejectionReason   String?  @map("rejection_reason") @db.Text
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   invoice           Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  processedBy       Teacher  @relation(fields: [processedById], references: [id])
+  processedBy       Teacher? @relation(fields: [processedById], references: [id])
 
   @@map("transactions")
 }
@@ -284,6 +312,7 @@ model Subject {
   createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz
 
   teachers  TeacherSubject[]
+  classes   Class[]
 
   @@map("subjects")
 }
@@ -297,4 +326,68 @@ model TeacherSubject {
 
   @@id([teacherId, subjectId])
   @@map("teacher_subjects")
+}
+
+model SystemFeedback {
+  id          String   @id @default(uuid()) @db.Uuid
+  accountId   String   @map("account_id") @db.Uuid
+  type        String   @db.VarChar(50) // "Bug", "FeatureRequest", "GeneralFeedback"
+  title       String   @db.VarChar(255)
+  content     String   @db.Text
+  attachmentUrls String[] @map("attachment_urls")
+  status      String   @default("Pending") @db.VarChar(50) // "Pending", "Reviewed", "Resolved"
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  account     Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@map("system_feedbacks")
+}
+
+model ClassMaterial {
+  id          String   @id @default(uuid()) @db.Uuid
+  classId     String   @map("class_id") @db.Uuid
+  title       String   @db.VarChar(255)
+  description String?  @db.Text
+  fileUrl     String   @map("file_url") @db.Text
+  fileName    String   @map("file_name") @db.VarChar(255)
+  fileType    String?  @map("file_type") @db.VarChar(100)
+  fileSize    Int?     @map("file_size")
+  uploadedAt  DateTime @default(now()) @map("uploaded_at") @db.Timestamptz
+
+  class       Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@map("class_materials")
+}
+
+model Post {
+  id              String    @id @default(uuid()) @db.Uuid
+  classId         String    @map("class_id") @db.Uuid
+  authorId        String    @map("author_id") @db.Uuid
+  content         String    @db.Text
+  attachments     String[]  @map("attachments")
+  views           Int       @default(0)
+  commentsEnabled Boolean   @default(true) @map("comments_enabled")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  class           Class     @relation(fields: [classId], references: [id], onDelete: Cascade)
+  author          Account   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments        Comment[]
+
+  @@map("posts")
+}
+
+model Comment {
+  id        String   @id @default(uuid()) @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  authorId  String   @map("author_id") @db.Uuid
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    Account  @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
 }

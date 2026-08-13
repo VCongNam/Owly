@@ -1,0 +1,15 @@
+meta {
+  name: Search Directory
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/students/search-directory?q=An
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}

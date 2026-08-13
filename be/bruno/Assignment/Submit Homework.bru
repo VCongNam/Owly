@@ -1,0 +1,33 @@
+meta {
+  name: Submit Homework
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/assignments/:assignmentId/submissions
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{studentToken}}
+}
+
+params:path {
+  assignmentId: ASSIGNMENT_UUID
+}
+
+body:json {
+  {
+    "content": "https://r2-bucket-url/assignments/my-work.pdf"
+  }
+}
+
+docs {
+  # Phân quyền nộp bài (cập nhật 06/08/2026)
+  Endpoint này có 2 guard bảo mật:
+  - 403 Forbidden: Học sinh không phải thành viên active của lớp chứa bài tập
+  - 400 Bad Request: Bài tập đã quá hạn nộp (dueDate < now)
+  - 400 Bad Request: Bài làm đã được chấm điểm, không thể nộp lại
+}

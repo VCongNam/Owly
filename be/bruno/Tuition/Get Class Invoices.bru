@@ -1,0 +1,19 @@
+meta {
+  name: Get Class Invoices
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/classes/:classId/invoices?billingMonth=2026-07&page=1&limit=10
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{teacherToken}}
+}
+
+params:path {
+  classId: CLASS_UUID
+}

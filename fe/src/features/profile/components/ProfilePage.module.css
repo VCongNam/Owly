@@ -1,0 +1,89 @@
+.gridContainer {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: var(--mantine-spacing-xl);
+}
+
+@media (max-width: 768px) {
+  .gridContainer {
+    grid-template-columns: 1fr;
+  }
+}
+
+.leftCard {
+  background-color: var(--mantine-color-body);
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-md);
+  padding: var(--mantine-spacing-xl);
+  height: fit-content;
+}
+
+.rightCard {
+  background-color: var(--mantine-color-body);
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-md);
+  padding: var(--mantine-spacing-xl);
+}
+
+.avatarWrapper {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto;
+}
+
+.avatarOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  cursor: pointer;
+}
+
+.avatarWrapper:hover .avatarOverlay {
+  opacity: 1;
+}
+
+.detailsList {
+  width: 100%;
+}
+
+.detailItem {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--mantine-color-default-border);
+  font-size: 14px;
+}
+
+.detailItem:last-child {
+  border-bottom: none;
+}
+
+.detailLabel {
+  color: var(--mantine-color-dimmed);
+}
+
+.detailValue {
+  font-weight: 500;
+  color: var(--mantine-color-text);
+}
+
+.passwordRequirement {
+  display: flex;
+  align-items: center;
+  color: var(--mantine-color-dimmed);
+}
+
+.specBadge {
+  text-transform: none;
+  font-weight: 500;
+}

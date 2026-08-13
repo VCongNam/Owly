@@ -77,6 +77,28 @@ graph TD
       }
     }
     ```
+*   **Pagination Response Format (Phân trang):**
+    Khi trả về danh sách dữ liệu có phân trang, cấu trúc bắt buộc phải trả về mảng dữ liệu nằm trong trường `items` kèm theo metadata `pagination`:
+    ```json
+    {
+      "success": true,
+      "data": {
+        "items": [], // Danh sách bản ghi của trang hiện tại
+        "pagination": {
+          "totalItems": 100, // Tổng số bản ghi khớp bộ lọc trong DB
+          "totalPages": 10,  // Tổng số trang
+          "currentPage": 1,  // Trang hiện tại (1-indexed)
+          "limit": 10        // Số lượng bản ghi trên mỗi trang
+        }
+      }
+    }
+    ```
+*   **Pagination Input Validation Rules:**
+    Khi nhận tham số phân trang từ Query parameters (`page`, `limit`), bắt buộc phải validate bằng Zod schema:
+    - `page`: Mặc định là `1`, giá trị nhỏ nhất là `1`, ép kiểu số nguyên (`z.coerce.number().int().min(1).default(1)`).
+    - `limit`: Mặc định phù hợp tùy màn hình (thường là `10` hoặc `12`), tối đa `100` để tránh query quá tải DB (`z.coerce.number().int().min(1).max(100).default(10)`).
+*   **Bắt buộc Phân trang (Mandatory Pagination):**
+    Tất cả các API lấy danh sách dữ liệu (mảng) đều **bắt buộc phải thực hiện phân trang** ở cả phía backend (dùng Prisma `skip` và `take`) và hiển thị phân trang ở frontend. Không thiết kế các endpoint trả về mảng dữ liệu không giới hạn kích thước (ngoại trừ các danh mục cực nhỏ và cố định như Môn học).
 *   **Failed Response Format (HTTP 4xx, 5xx):**
     Never expose stack traces to the client in Production.
     ```json
@@ -125,6 +147,17 @@ graph TD
 *   **State Synchronization (Zustand Stores):**
     *   Separate global states (such as logged-in User info, application Theme) into Zustand stores.
     *   Keep local states (like form inputs or UI modal states) within the local component using `useState`.
+*   **Không sử dụng Native Dialogs (alert, confirm):** Tuyệt đối không sử dụng các hàm native của trình duyệt như `alert()` hay `confirm()`. Bắt buộc sử dụng hệ thống Notifications của Mantine hoặc component `ConfirmModal` dùng chung tại [ConfirmModal.jsx](file:///d:/Study/Owly/fe/src/shared/components/ConfirmModal.jsx) để đảm bảo trải nghiệm người dùng đồng nhất và tương thích giao diện Light/Dark Mode.
+
+### 4. Thiết kế & Quy chuẩn Màu sắc (Color Scheme & Aesthetics)
+*   **Hỗ trợ Light/Dark Mode:** Bắt buộc sử dụng các biến CSS toàn cục được khai báo tại [index.css](file:///e:/Data/Owly/fe/src/index.css) (ví dụ: `var(--bg-color)`, `var(--text-color)`, `var(--accent-color)`, `var(--card-bg)`, `var(--border-color)`) để các modal, panel, card tự động chuyển đổi tương thích khi người dùng chuyển đổi giao diện sáng/tối.
+
+### 5. Thiết kế Đáp ứng & Tương thích Di động (Responsive Design)
+*   **Bắt buộc hỗ trợ hiển thị đa thiết bị:** Mọi giao diện (đặc biệt là bảng dữ liệu, form nhập liệu, danh sách thẻ và modal) phải hiển thị tốt trên cả màn hình máy tính lớn, máy tính bảng và thiết bị di động (Mobile).
+*   **Không sử dụng kích thước cố định lớn:** Tuyệt đối không dùng các thuộc tính có độ rộng cố định bằng pixel lớn (ví dụ: `width: 800px`) cho panel hoặc container. Sử dụng `max-width` kết hợp với `width: 100%` hoặc các đơn vị linh hoạt như `%`, `vw`, `vh`.
+*   **Sử dụng SimpleGrid / Grid thông minh:** Tận dụng thuộc tính responsive của các thư viện CSS/UI (ví dụ: `<SimpleGrid cols={{ base: 1, sm: 2, md: 3 }}>` hoặc dùng Flexbox wrap) để tự động xuống dòng/thu nhỏ số cột khi xem trên thiết bị có chiều rộng hẹp.
+*   **Bảo toàn hiển thị bảng (Table Scrolling):** Khi sử dụng thẻ bảng (`Table`), bắt buộc phải bọc ngoài bằng thẻ cuộn có kiểm soát (như `<ScrollArea>` hoặc class CSS `overflow-x: auto`) để tránh tình trạng bảng bị tràn viền (overflow) gây vỡ bố cục trang trên màn hình di động.
+
 
 ---
 
@@ -181,3 +214,24 @@ To ensure strict adherence to the standards above, the project utilizes the foll
 3.  **Git Hooks (Husky + lint-staged):**
     *   Every `git commit` automatically triggers ESLint and Prettier on staged files.
     *   If errors are found, the commit is aborted until they are resolved.
+
+---
+
+## VII. Session Status Rendering Rules
+
+To ensure visual consistency across all pages (e.g., Schedules, Class Details, Attendance Logs) and roles (Teachers, Students, Admins), any session status representation must follow these strict styling rules:
+
+### 1. Status Badges Definition
+Always use standard Mantine Badges (web) or equivalent customized Tag views (mobile) with `variant="light"` matching these exact labels and colors:
+
+| Database Status | Context / Logic | Display Label | Badge Color |
+|---|---|---|---|
+| `Cancelled` | Session cancelled | **Đã hủy** | `red` |
+| `Completed` | Session finished and/or marked | **Hoàn thành** | `teal` |
+| `Scheduled` | Past session (`date` < `now`) but not completed | **Chờ điểm danh** | `orange` |
+| `Scheduled` | Future session (`date` >= `now`) | **Lên lịch** | `blue` |
+
+### 2. Implementation Guidelines
+- **Always dynamic:** Do not render a hardcoded "Lên lịch" badge for all `Scheduled` statuses. Check the date/time of the session dynamically against the current system time (`new Date()`) to choose between **Chờ điểm danh** and **Lên lịch**.
+- **Unified logic helper:** Keep this logic inside a helper or component property (like `getStatusBadge`) to prevent divergence between tabs (e.g., the Class Schedule list and the Student Attendance log modal).
+

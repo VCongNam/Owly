@@ -1,0 +1,15 @@
+meta {
+  name: Student Schedule Invalid Date
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/students/me/schedule?startDate=hello
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}

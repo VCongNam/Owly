@@ -1,0 +1,50 @@
+meta {
+  name: Update Profile
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{baseUrl}}/api/profile
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+body:json {
+  {
+    "fullName": "Nguyễn Văn A Updated",
+    "phone": "0987654321",
+    "bankName": "ACB",
+    "bankAccountNo": "123456789",
+    "bankAccountName": "NGUYEN VAN A",
+    "bankBin": "970416",
+    "bio": "Xin chào, tôi là giáo viên Toán giàu kinh nghiệm giảng dạy ôn thi Đại học.",
+    "metadata": {
+      "experience": [
+        {
+          "id": 1782958739500,
+          "period": "2020 - 2022",
+          "detail": "Giáo viên Toán tại trường THPT Phan Đình Phùng"
+        }
+      ],
+      "certificates": [
+        {
+          "id": 1782958739501,
+          "period": "2018",
+          "detail": "Bằng Cử nhân Sư phạm Toán xuất sắc - ĐH Sư phạm Hà Nội"
+        }
+      ],
+      "awards": [
+        {
+          "id": 1782958739502,
+          "period": "2023",
+          "detail": "Đạt danh hiệu giáo viên dạy giỏi cấp Tỉnh"
+        }
+      ]
+    }
+  }
+}

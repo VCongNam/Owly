@@ -1,0 +1,24 @@
+meta {
+  name: Create Feedback
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/feedbacks
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwtToken}}
+}
+
+body:json {
+  {
+    "type": "Bug",
+    "title": "Lỗi giao diện",
+    "content": "Tôi không thấy nút gửi feedback hiện lên",
+    "attachmentUrls": ["https://example.com/image1.png", "https://example.com/image2.png"]
+  }
+}

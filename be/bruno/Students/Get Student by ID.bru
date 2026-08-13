@@ -1,0 +1,15 @@
+meta {
+  name: Get Student by ID
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/students/replace-with-student-uuid
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
