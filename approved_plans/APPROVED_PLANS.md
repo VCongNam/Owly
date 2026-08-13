@@ -421,3 +421,56 @@ Kế hoạch 5 giai đoạn nhằm chuẩn hóa dự án Owly từ 70% lên mứ
   - Bổ sung 8 request Bruno mới tại thư mục `be/bruno/Validation` để kiểm tra validation thủ công.
   - Review sau triển khai xác nhận `studentScheduleQuerySchema` mới kiểm tra định dạng ngày bằng regex, chưa chặn ngày không tồn tại hoặc `startDate > endDate`.
   - Các request Bruno Validation chưa có assertion tự động và một số request còn hardcode UUID; chưa được coi là regression test suite cho đến khi bổ sung `tests {}` và biến environment/fixture.
+
+---
+
+## 19. Hoàn thiện & Nghiệm thu Kế hoạch Chuẩn hóa 5 Giai đoạn (Ngày 10/08/2026)
+
+### Phạm vi & Quyết định Kiến trúc
+
+- **SePay Deferred:** Phân hệ đối soát tự động SePay được tạm hoãn. Không thay đổi Prisma schema, không migration. Endpoint `POST /api/tuition/webhook/sepay` bảo vệ bằng feature flag `SEPAY_ENABLED=false` → trả `next(new AppError(..., 503))` qua error handler tập trung. Ghi rõ trong progress: *"Deferred — đã tích hợp thử nghiệm nhưng chưa kích hoạt và không thuộc phạm vi nghiệm thu hiện tại."*
+- **Error Contract thống nhất:** Mọi response lỗi đều có dạng `{ "success": false, "message": "...", "errors": [] }`. Trường `errors` luôn là mảng.
+- **Route 404 Catch-All:** Thêm middleware catch-all trước `errorHandler` trong `app.js` để endpoint không tồn tại trả HTTP `404` JSON chuẩn.
+- **Tách Entry Point:** `app.js` chỉ export `app` Express; `server.js` (mới) gọi `app.listen()`.
+
+### Giai đoạn 1: Error Contract & Backend Error Sweep
+- Cập nhật `errorHandler.js` đảm bảo format `{ success, message, errors[] }`.
+- Thêm Route 404 Catch-All Middleware vào `app.js`.
+- Chuẩn hóa API thành công còn dùng `{ status: "success" }` về `{ success: true, data: {} }`.
+- Rà soát 13 phân hệ (auth, profile, subjects, classes, students, schedule, attendance, assignments, materials, posts, tuition, upload, middlewares): Chuyển mọi catch block trả lỗi bằng `next(error)`, loại bỏ raw `error.message` ra client. Ánh xạ lỗi bên thứ ba đã biết sang `AppError` thân thiện.
+
+### Giai đoạn 2: Zod Validation & Date Schema
+- Tạo `isoDateSchema` dùng chung trong `commonSchema.js`: validate `YYYY-MM-DD`, kiểm tra tính tồn tại thực của ngày trên lịch (hỗ trợ năm nhuận, bác bỏ `2025-02-29`, `2026-02-30`, `2026-99-99`).
+- Cập nhật `studentScheduleQuerySchema`: `startDate`, `endDate` optional, refine `startDate <= endDate`.
+- Sửa phone regex trong `studentSchema.js`: từ `[3|5|7|8|9]` thành `/^(0[35789])[0-9]{8}$/`.
+- Bổ sung `tests {}` assertion cho 8 request trong `be/bruno/Validation/`; loại bỏ UUID hardcode.
+
+### Giai đoạn 3: Hệ thống Kiểm thử Tự động (Vitest + Supertest)
+- Cài đặt `vitest`, `supertest`, `@vitest/coverage-v8`. Tách `app.js`/`server.js`.
+- Cấu trúc `be/tests/` với `helpers/` (authMock.js, fixtures.js, dbSetup.js), `unit/` (validation.test.js, errorContract.test.js), `integration/` (auth, classes, assignments, tuition, validationContract).
+- Mock `supabase.auth.getUser`. Guard tự động dừng nếu kết nối nhầm Production DB.
+- Unit test kiểm tra trực tiếp `safeParse().success` Zod schema. HTTP integration test kiểm tra qua Supertest.
+- Security tests bao phủ: 401/403/404 Auth, Student cross-class access, Inactive enrollment, Assignment nộp/chấm sai quyền, điểm vượt maxPoints, Tuition invoice/submit-proof/review phân quyền.
+
+### Giai đoạn 4: Bruno Security Suite & Environment Management
+- Bổ sung 7 endpoints còn thiếu (`Update/Delete Assignment`, `Get Class Sessions`, `Bulk Import Students`, `Download Template`, `Get My Invoices`, `Upload Files`).
+- Đổi tên `Local.bru` thành `Local.example.bru` (commit); thêm `Local.private.bru` vào `.gitignore`.
+- Security Suite (11 requests + 1 `SePay Feature Disabled.bru` → assert 503).
+- Lệnh chạy: `pnpm exec bru run bruno/Validation --env Local.private` và `pnpm exec bru run bruno/Security --env Local.private`.
+
+### Giai đoạn 5: Frontend ESLint (React 19.2.6)
+- Xử lý 70 vấn đề ESLint (62 errors, 8 warnings) chia 4 nhóm checkpoint:
+  - **A** (Unused vars/imports, 17 files) → chạy lint xác nhận giảm.
+  - **B** (Impure render `Date.now()` tại `DashboardPage.jsx`) → đọc `now` từ hook/state ổn định.
+  - **C** (`set-state-in-effect`, 21 files) → phân Derived state / Modal reset / Data fetching; kiểm tra network request count.
+  - **D** (Escape regex + `pnpm build`) → 0 errors, 0 warnings, exit code 0.
+
+### Tiêu chí Nghiệm thu (Verification Gate)
+- `pnpm prisma validate` (be)
+- `pnpm test` (be): 100% PASS
+- `pnpm test:coverage` (be)
+- Syntax check 100% file JS `be/src` và `be/tests`
+- `pnpm exec bru run bruno/Validation --env Local.private`
+- `pnpm exec bru run bruno/Security --env Local.private`
+- `pnpm lint` (fe): 0 errors, 0 warnings
+- `pnpm build` (fe): exit code 0

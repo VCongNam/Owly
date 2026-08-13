@@ -14,7 +14,7 @@ export const useAssignment = (classId) => {
       const res = await axiosInstance.get(`/assignments/class/${classId}?page=${page}&limit=10`);
       setAssignments(res.data.data.items);
       setPagination(res.data.data.pagination);
-    } catch (error) {
+    } catch {
       notifications.show({
         title: 'Lỗi',
         message: 'Không thể tải danh sách bài tập',

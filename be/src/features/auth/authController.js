@@ -1,14 +1,12 @@
 import * as authService from './authService.js';
+import { AppError } from '../../utils/appError.js';
 
-export const refreshToken = async (req, res) => {
+export const refreshToken = async (req, res, next) => {
   try {
     const { refreshToken: token } = req.body;
 
     if (!token) {
-      return res.status(400).json({
-        success: false,
-        message: 'Refresh token không được để trống'
-      });
+      return next(new AppError('Refresh token không được để trống', 400));
     }
 
     const result = await authService.refreshSession(token);
@@ -18,23 +16,17 @@ export const refreshToken = async (req, res) => {
       data: result
     });
   } catch (error) {
-    return res.status(401).json({
-      success: false,
-      message: error.message || 'Phiên đăng nhập đã hết hạn'
-    });
+    next(error);
   }
 };
 
 // Đăng ký tài khoản mới trên Supabase Auth + Tự động sinh hồ sơ Giáo viên
-export const signUp = async (req, res) => {
+export const signUp = async (req, res, next) => {
   try {
     const { email, password, fullName, phone, specializationIds } = req.body;
 
     if (!email || !password || !fullName || !phone) {
-      return res.status(400).json({
-        success: false,
-        message: 'Các trường email, password, fullName và phone là bắt buộc'
-      });
+      return next(new AppError('Các trường email, password, fullName và phone là bắt buộc', 400));
     }
 
     const result = await authService.signUpTeacher(
@@ -61,34 +53,29 @@ export const signUp = async (req, res) => {
       }
     });
   } catch (error) {
-    let msg = error.message;
+    // Ánh xạ lỗi bên thứ ba (Supabase) thành AppError thân thiện trước khi chuyển tiếp
+    const msg = error.message || '';
     if (msg.includes('User already registered')) {
-      msg = 'Email này đã được đăng ký tài khoản';
-    } else if (msg.includes('Password should be')) {
-      msg = 'Mật khẩu không đáp ứng yêu cầu độ bảo mật';
+      return next(new AppError('Email này đã được đăng ký tài khoản', 409));
     }
-    
-    return res.status(500).json({
-      success: false,
-      message: msg || 'Đăng ký tài khoản giáo viên thất bại'
-    });
+    if (msg.includes('Password should be')) {
+      return next(new AppError('Mật khẩu không đáp ứng yêu cầu độ bảo mật', 400));
+    }
+    next(error);
   }
 };
 
 // Đồng bộ/Tạo mới hồ sơ Giáo viên sau khi đã đăng ký trên Supabase Auth
-export const registerTeacherProfile = async (req, res) => {
+export const registerTeacherProfile = async (req, res, next) => {
   try {
     const { fullName, specializationIds } = req.body;
-    
+
     // req.user được gán từ authMiddleware sau khi xác thực Token thành công
     const userId = req.user.id;
     const email = req.user.email;
 
     if (!fullName) {
-      return res.status(400).json({
-        success: false,
-        message: 'Họ và tên không được để trống'
-      });
+      return next(new AppError('Họ và tên không được để trống', 400));
     }
 
     const profile = await authService.createTeacherProfile({
@@ -104,15 +91,12 @@ export const registerTeacherProfile = async (req, res) => {
       data: profile
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Tạo hồ sơ giáo viên thất bại'
-    });
+    next(error);
   }
 };
 
 // Lấy thông tin hồ sơ của Giáo viên đang đăng nhập
-export const getProfile = async (req, res) => {
+export const getProfile = async (req, res, next) => {
   try {
     const userId = req.user.id;
     let profile = await authService.getMyProfile(userId);
@@ -128,10 +112,7 @@ export const getProfile = async (req, res) => {
     }
 
     if (!profile) {
-      return res.status(404).json({
-        success: false,
-        message: 'Không tìm thấy thông tin hồ sơ. Vui lòng đăng ký hồ sơ trước.'
-      });
+      return next(new AppError('Không tìm thấy thông tin hồ sơ. Vui lòng đăng ký hồ sơ trước.', 404));
     }
 
     return res.status(200).json({
@@ -139,15 +120,12 @@ export const getProfile = async (req, res) => {
       data: profile
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Lấy thông tin hồ sơ thất bại'
-    });
+    next(error);
   }
 };
 
 // Đăng nhập tài khoản bằng email & password
-export const signIn = async (req, res) => {
+export const signIn = async (req, res, next) => {
   try {
     const { email, password, role } = req.body;
 
@@ -159,18 +137,16 @@ export const signIn = async (req, res) => {
       data: result
     });
   } catch (error) {
-    let msg = error.message;
+    // Ánh xạ lỗi bên thứ ba (Supabase) thành AppError thân thiện với đúng status code
+    const msg = error.message || '';
     if (msg.includes('Invalid login credentials')) {
-      msg = 'Email hoặc mật khẩu không chính xác';
+      return next(new AppError('Email hoặc mật khẩu không chính xác', 401));
     }
-    
-    // Nếu lỗi về phân quyền vai trò, trả về status 403 Forbidden
-    const status = msg.includes('không đăng ký vai trò') ? 403 : 401;
-    
-    return res.status(status).json({
-      success: false,
-      message: msg || 'Đăng nhập thất bại'
-    });
+    if (msg.includes('không đăng ký vai trò')) {
+      return next(new AppError(msg, 403));
+    }
+    // Lỗi AppError từ service sẽ được giữ nguyên status code
+    next(error);
   }
 };
 
@@ -180,16 +156,13 @@ export const signIn = async (req, res) => {
  * Bước 1: Tạo Google OAuth URL và redirect người dùng đến Google.
  * Domain hiển thị trên màn hình chọn tài khoản Google sẽ là FRONTEND_URL.
  */
-export const googleAuth = async (req, res) => {
+export const googleAuth = async (req, res, next) => {
   try {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const frontendUrl = process.env.FRONTEND_URL;
 
     if (!clientId || !frontendUrl) {
-      return res.status(500).json({
-        success: false,
-        message: 'GOOGLE_CLIENT_ID hoặc FRONTEND_URL chưa được cấu hình'
-      });
+      return next(new AppError('GOOGLE_CLIENT_ID hoặc FRONTEND_URL chưa được cấu hình', 500));
     }
 
     // redirect_uri trỏ về FE — đây là domain Google sẽ hiển thị
@@ -206,25 +179,19 @@ export const googleAuth = async (req, res) => {
 
     return res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Không thể khởi tạo Google OAuth'
-    });
+    next(error);
   }
 };
 
 /**
  * Bước 2: FE gửi `code` nhận được từ Google lên đây để đổi lấy Supabase session.
  */
-export const googleExchange = async (req, res) => {
+export const googleExchange = async (req, res, next) => {
   try {
     const { code } = req.body;
 
     if (!code) {
-      return res.status(400).json({
-        success: false,
-        message: 'Thiếu authorization code từ Google'
-      });
+      return next(new AppError('Thiếu authorization code từ Google', 400));
     }
 
     const result = await authService.exchangeGoogleCode(code);
@@ -235,21 +202,15 @@ export const googleExchange = async (req, res) => {
       data: result
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Không thể xác thực với Google'
-    });
+    next(error);
   }
 };
 
-export const signOut = async (req, res) => {
+export const signOut = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
-      return res.status(400).json({
-        success: false,
-        message: 'Mã xác thực bị thiếu'
-      });
+      return next(new AppError('Mã xác thực bị thiếu', 400));
     }
     const token = authHeader.split(' ')[1];
     await authService.signOutTeacher(token);
@@ -258,14 +219,11 @@ export const signOut = async (req, res) => {
       message: 'Đăng xuất thành công'
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Đăng xuất thất bại'
-    });
+    next(error);
   }
 };
 
-export const changePassword = async (req, res) => {
+export const changePassword = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const { newPassword } = req.body;
@@ -275,14 +233,11 @@ export const changePassword = async (req, res) => {
       message: 'Đổi mật khẩu thành công'
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Đổi mật khẩu thất bại'
-    });
+    next(error);
   }
 };
 
-export const forgotPassword = async (req, res) => {
+export const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
@@ -294,10 +249,6 @@ export const forgotPassword = async (req, res) => {
       message: 'Email khôi phục mật khẩu đã được gửi'
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Yêu cầu khôi phục mật khẩu thất bại'
-    });
+    next(error);
   }
 };
-

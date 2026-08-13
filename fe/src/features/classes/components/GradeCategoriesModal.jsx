@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Modal, Table, Button, Group, Stack, Text, TextInput, NumberInput,
   ActionIcon, Badge, Tooltip, ScrollArea, Paper, Divider, Alert
@@ -8,9 +8,8 @@ import { notifications } from '@mantine/notifications';
 import { gradeCategoryService } from '../services/gradeCategories';
 import { ConfirmModal } from '../../../shared';
 
-export function GradeCategoriesModal({ classId, opened, onClose, onCategoriesUpdated }) {
+export function GradeCategoriesModal({ classId, onClose, onCategoriesUpdated }) {
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(false);
 
   // Form states (Add/Edit)
   const [editingId, setEditingId] = useState(null); // null = mode tạo mới
@@ -23,24 +22,53 @@ export function GradeCategoriesModal({ classId, opened, onClose, onCategoriesUpd
   const [categoryToDelete, setCategoryToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   const fetchCategories = useCallback(async () => {
-    if (!classId || !opened) return;
-    setLoading(true);
+    if (!classId) return;
     try {
       const res = await gradeCategoryService.getGradeCategories(classId);
       const cats = Array.isArray(res) ? res : (res?.data || []);
-      setCategories(cats);
+      if (isMountedRef.current) {
+        setCategories(cats);
+      }
     } catch (err) {
       console.error('Lỗi khi lấy danh mục đầu điểm:', err);
-      notifications.show({ title: 'Lỗi', message: 'Không thể tải danh sách danh mục đầu điểm.', color: 'red' });
-    } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        notifications.show({ title: 'Lỗi', message: 'Không thể tải danh sách danh mục đầu điểm.', color: 'red' });
+      }
     }
-  }, [classId, opened]);
+  }, [classId]);
 
   useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+    let active = true;
+
+    const loadInitialCategories = async () => {
+      try {
+        const result = await gradeCategoryService.getGradeCategories(classId);
+        if (active) {
+          setCategories(Array.isArray(result) ? result : result?.data || []);
+        }
+      } catch {
+        if (active) {
+          notifications.show({ title: 'Lỗi', message: 'Không thể tải danh sách danh mục đầu điểm.', color: 'red' });
+        }
+      }
+    };
+
+    loadInitialCategories();
+
+    return () => {
+      active = false;
+    };
+  }, [classId]);
 
   const resetForm = () => {
     setEditingId(null);
@@ -140,7 +168,7 @@ export function GradeCategoriesModal({ classId, opened, onClose, onCategoriesUpd
   return (
     <>
       <Modal
-        opened={opened}
+        opened={true}
         onClose={onClose}
         title={
           <Group gap="md">

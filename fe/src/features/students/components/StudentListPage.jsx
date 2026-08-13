@@ -68,10 +68,15 @@ export function StudentListPage() {
     return () => clearTimeout(debounceHandler);
   }, [search, classId, page]);
 
-  // Trở lại trang 1 khi thay đổi điều kiện tìm kiếm/lọc
-  useEffect(() => {
+  const handleSearchChange = (val) => {
+    setSearch(val);
     setPage(1);
-  }, [search, classId]);
+  };
+
+  const handleClassChange = (val) => {
+    setClassId(val);
+    setPage(1);
+  };
 
   const rows = students.map((student) => (
     <Table.Tr key={student.id} className={classes.tableRow}>
@@ -135,14 +140,14 @@ export function StudentListPage() {
           placeholder="Tìm học viên theo họ tên, sđt phụ huynh..."
           leftSection={<MagnifyingGlass size={16} />}
           value={search}
-          onChange={(e) => setSearch(e.currentTarget.value)}
+          onChange={(e) => handleSearchChange(e.currentTarget.value)}
           style={{ flex: 1, minWidth: 260, maxWidth: 360 }}
         />
         <Select
           placeholder="Lọc theo lớp học"
           data={classesList.map(c => ({ value: c.id, label: c.name }))}
           value={classId}
-          onChange={setClassId}
+          onChange={handleClassChange}
           clearable
           style={{ width: 220 }}
         />

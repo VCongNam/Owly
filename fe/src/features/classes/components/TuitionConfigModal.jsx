@@ -1,13 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Modal, NumberInput, Button, Group, Text, Stack } from '@mantine/core';
 import { CurrencyCircleDollar, FloppyDisk } from '@phosphor-icons/react';
 
 export function TuitionConfigModal({ opened, onClose, currentAmount, onSave, loading }) {
-  const [amount, setAmount] = useState(currentAmount || 0);
-
-  useEffect(() => {
-    setAmount(currentAmount || 0);
-  }, [currentAmount, opened]);
+  const [amount, setAmount] = useState(() => currentAmount ?? 0);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -41,7 +37,7 @@ export function TuitionConfigModal({ opened, onClose, currentAmount, onSave, loa
             label="Đơn giá trên mỗi buổi học (VNĐ)"
             placeholder="Ví dụ: 200,000"
             value={amount}
-            onChange={(val) => setAmount(val || 0)}
+            onChange={(val) => setAmount(typeof val === 'number' ? val : 0)}
             min={0}
             step={10000}
             thousandSeparator=","

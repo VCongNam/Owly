@@ -1,6 +1,7 @@
 import * as studentService from './studentService.js';
 import { formatToVietnamTime } from '../../utils/dateHelper.js';
 import { assertClassAccess } from '../../utils/authHelpers.js';
+import { AppError } from '../../utils/appError.js';
 
 // Format helper cho ngày sinh và ngày tạo
 const formatStudentDates = (student) => {
@@ -47,10 +48,7 @@ export const getStudentById = async (req, res, next) => {
 
     const student = await studentService.getStudentById(id, teacherId);
     if (!student) {
-      return res.status(404).json({
-        success: false,
-        message: 'Không tìm thấy thông tin học viên'
-      });
+      return next(new AppError('Không tìm thấy thông tin học viên', 404));
     }
 
     return res.status(200).json({

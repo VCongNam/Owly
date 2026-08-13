@@ -1,24 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Modal, NumberInput, Button, Group, Text, Stack, Alert } from '@mantine/core';
 import { MonthPickerInput, DateInput } from '@mantine/dates';
 import { PaperPlaneTilt, Info } from '@phosphor-icons/react';
 import dayjs from 'dayjs';
 
 export function GenerateInvoicesModal({ opened, onClose, defaultAmount, initialMonthDate, onGenerate, loading }) {
-  const [selectedMonth, setSelectedMonth] = useState(initialMonthDate || new Date());
+  const [selectedMonth, setSelectedMonth] = useState(() => initialMonthDate ?? new Date());
   const [dueDate, setDueDate] = useState(() => {
-    return dayjs(initialMonthDate || new Date()).endOf('month').toDate();
+    return dayjs(initialMonthDate ?? new Date()).endOf('month').toDate();
   });
-  const [amountPerSession, setAmountPerSession] = useState(defaultAmount || 0);
-
-  useEffect(() => {
-    if (opened) {
-      const targetMonth = initialMonthDate || new Date();
-      setSelectedMonth(targetMonth);
-      setAmountPerSession(defaultAmount || 0);
-      setDueDate(dayjs(targetMonth).endOf('month').toDate());
-    }
-  }, [defaultAmount, initialMonthDate, opened]);
+  const [amountPerSession, setAmountPerSession] = useState(() => defaultAmount ?? 0);
 
   const handleMonthChange = (date) => {
     if (date) {

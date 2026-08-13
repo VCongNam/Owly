@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Modal, Group, Text, Stack, Badge, Button, Image,
-  Divider, Paper, SimpleGrid, Box, FileInput, Center, Loader
+  Paper, SimpleGrid, Box, FileInput
 } from '@mantine/core';
-import { QrCode, Receipt, CalendarBlank, UploadSimple, CheckCircle, WarningCircle, Eye } from '@phosphor-icons/react';
+import { QrCode, Receipt, CalendarBlank, UploadSimple, WarningCircle } from '@phosphor-icons/react';
 import { notifications } from '@mantine/notifications';
 import dayjs from 'dayjs';
 import { tuitionService } from '../services/tuition';
@@ -13,25 +13,33 @@ export function StudentPaymentProofModal({ opened, onClose, invoice, teacherBank
   const [file, setFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const previewUrlRef = useRef(null);
 
-  useEffect(() => {
-    if (!opened) {
-      setFile(null);
+  const handleFileChange = (nextFile) => {
+    // Thu hồi URL cũ nếu có
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = null;
     }
-  }, [opened]);
 
-  useEffect(() => {
-    if (!file) {
+    setFile(nextFile);
+
+    if (nextFile) {
+      const url = URL.createObjectURL(nextFile);
+      previewUrlRef.current = url;
+      setPreviewUrl(url);
+    } else {
       setPreviewUrl(null);
-      return;
     }
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
+  };
 
+  useEffect(() => {
     return () => {
-      URL.revokeObjectURL(url);
+      if (previewUrlRef.current) {
+        URL.revokeObjectURL(previewUrlRef.current);
+      }
     };
-  }, [file]);
+  }, []);
 
   if (!invoice) return null;
 
@@ -193,7 +201,7 @@ export function StudentPaymentProofModal({ opened, onClose, invoice, teacherBank
                   placeholder="Chọn ảnh chụp biên lai chuyển tiền..."
                   leftSection={<UploadSimple size={16} />}
                   value={file}
-                  onChange={setFile}
+                  onChange={handleFileChange}
                   accept="image/*"
                   disabled={submitting}
                 />

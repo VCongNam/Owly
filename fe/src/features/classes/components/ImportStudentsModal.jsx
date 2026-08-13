@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
-  Modal, Stack, Text, Button, FileInput, Textarea, Table, Group, Box,
+  Modal, Stack, Text, Button, FileInput, Textarea, Table, Group,
   Badge, ActionIcon, ScrollArea, TextInput, Card, Alert, Divider
 } from '@mantine/core';
 import { UploadSimple, DownloadSimple, Check, Trash, WarningCircle, ClipboardText } from '@phosphor-icons/react';
@@ -15,16 +15,15 @@ export function ImportStudentsModal({ opened, onClose, classId, onSuccess }) {
   const [parsedStudents, setParsedStudents] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [successList, setSuccessList] = useState(null);
+  const readerRef = useRef(null);
 
-  // Reset state when modal is opened/closed
   useEffect(() => {
-    if (opened) {
-      setFile(null);
-      setPasteText('');
-      setParsedStudents([]);
-      setSuccessList(null);
-    }
-  }, [opened]);
+    return () => {
+      if (readerRef.current && readerRef.current.readyState === FileReader.LOADING) {
+        readerRef.current.abort();
+      }
+    };
+  }, []);
 
   // Tải file excel mẫu
   const handleDownloadTemplate = async () => {
@@ -40,6 +39,7 @@ export function ImportStudentsModal({ opened, onClose, classId, onSuccess }) {
       document.body.appendChild(link);
       link.click();
       link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Lỗi khi tải file mẫu:', error);
       notifications.show({
@@ -79,10 +79,17 @@ export function ImportStudentsModal({ opened, onClose, classId, onSuccess }) {
 
   // Đọc file excel tải lên
   const handleFileChange = (selectedFile) => {
+    if (readerRef.current) {
+      readerRef.current.abort();
+      readerRef.current = null;
+    }
+
     setFile(selectedFile);
     if (!selectedFile) return;
 
     const reader = new FileReader();
+    readerRef.current = reader;
+
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target.result);
@@ -116,6 +123,13 @@ export function ImportStudentsModal({ opened, onClose, classId, onSuccess }) {
         });
       }
     };
+
+    reader.onloadend = () => {
+      if (readerRef.current === reader) {
+        readerRef.current = null;
+      }
+    };
+
     reader.readAsArrayBuffer(selectedFile);
   };
 

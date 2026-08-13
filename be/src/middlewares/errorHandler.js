@@ -10,12 +10,16 @@ export const errorHandler = (err, req, res, next) => {
   // Lỗi hệ thống (Error thường / lỗi Prisma, v.v.): ẩn chi tiết, chỉ báo lỗi chung
   const message = isOperational ? err.message : 'Đã xảy ra lỗi hệ thống, vui lòng thử lại sau';
 
+  // errors: luôn là mảng theo Error Contract chuẩn của Owly
+  const errors = Array.isArray(err.errors) ? err.errors : [];
+
   const response = {
     success: false,
     message,
+    errors,
   };
 
-  // Chỉ expose stack trace trong development để debug
+  // Chỉ expose stack trace trong development để debug — không bao giờ lộ trong production
   if (process.env.NODE_ENV !== 'production' && err.stack) {
     response.stack = err.stack;
   }

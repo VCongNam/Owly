@@ -1,16 +1,19 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { classService } from '../services/classService';
 import { notifications } from '@mantine/notifications';
 
+const EMPTY_PAGINATION = {
+  totalItems: 0,
+  totalPages: 0,
+  currentPage: 1,
+  limit: 9,
+};
+
 export function useClasses(initialParams = {}) {
   const [classes, setClasses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState({
-    totalItems: 0,
-    totalPages: 0,
-    currentPage: 1,
-    limit: initialParams.limit || 9,
-  });
+  const [resolvedParamsKey, setResolvedParamsKey] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [pagination, setPagination] = useState(EMPTY_PAGINATION);
 
   const [params, setParams] = useState({
     page: 1,
@@ -20,29 +23,88 @@ export function useClasses(initialParams = {}) {
     ...initialParams
   });
 
-  const fetchClasses = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await classService.getClasses(params);
-      const resData = res?.data || res;
-      setClasses(resData?.items || []);
-      if (resData?.pagination) {
-        setPagination(resData.pagination);
-      }
-    } catch (error) {
-      notifications.show({
-        title: 'Lỗi tải danh sách lớp học',
-        message: error.response?.data?.message || 'Có lỗi xảy ra',
-        color: 'red'
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [params]);
+  const requestIdRef = useRef(0);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
-    fetchClasses();
-  }, [fetchClasses]);
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const currentParamsKey = JSON.stringify(params);
+  const loading = resolvedParamsKey !== currentParamsKey || refreshing;
+
+  const fetchClasses = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
+    setRefreshing(true);
+    try {
+      const res = await classService.getClasses(params);
+      const resData = res?.data || res;
+      if (requestId === requestIdRef.current) {
+        setClasses(resData?.items || []);
+        if (resData?.pagination) {
+          setPagination(resData.pagination);
+        }
+      }
+    } catch (error) {
+      if (requestId === requestIdRef.current) {
+        if (resolvedParamsKey !== currentParamsKey) {
+          setClasses([]);
+          setPagination(EMPTY_PAGINATION);
+        }
+        notifications.show({
+          title: 'Lỗi tải danh sách lớp học',
+          message: error.response?.data?.message || 'Có lỗi xảy ra',
+          color: 'red'
+        });
+      }
+    } finally {
+      if (requestId === requestIdRef.current) {
+        setRefreshing(false);
+        setResolvedParamsKey(currentParamsKey);
+      }
+    }
+  }, [params, currentParamsKey, resolvedParamsKey]);
+
+  useEffect(() => {
+    const requestId = ++requestIdRef.current;
+
+    const loadClasses = async () => {
+      try {
+        const requestParams = JSON.parse(currentParamsKey);
+        const res = await classService.getClasses(requestParams);
+        const resData = res?.data || res;
+        if (requestId === requestIdRef.current) {
+          setClasses(resData?.items || []);
+          if (resData?.pagination) {
+            setPagination(resData.pagination);
+          }
+        }
+      } catch (error) {
+        if (requestId === requestIdRef.current) {
+          setClasses([]);
+          setPagination(EMPTY_PAGINATION);
+          notifications.show({
+            title: 'Lỗi tải danh sách lớp học',
+            message: error.response?.data?.message || 'Có lỗi xảy ra',
+            color: 'red'
+          });
+        }
+      } finally {
+        if (requestId === requestIdRef.current) {
+          setResolvedParamsKey(currentParamsKey);
+        }
+      }
+    };
+
+    loadClasses();
+
+    return () => {
+      requestIdRef.current += 1;
+    };
+  }, [currentParamsKey]);
 
   const setPage = (page) => {
     setParams(prev => ({ ...prev, page }));
@@ -59,19 +121,23 @@ export function useClasses(initialParams = {}) {
   const createClass = async (data) => {
     try {
       await classService.createClass(data);
-      notifications.show({
-        title: 'Thành công',
-        message: 'Tạo lớp học mới thành công',
-        color: 'green'
-      });
-      await fetchClasses();
+      if (isMountedRef.current) {
+        notifications.show({
+          title: 'Thành công',
+          message: 'Tạo lớp học mới thành công',
+          color: 'green'
+        });
+        await fetchClasses();
+      }
       return true;
     } catch (error) {
-      notifications.show({
-        title: 'Lỗi tạo lớp học',
-        message: error.response?.data?.message || 'Có lỗi xảy ra',
-        color: 'red'
-      });
+      if (isMountedRef.current) {
+        notifications.show({
+          title: 'Lỗi tạo lớp học',
+          message: error.response?.data?.message || 'Có lỗi xảy ra',
+          color: 'red'
+        });
+      }
       return false;
     }
   };
@@ -79,19 +145,23 @@ export function useClasses(initialParams = {}) {
   const updateClass = async (id, data) => {
     try {
       await classService.updateClass(id, data);
-      notifications.show({
-        title: 'Thành công',
-        message: 'Cập nhật thông tin lớp học thành công',
-        color: 'green'
-      });
-      await fetchClasses();
+      if (isMountedRef.current) {
+        notifications.show({
+          title: 'Thành công',
+          message: 'Cập nhật thông tin lớp học thành công',
+          color: 'green'
+        });
+        await fetchClasses();
+      }
       return true;
     } catch (error) {
-      notifications.show({
-        title: 'Lỗi cập nhật',
-        message: error.response?.data?.message || 'Có lỗi xảy ra',
-        color: 'red'
-      });
+      if (isMountedRef.current) {
+        notifications.show({
+          title: 'Lỗi cập nhật',
+          message: error.response?.data?.message || 'Có lỗi xảy ra',
+          color: 'red'
+        });
+      }
       return false;
     }
   };
@@ -99,27 +169,34 @@ export function useClasses(initialParams = {}) {
   const deleteClass = async (id) => {
     try {
       await classService.deleteClass(id);
-      notifications.show({
-        title: 'Thành công',
-        message: 'Đã xóa lớp học',
-        color: 'green'
-      });
-      await fetchClasses();
+      if (isMountedRef.current) {
+        notifications.show({
+          title: 'Thành công',
+          message: 'Đã xóa lớp học',
+          color: 'green'
+        });
+        await fetchClasses();
+      }
       return true;
     } catch (error) {
-      notifications.show({
-        title: 'Lỗi xóa',
-        message: error.response?.data?.message || 'Có lỗi xảy ra',
-        color: 'red'
-      });
+      if (isMountedRef.current) {
+        notifications.show({
+          title: 'Lỗi xóa',
+          message: error.response?.data?.message || 'Có lỗi xảy ra',
+          color: 'red'
+        });
+      }
       return false;
     }
   };
 
+  const visibleClasses = resolvedParamsKey === currentParamsKey ? classes : [];
+  const visiblePagination = resolvedParamsKey === currentParamsKey ? pagination : EMPTY_PAGINATION;
+
   return {
-    classes,
+    classes: visibleClasses,
     loading,
-    pagination,
+    pagination: visiblePagination,
     params,
     setPage,
     setSearch,
@@ -133,29 +210,76 @@ export function useClasses(initialParams = {}) {
 
 export function useClassDetails(id) {
   const [classDetail, setClassDetail] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [resolvedId, setResolvedId] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const requestIdRef = useRef(0);
+
+  const loading = Boolean(id) && (resolvedId !== id || refreshing);
 
   const fetchDetail = useCallback(async () => {
     if (!id) return;
+    const requestId = ++requestIdRef.current;
+    setRefreshing(true);
     try {
-      setLoading(true);
       const res = await classService.getClassById(id);
-      // Backend returns unified format { success: true, data: {...} }
-      setClassDetail(res?.data || res);
+      if (requestId === requestIdRef.current) {
+        setClassDetail(res?.data || res);
+        setResolvedId(id);
+      }
     } catch (error) {
-      notifications.show({
-        title: 'Lỗi lấy thông tin',
-        message: error.response?.data?.message || 'Không tìm thấy lớp học',
-        color: 'red'
-      });
+      if (requestId === requestIdRef.current) {
+        if (resolvedId !== id) {
+          setClassDetail(null);
+        }
+        notifications.show({
+          title: 'Lỗi lấy thông tin',
+          message: error.response?.data?.message || 'Không tìm thấy lớp học',
+          color: 'red'
+        });
+      }
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setRefreshing(false);
+        setResolvedId(id);
+      }
     }
-  }, [id]);
+  }, [id, resolvedId]);
 
   useEffect(() => {
-    fetchDetail();
-  }, [fetchDetail]);
+    if (!id) return;
+    const requestId = ++requestIdRef.current;
 
-  return { classDetail, loading, refetch: fetchDetail };
+    const loadDetail = async () => {
+      try {
+        const res = await classService.getClassById(id);
+        if (requestId === requestIdRef.current) {
+          setClassDetail(res?.data || res);
+        }
+      } catch (error) {
+        if (requestId === requestIdRef.current) {
+          setClassDetail(null);
+          notifications.show({
+            title: 'Lỗi lấy thông tin',
+            message: error.response?.data?.message || 'Không tìm thấy lớp học',
+            color: 'red'
+          });
+        }
+      } finally {
+        if (requestId === requestIdRef.current) {
+          setResolvedId(id);
+        }
+      }
+    };
+
+    loadDetail();
+
+    return () => {
+      requestIdRef.current += 1;
+    };
+  }, [id]);
+
+  const visibleDetail = resolvedId === id ? classDetail : null;
+
+  return { classDetail: visibleDetail, loading, refetch: fetchDetail };
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Modal, Stack, Text, Button, FileInput, Group, Center, Loader,
   Alert, Divider, Badge, Card
@@ -8,30 +8,65 @@ import { notifications } from '@mantine/notifications';
 import { assignmentService } from '../services/assignments';
 import { uploadService } from '../../../services/uploadService';
 
-export function AssignmentSubmissionModal({ opened, onClose, assignment }) {
-  const [loading, setLoading] = useState(false);
+export function AssignmentSubmissionModal({ onClose, assignment }) {
+  const [loading, setLoading] = useState(true);
   const [submission, setSubmission] = useState(null);
   const [file, setFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const isOverdue = assignment?.dueDate ? new Date(assignment.dueDate) < new Date() : false;
 
-  const fetchMySubmission = async () => {
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const assignmentId = assignment?.id;
+
+  const handleRefresh = async () => {
+    if (!assignmentId) return;
     try {
       setLoading(true);
-      const res = await assignmentService.getMySubmission(assignment.id);
-      setSubmission(res || null);
+      const res = await assignmentService.getMySubmission(assignmentId);
+      if (isMountedRef.current) {
+        setSubmission(res || null);
+      }
     } catch (error) {
       console.error('Lỗi tải bài nộp:', error);
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    if (opened && assignment) {
-      fetchMySubmission();
-    }
-  }, [opened, assignment]);
+    if (!assignmentId) return;
+    let active = true;
+
+    const loadInitialSubmission = async () => {
+      try {
+        const result = await assignmentService.getMySubmission(assignmentId);
+        if (active) {
+          setSubmission(result || null);
+        }
+      } catch (error) {
+        console.error('Lỗi tải bài nộp:', error);
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadInitialSubmission();
+    return () => {
+      active = false;
+    };
+  }, [assignmentId]);
 
   const handleUploadAndSubmit = async () => {
     if (!file) {
@@ -61,15 +96,17 @@ export function AssignmentSubmissionModal({ opened, onClose, assignment }) {
         throw new Error('Không lấy được đường dẫn tệp sau khi tải lên');
       }
 
-      await assignmentService.submitAssignment(assignment.id, { content: fileUrl });
+      await assignmentService.submitAssignment(assignmentId, { content: fileUrl });
 
       notifications.show({
         title: 'Thành công',
         message: 'Nộp bài tập về nhà thành công',
         color: 'green'
       });
-      setFile(null);
-      fetchMySubmission();
+      if (isMountedRef.current) {
+        setFile(null);
+      }
+      await handleRefresh();
     } catch (error) {
       console.error(error);
       notifications.show({
@@ -78,7 +115,9 @@ export function AssignmentSubmissionModal({ opened, onClose, assignment }) {
         color: 'red'
       });
     } finally {
-      setSubmitting(false);
+      if (isMountedRef.current) {
+        setSubmitting(false);
+      }
     }
   };
 
@@ -98,7 +137,7 @@ export function AssignmentSubmissionModal({ opened, onClose, assignment }) {
 
   return (
     <Modal
-      opened={opened}
+      opened={true}
       onClose={onClose}
       title={
         <div>

@@ -66,13 +66,13 @@ const STUDENT_INVOICE_STATUS_MAP = {
 
 const getStudentClassStatus = (status) => STUDENT_CLASS_STATUS_MAP[status] || { label: status || 'Không rõ', color: 'gray' };
 
-const getStudentSessionStatus = (session) => {
+const getStudentSessionStatus = (session, now) => {
   if (!session) return { label: 'Không rõ', color: 'gray' };
   if (session.status === 'Cancelled') return STUDENT_SESSION_STATUS_MAP.Cancelled;
   if (session.status === 'Completed') return STUDENT_SESSION_STATUS_MAP.Completed;
 
   const dateValue = session.startTime || session.date || session.scheduledAt;
-  const isPast = dateValue ? new Date(dateValue).getTime() < Date.now() : false;
+  const isPast = dateValue ? new Date(dateValue).getTime() < now : false;
   if (isPast && !session.hasAttendance) {
     return { label: 'Chưa điểm danh', color: 'orange' };
   }
@@ -82,14 +82,26 @@ const getStudentSessionStatus = (session) => {
 
 const getStudentInvoiceStatus = (status) => STUDENT_INVOICE_STATUS_MAP[status] || { label: status || 'Chờ xử lý', color: 'gray' };
 
-const getGreeting = () => {
-  const hour = new Date().getHours();
+const useNow = () => {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(Date.now());
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+  return now;
+};
+
+const getGreeting = (now) => {
+  const hour = new Date(now).getHours();
   if (hour < 12) return 'Chào buổi sáng';
   if (hour < 18) return 'Chào buổi chiều';
   return 'Chào buổi tối';
 };
 
 function TeacherDashboard({ user }) {
+  const now = useNow();
   const [classLoading, setClassLoading] = useState(true);
   const [studentLoading, setStudentLoading] = useState(true);
   const [scheduleLoading, setScheduleLoading] = useState(true);
@@ -251,7 +263,7 @@ function TeacherDashboard({ user }) {
     if (session.status === 'Completed') return { label: 'Hoàn thành', color: 'teal' };
 
     const dateValue = session.startTime || session.date || session.scheduledAt;
-    const isPast = dateValue ? new Date(dateValue).getTime() < Date.now() : false;
+    const isPast = dateValue ? new Date(dateValue).getTime() < now : false;
     if (isPast) {
       return { label: 'Chờ điểm danh', color: 'orange' };
     }
@@ -265,7 +277,7 @@ function TeacherDashboard({ user }) {
           <Badge variant="light" color="copper" w="fit-content">
             Giáo viên
           </Badge>
-          <Text size="sm" c="dimmed" mt="sm">{getGreeting()}</Text>
+          <Text size="sm" c="dimmed" mt="sm">{getGreeting(now)}</Text>
           <Title order={2} className={classes.pageTitle}>{user?.fullName || 'Giáo viên'}</Title>
           <Text c="dimmed" size="sm" maw={580}>
             Đây là bảng điều khiển của bạn. Từ đây có thể quản lý các lớp học đang dạy, lịch dạy hôm nay, bài tập sắp tới và học phí chờ phê duyệt.
@@ -454,7 +466,7 @@ function TeacherDashboard({ user }) {
             ) : upcomingAssignments.length > 0 ? (
               <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
                 {upcomingAssignments.map((item) => {
-                  const daysLeft = Math.ceil((new Date(item.dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                  const daysLeft = Math.ceil((new Date(item.dueDate).getTime() - now) / (1000 * 60 * 60 * 24));
                   return (
                     <Card key={item.id} withBorder radius="sm" p="sm" className={classes.listItem}>
                       <Group justify="space-between">
@@ -547,6 +559,7 @@ function TeacherDashboard({ user }) {
 }
 
 function StudentDashboard({ user }) {
+  const now = useNow();
   const [classLoading, setClassLoading] = useState(true);
   const [scheduleLoading, setScheduleLoading] = useState(true);
   const [invoiceLoading, setInvoiceLoading] = useState(true);
@@ -683,7 +696,7 @@ function StudentDashboard({ user }) {
     title: item.title || 'Buổi học',
     subtitle: item.className || item.class?.name || 'Lịch học',
     dateLabel: formatShortDate(item.date || item.startTime || item.scheduledAt),
-    status: getStudentSessionStatus(item),
+    status: getStudentSessionStatus(item, now),
   }));
 
   return (
@@ -693,7 +706,7 @@ function StudentDashboard({ user }) {
           <Badge variant="light" color="copper" w="fit-content">
             Học sinh
           </Badge>
-          <Text size="sm" c="dimmed" mt="sm">{getGreeting()}</Text>
+          <Text size="sm" c="dimmed" mt="sm">{getGreeting(now)}</Text>
           <Title order={2} className={classes.pageTitle}>{user?.fullName || 'Học sinh'}</Title>
           <Text c="dimmed" size="sm" maw={580}>
             Đây là bảng điều khiển của bạn. Từ đây có thể xem lớp đang học, lịch học, bài tập và học phí cần xử lý.

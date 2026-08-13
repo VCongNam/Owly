@@ -17,6 +17,16 @@ export const validate = (schema, target = 'body') => (req, res, next) => {
   }
 
   // Ghi lại dữ liệu đã được coerce/default bởi Zod để controller nhận giá trị đã chuẩn hóa
-  req[target] = result.data;
+  try {
+    req[target] = result.data;
+  } catch (err) {
+    Object.defineProperty(req, target, {
+      value: result.data,
+      writable: true,
+      enumerable: true,
+      configurable: true
+    });
+  }
   next();
 };
+

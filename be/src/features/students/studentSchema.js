@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
 // Regex validate số điện thoại Việt Nam tiêu chuẩn (03, 05, 07, 08, 09 kèm 8 chữ số)
-const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
+// Lưu ý: [3|5|7|8|9] sai — ký tự | bên trong [] được hiểu là literal, không phải alternation
+const phoneRegex = /^(0[35789])[0-9]{8}$/;
 
 export const createAndEnrollStudentSchema = z.object({
   fullName: z.string({

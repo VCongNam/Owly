@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { Group, Button, Card, SimpleGrid, Text, Badge, Select, SegmentedControl, ActionIcon, Title, Center, Loader, Popover, Menu, Divider, Stack, Box } from '@mantine/core';
+import { Group, Button, Card, SimpleGrid, Text, Badge, Select, SegmentedControl, ActionIcon, Title, Center, Loader, Popover, Menu, Divider, Stack } from '@mantine/core';
 import { CaretLeft, CaretRight, Calendar, List, Plus, NotePencil, Prohibit, DotsThree, CheckSquare, Chats } from '@phosphor-icons/react';
 import { useSchedule } from '../hooks/useSchedule';
 import { SessionFormModal } from './SessionFormModal';
@@ -184,7 +184,7 @@ export function SchedulePage() {
   };
 
   const handleSessionSubmit = async (payload) => {
-    let success = false;
+    let success;
     if (isEditSession && selectedSession) {
       success = await updateSession(selectedSession.classId, selectedSession.id, payload);
     } else {
@@ -222,15 +222,6 @@ export function SchedulePage() {
       setSessionToCancel(null);
       loadSchedule();
     }
-  };
-
-
-  const handlePlaceholderAction = (actionName) => {
-    notifications.show({
-      title: 'Thông báo',
-      message: `Tính năng ${actionName} đang được phát triển ở Phân hệ tiếp theo.`,
-      color: 'blue'
-    });
   };
 
   // Group các buổi học theo ngày để hiển thị danh sách dạng Timeline (Lịch tuần)
@@ -636,27 +627,33 @@ export function SchedulePage() {
         loading={loading}
       />
 
-      <AttendanceModal
-        isOpen={attendanceOpened}
-        onClose={() => {
-          setAttendanceOpened(false);
-          setAttendanceSessionId(null);
-          loadSchedule();
-        }}
-        sessionId={attendanceSessionId}
-      />
+      {attendanceOpened && attendanceSessionId && (
+        <AttendanceModal
+          key={attendanceSessionId}
+          isOpen={attendanceOpened}
+          onClose={() => {
+            setAttendanceOpened(false);
+            setAttendanceSessionId(null);
+            loadSchedule();
+          }}
+          sessionId={attendanceSessionId}
+        />
+      )}
 
-      <SessionFeedbackModal
-        opened={feedbackOpened}
-        onClose={() => {
-          setFeedbackOpened(false);
-          setFeedbackSessionId(null);
-          setFeedbackSessionTitle('');
-        }}
-        sessionId={feedbackSessionId}
-        sessionTitle={feedbackSessionTitle}
-        onSaveSuccess={() => loadSchedule()}
-      />
+      {feedbackOpened && feedbackSessionId && (
+        <SessionFeedbackModal
+          key={feedbackSessionId}
+          opened={feedbackOpened}
+          onClose={() => {
+            setFeedbackOpened(false);
+            setFeedbackSessionId(null);
+            setFeedbackSessionTitle('');
+          }}
+          sessionId={feedbackSessionId}
+          sessionTitle={feedbackSessionTitle}
+          onSaveSuccess={() => loadSchedule()}
+        />
+      )}
     </div>
   );
 }

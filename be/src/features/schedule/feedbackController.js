@@ -1,4 +1,5 @@
 import * as feedbackService from './feedbackService.js';
+import { AppError } from '../../utils/appError.js';
 
 export const getSessionFeedbacks = async (req, res, next) => {
   try {
@@ -23,10 +24,7 @@ export const upsertSessionFeedbacks = async (req, res, next) => {
     const { feedbacks } = req.body;
 
     if (!Array.isArray(feedbacks)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Danh sách nhận xét (feedbacks) phải là một mảng.'
-      });
+      return next(new AppError('Danh sách nhận xét (feedbacks) phải là một mảng.', 400));
     }
 
     const data = await feedbackService.upsertSessionFeedbacks(sessionId, teacherId, feedbacks);

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import {
-  Grid, Card, Text, Avatar, TextInput, Button, FileInput,
+  Card, Text, Avatar, TextInput, Button, FileInput,
   Group, Stack, ActionIcon, Tooltip, Badge, Modal, ScrollArea, Center, Loader, Box
 } from '@mantine/core';
 import {
@@ -157,8 +157,7 @@ export function ClassStreamTab() {
     return author.teacherProfile?.fullName || author.studentProfile?.fullName || author.email || 'Ẩn danh';
   };
 
-  const getFileIcon = (url) => {
-    const ext = url.split('.').pop()?.split('?')[0]?.toLowerCase();
+  const getFileIcon = () => {
     return <File size={16} weight="duotone" color="var(--accent-color)" />;
   };
 

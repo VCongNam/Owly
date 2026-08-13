@@ -4,7 +4,6 @@ import { Calendar, Plus, DotsThreeVertical, NotePencil, Prohibit, CheckSquare, C
 import { useSchedule } from '../../schedule/hooks/useSchedule';
 import { ScheduleSetupModal } from '../../schedule/components/ScheduleSetupModal';
 import { SessionFormModal } from '../../schedule/components/SessionFormModal';
-import { notifications } from '@mantine/notifications';
 import { ConfirmModal } from '../../../shared';
 import AttendanceModal from '../../attendance/components/AttendanceModal';
 import SessionFeedbackModal from '../../schedule/components/SessionFeedbackModal';
@@ -104,7 +103,7 @@ export function ClassSessionsTab({ classDetail }) {
   };
 
   const handleSessionSubmit = async (payload) => {
-    let success = false;
+    let success;
     if (selectedSession) {
       success = await updateSession(classId, selectedSession.id, payload);
     } else {
@@ -133,15 +132,6 @@ export function ClassSessionsTab({ classDetail }) {
       setSessionToCancel(null);
       loadData(currentPage);
     }
-  };
-
-
-  const handlePlaceholderAction = (actionName) => {
-    notifications.show({
-      title: 'Thông báo',
-      message: `Tính năng ${actionName} đang được phát triển ở Phân hệ tiếp theo.`,
-      color: 'blue'
-    });
   };
 
   const getStatusBadge = (session) => {
@@ -373,27 +363,33 @@ export function ClassSessionsTab({ classDetail }) {
         loading={loading}
       />
 
-      <AttendanceModal
-        isOpen={attendanceOpened}
-        onClose={() => {
-          setAttendanceOpened(false);
-          setAttendanceSessionId(null);
-          loadData(currentPage);
-        }}
-        sessionId={attendanceSessionId}
-      />
+      {attendanceOpened && attendanceSessionId && (
+        <AttendanceModal
+          key={attendanceSessionId}
+          isOpen={attendanceOpened}
+          onClose={() => {
+            setAttendanceOpened(false);
+            setAttendanceSessionId(null);
+            loadData(currentPage);
+          }}
+          sessionId={attendanceSessionId}
+        />
+      )}
 
-      <SessionFeedbackModal
-        opened={feedbackOpened}
-        onClose={() => {
-          setFeedbackOpened(false);
-          setFeedbackSessionId(null);
-          setFeedbackSessionTitle('');
-        }}
-        sessionId={feedbackSessionId}
-        sessionTitle={feedbackSessionTitle}
-        onSaveSuccess={() => loadData(currentPage)}
-      />
+      {feedbackOpened && feedbackSessionId && (
+        <SessionFeedbackModal
+          key={feedbackSessionId}
+          opened={feedbackOpened}
+          onClose={() => {
+            setFeedbackOpened(false);
+            setFeedbackSessionId(null);
+            setFeedbackSessionTitle('');
+          }}
+          sessionId={feedbackSessionId}
+          sessionTitle={feedbackSessionTitle}
+          onSaveSuccess={() => loadData(currentPage)}
+        />
+      )}
     </Box>
   );
 }

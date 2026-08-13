@@ -1,13 +1,13 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
-  Stack, Group, Text, Button, Table, ActionIcon, Tooltip,
+  Stack, Group, Text, Button, ActionIcon,
   Center, ThemeIcon, Loader, Badge, ScrollArea, Grid,
   TextInput, NumberInput, Textarea, Card, Divider,
   UnstyledButton, Box, Alert
 } from '@mantine/core';
 import {
   ArrowLeft, MagnifyingGlass, FilePdf, Image as ImageIcon, FileDoc,
-  Check, UploadSimple, Download, X, CheckCircle, Warning,
+  UploadSimple, Download, X, CheckCircle, Warning,
   Info, Paperclip
 } from '@phosphor-icons/react';
 import { notifications } from '@mantine/notifications';
@@ -81,103 +81,24 @@ function FilePreview({ fileUrl }) {
   );
 }
 
-export function AssignmentGradingPanel({ assignment, onBack }) {
-  const [loading, setLoading] = useState(false);
-  const [submissions, setSubmissions] = useState([]);
-  const [selectedStudent, setSelectedStudent] = useState(null);
-  
-  // Trạng thái tìm kiếm & lọc
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL'); // 'ALL' | 'UNGRADED' | 'GRADED' | 'NOT_SUBMITTED'
-
-  // Trạng thái chấm điểm
-  const [grade, setGrade] = useState(10);
-  const [remarks, setRemarks] = useState('');
+// Component Editor chấm điểm độc lập
+function GradingEditor({ selectedStudent, assignment, onRefresh, isMobile, onMobileComplete }) {
+  const [grade, setGrade] = useState(() => {
+    const feedback = selectedStudent.submission?.feedback;
+    return feedback?.grade ?? assignment.maxPoints;
+  });
+  const [remarks, setRemarks] = useState(() => {
+    const feedback = selectedStudent.submission?.feedback;
+    return feedback?.remarks ?? 'Bài làm tốt, đạt yêu cầu.';
+  });
   const [correctionFile, setCorrectionFile] = useState(null);
-  const [uploadedCorrectionUrl, setUploadedCorrectionUrl] = useState('');
+  const [uploadedCorrectionUrl, setUploadedCorrectionUrl] = useState(() => {
+    const feedback = selectedStudent.submission?.feedback;
+    return feedback?.attachmentUrl ?? '';
+  });
   const [submittingGrade, setSubmittingGrade] = useState(false);
   const [uploadingCorrection, setUploadingCorrection] = useState(false);
 
-  // Responsive state (dưới 768px là mobile view)
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [showWorkspaceOnMobile, setShowWorkspaceOnMobile] = useState(false);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const fetchSubmissions = async () => {
-    try {
-      setLoading(true);
-      const res = await assignmentService.getAssignmentSubmissions(assignment.id);
-      const data = Array.isArray(res) ? res : [];
-      setSubmissions(data);
-      
-      // Nếu đã có học sinh đang chọn, cập nhật lại thông tin mới nhất
-      if (selectedStudent) {
-        const updated = data.find(s => s.studentId === selectedStudent.studentId);
-        if (updated) {
-          setSelectedStudent(updated);
-        }
-      }
-    } catch (error) {
-      console.error('Lỗi tải danh sách bài nộp:', error);
-      notifications.show({
-        title: 'Lỗi',
-        message: 'Không thể tải danh sách bài nộp của học sinh',
-        color: 'red'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (assignment) {
-      fetchSubmissions();
-    }
-  }, [assignment]);
-
-  // Thiết lập điểm và nhận xét khi đổi học sinh
-  useEffect(() => {
-    if (selectedStudent) {
-      const submission = selectedStudent.submission;
-      if (submission?.feedback) {
-        setGrade(submission.feedback.grade);
-        setRemarks(submission.feedback.remarks);
-        setUploadedCorrectionUrl(submission.feedback.attachmentUrl || '');
-      } else {
-        setGrade(assignment.maxPoints);
-        setRemarks('Bài làm tốt, đạt yêu cầu.');
-        setUploadedCorrectionUrl('');
-      }
-      setCorrectionFile(null);
-    }
-  }, [selectedStudent, assignment]);
-
-  // Bộ lọc tìm kiếm học viên
-  const filteredSubmissions = useMemo(() => {
-    return submissions.filter(item => {
-      const matchSearch = item.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          item.studentCode.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const isSubmitted = !!item.submission;
-      const hasFeedback = !!item.submission?.feedback;
-
-      if (!matchSearch) return false;
-
-      if (statusFilter === 'UNGRADED') return isSubmitted && !hasFeedback;
-      if (statusFilter === 'GRADED') return isSubmitted && hasFeedback;
-      if (statusFilter === 'NOT_SUBMITTED') return !isSubmitted;
-      return true;
-    });
-  }, [submissions, searchQuery, statusFilter]);
-
-  // Xử lý tải lên file chữa bài (Correction File)
   const handleCorrectionFileChange = async (file) => {
     if (!file) return;
     try {
@@ -210,7 +131,6 @@ export function AssignmentGradingPanel({ assignment, onBack }) {
     setUploadedCorrectionUrl('');
   };
 
-  // Lưu điểm số
   const handleSaveGrade = async () => {
     if (grade === undefined || grade === null) {
       notifications.show({
@@ -231,8 +151,7 @@ export function AssignmentGradingPanel({ assignment, onBack }) {
 
     try {
       setSubmittingGrade(true);
-      
-      let submissionId = selectedStudent.submission?.id;
+      const submissionId = selectedStudent.submission?.id;
       if (!submissionId) {
         notifications.show({
           title: 'Lỗi',
@@ -242,37 +161,329 @@ export function AssignmentGradingPanel({ assignment, onBack }) {
         return;
       }
 
-      // Gửi điểm số, nhận xét và tệp chữa bài (nếu có)
       await assignmentService.gradeSubmission(submissionId, { 
         grade, 
         remarks,
         attachmentUrl: uploadedCorrectionUrl || null
       });
-
-      notifications.show({
-        title: 'Thành công',
-        message: `Chấm điểm học viên ${selectedStudent.fullName} thành công`,
-        color: 'green'
-      });
-
-      // Reload dữ liệu bài nộp
-      await fetchSubmissions();
-      
-      // Nếu ở giao diện mobile thì có thể quay lại danh sách
-      if (isMobile) {
-        setShowWorkspaceOnMobile(false);
-      }
     } catch (error) {
-      console.error(error);
+      setSubmittingGrade(false);
       notifications.show({
         title: 'Lỗi',
         message: error.response?.data?.message || 'Có lỗi xảy ra khi chấm điểm',
         color: 'red'
       });
-    } finally {
-      setSubmittingGrade(false);
+      return;
+    }
+
+    setSubmittingGrade(false);
+    notifications.show({
+      title: 'Thành công',
+      message: `Chấm điểm học viên ${selectedStudent.fullName} thành công`,
+      color: 'green'
+    });
+
+    await onRefresh();
+    
+    if (isMobile) {
+      onMobileComplete(false);
     }
   };
+
+  if (isMobile) {
+    return (
+      <Stack gap="md">
+        <Alert color="orange" variant="light" title="Trải nghiệm bị hạn chế trên di động" icon={<Warning size={18} />}>
+          Để bảo đảm tính chính xác khi đọc tài liệu và chấm điểm, tính năng xem trước bài làm trực quan và nhập điểm số chỉ được hỗ trợ đầy đủ trên máy tính (Desktop/Laptop). Trên thiết bị di động, bạn chỉ được phép theo dõi trạng thái nộp bài và tải về tệp tin bài làm gốc để xem nhanh.
+        </Alert>
+
+        <Card withBorder p="sm" bg="var(--card-bg)" radius="md">
+          <Group justify="space-between" wrap="nowrap">
+            <Group gap="xs" style={{ flex: 1, minWidth: 0 }}>
+              {selectedStudent.submission.content.toLowerCase().endsWith('.pdf') ? (
+                <FilePdf size={24} color="var(--accent-color)" style={{ flexShrink: 0 }} />
+              ) : selectedStudent.submission.content.toLowerCase().includes('doc') ? (
+                <FileDoc size={24} color="blue" style={{ flexShrink: 0 }} />
+              ) : (
+                <ImageIcon size={24} color="green" style={{ flexShrink: 0 }} />
+              )}
+              <Box style={{ flex: 1, minWidth: 0 }}>
+                <Text size="xs" fw={600} truncate>Liên kết tệp bài làm gốc</Text>
+                <Text size="10px" c="dimmed" truncate>{selectedStudent.submission.content}</Text>
+              </Box>
+            </Group>
+            <Button
+              variant="light"
+              color="copper"
+              size="xs"
+              leftSection={<Download size={14} />}
+              component="a"
+              href={selectedStudent.submission.content}
+              target="_blank"
+              style={{ flexShrink: 0 }}
+            >
+              Tải tệp gốc
+            </Button>
+          </Group>
+        </Card>
+      </Stack>
+    );
+  }
+
+  return (
+    <Grid gutter="md">
+      {/* Cột Xem tệp nộp bài */}
+      <Grid.Col span={{ base: 12, md: 8 }}>
+        <Stack gap="sm">
+          <FilePreview fileUrl={selectedStudent.submission.content} />
+
+          <Card withBorder p="sm" bg="var(--card-bg)" radius="md">
+            <Group justify="space-between">
+              <Group gap="xs">
+                {selectedStudent.submission.content.toLowerCase().endsWith('.pdf') ? (
+                  <FilePdf size={24} color="var(--accent-color)" />
+                ) : selectedStudent.submission.content.toLowerCase().includes('doc') ? (
+                  <FileDoc size={24} color="blue" />
+                ) : (
+                  <ImageIcon size={24} color="green" />
+                )}
+                <Box style={{ maxWidth: '280px' }}>
+                  <Text size="xs" fw={600} truncate>Liên kết tệp bài làm gốc</Text>
+                  <Text size="10px" c="dimmed" truncate>{selectedStudent.submission.content}</Text>
+                </Box>
+              </Group>
+              <Button
+                variant="light"
+                color="copper"
+                size="xs"
+                leftSection={<Download size={14} />}
+                component="a"
+                href={selectedStudent.submission.content}
+                target="_blank"
+              >
+                Tải tệp gốc
+              </Button>
+            </Group>
+          </Card>
+        </Stack>
+      </Grid.Col>
+
+      {/* Cột form Chấm điểm & Chữa bài */}
+      <Grid.Col span={{ base: 12, md: 4 }}>
+        <Card withBorder p="md" bg="var(--card-bg)" radius="md" style={{ position: 'sticky', top: '10px' }}>
+          <Text fw={700} size="sm" mb="xs">Giao diện chấm điểm</Text>
+          <Divider mb="md" />
+
+          <Stack gap="md">
+            <NumberInput
+              label="Điểm số đạt được"
+              placeholder={`Từ 0 đến ${assignment.maxPoints}`}
+              min={0}
+              max={assignment.maxPoints}
+              decimalScale={1}
+              value={grade}
+              onChange={setGrade}
+              required
+              size="sm"
+            />
+
+            <Textarea
+              label="Nhận xét của giáo viên"
+              placeholder="Ghi chú nhận xét chi tiết..."
+              minRows={4}
+              value={remarks}
+              onChange={(e) => setRemarks(e.target.value)}
+              required
+              size="sm"
+            />
+
+            {/* Phần tải tệp chữa bài */}
+            <Stack gap="xs">
+              <Text size="sm" fw={500}>Tệp bài thi đã chữa (nếu có)</Text>
+              
+              {uploadedCorrectionUrl ? (
+                <Card withBorder p="xs" bg="rgba(0,0,0,0.03)" radius="md">
+                  <Group justify="space-between" wrap="nowrap">
+                    <Group gap="xs" style={{ flex: 1, minWidth: 0 }}>
+                      <Paperclip size={16} color="var(--accent-color)" />
+                      <Text size="xs" truncate style={{ flex: 1 }}>
+                        {correctionFile ? correctionFile.name : 'Đã tải lên tệp chữa bài'}
+                      </Text>
+                    </Group>
+                    <ActionIcon
+                      variant="subtle"
+                      color="red"
+                      size="sm"
+                      onClick={handleRemoveCorrectionFile}
+                    >
+                      <X size={14} />
+                    </ActionIcon>
+                  </Group>
+                </Card>
+              ) : (
+                <Button
+                  variant="outline"
+                  color="gray"
+                  size="sm"
+                  fullWidth
+                  leftSection={uploadingCorrection ? <Loader size="xs" color="gray" /> : <UploadSimple size={16} />}
+                  onClick={() => document.getElementById('correction-file-btn')?.click()}
+                  disabled={uploadingCorrection}
+                >
+                  {uploadingCorrection ? 'Đang tải lên...' : 'Tải lên tệp đã chữa'}
+                </Button>
+              )}
+              <input
+                type="file"
+                id="correction-file-btn"
+                style={{ display: 'none' }}
+                accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                onChange={(e) => handleCorrectionFileChange(e.target.files?.[0])}
+              />
+            </Stack>
+
+            <Button
+              color="copper"
+              leftSection={<CheckCircle size={16} />}
+              onClick={handleSaveGrade}
+              loading={submittingGrade}
+              fullWidth
+              mt="xs"
+            >
+              Lưu điểm số & Nhận xét
+            </Button>
+          </Stack>
+        </Card>
+      </Grid.Col>
+    </Grid>
+  );
+}
+
+export function AssignmentGradingPanel({ assignment, onBack }) {
+  const [resolvedAssignmentId, setResolvedAssignmentId] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [submissions, setSubmissions] = useState([]);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+
+  const requestIdRef = useRef(0);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const loading = Boolean(assignment?.id) && (resolvedAssignmentId !== assignment.id || refreshing);
+
+  // Trạng thái tìm kiếm & lọc
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL'); // 'ALL' | 'UNGRADED' | 'GRADED' | 'NOT_SUBMITTED'
+
+  // Responsive state (dưới 768px là mobile view)
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [showWorkspaceOnMobile, setShowWorkspaceOnMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const fetchSubmissions = useCallback(async () => {
+    if (!assignment?.id) return;
+    const assignmentId = assignment.id;
+    const requestId = ++requestIdRef.current;
+    setRefreshing(true);
+    try {
+      const res = await assignmentService.getAssignmentSubmissions(assignmentId);
+      const data = Array.isArray(res) ? res : [];
+      if (isMountedRef.current && requestId === requestIdRef.current) {
+        setSubmissions(data);
+        setSelectedStudent(prev => {
+          if (!prev) return null;
+          return data.find(s => s.studentId === prev.studentId) || prev;
+        });
+      }
+    } catch (error) {
+      if (isMountedRef.current && requestId === requestIdRef.current) {
+        if (resolvedAssignmentId !== assignmentId) {
+          setSubmissions([]);
+          setSelectedStudent(null);
+        }
+        console.error('Lỗi tải danh sách bài nộp:', error);
+        notifications.show({
+          title: 'Lỗi',
+          message: 'Không thể tải danh sách bài nộp của học sinh',
+          color: 'red'
+        });
+      }
+    } finally {
+      if (isMountedRef.current && requestId === requestIdRef.current) {
+        setRefreshing(false);
+        setResolvedAssignmentId(assignmentId);
+      }
+    }
+  }, [assignment?.id, resolvedAssignmentId]);
+
+  useEffect(() => {
+    if (!assignment?.id) return;
+    const assignmentId = assignment.id;
+    const requestId = ++requestIdRef.current;
+
+    const loadInitialSubmissions = async () => {
+      try {
+        const res = await assignmentService.getAssignmentSubmissions(assignmentId);
+        const data = Array.isArray(res) ? res : [];
+        if (isMountedRef.current && requestId === requestIdRef.current) {
+          setSubmissions(data);
+          setSelectedStudent(prev => {
+            if (!prev) return null;
+            return data.find(s => s.studentId === prev.studentId) || prev;
+          });
+        }
+      } catch (error) {
+        if (isMountedRef.current && requestId === requestIdRef.current) {
+          setSubmissions([]);
+          setSelectedStudent(null);
+          console.error('Lỗi tải danh sách bài nộp:', error);
+        }
+      } finally {
+        if (isMountedRef.current && requestId === requestIdRef.current) {
+          setResolvedAssignmentId(assignmentId);
+        }
+      }
+    };
+
+    loadInitialSubmissions();
+
+    return () => {
+      requestIdRef.current += 1;
+    };
+  }, [assignment?.id]);
+
+  const visibleSubmissions = resolvedAssignmentId === assignment?.id ? submissions : [];
+
+  // Bộ lọc tìm kiếm học viên
+  const filteredSubmissions = useMemo(() => {
+    return visibleSubmissions.filter(item => {
+      const matchSearch = item.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          item.studentCode.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const isSubmitted = !!item.submission;
+      const hasFeedback = !!item.submission?.feedback;
+
+      if (!matchSearch) return false;
+
+      if (statusFilter === 'UNGRADED') return isSubmitted && !hasFeedback;
+      if (statusFilter === 'GRADED') return isSubmitted && hasFeedback;
+      if (statusFilter === 'NOT_SUBMITTED') return !isSubmitted;
+      return true;
+    });
+  }, [visibleSubmissions, searchQuery, statusFilter]);
 
   const renderStudentItem = (item) => {
     const isSelected = selectedStudent?.studentId === item.studentId;
@@ -450,169 +661,14 @@ export function AssignmentGradingPanel({ assignment, onBack }) {
       <Divider />
 
       {selectedStudent.submission ? (
-        isMobile ? (
-          <Stack gap="md">
-            <Alert color="orange" variant="light" title="Trải nghiệm bị hạn chế trên di động" icon={<Warning size={18} />}>
-              Để bảo đảm tính chính xác khi đọc tài liệu và chấm điểm, tính năng xem trước bài làm trực quan và nhập điểm số chỉ được hỗ trợ đầy đủ trên máy tính (Desktop/Laptop). Trên thiết bị di động, bạn chỉ được phép theo dõi trạng thái nộp bài và tải về tệp tin bài làm gốc để xem nhanh.
-            </Alert>
-
-            <Card withBorder p="sm" bg="var(--card-bg)" radius="md">
-              <Group justify="space-between" wrap="nowrap">
-                <Group gap="xs" style={{ flex: 1, minWidth: 0 }}>
-                  {selectedStudent.submission.content.toLowerCase().endsWith('.pdf') ? (
-                    <FilePdf size={24} color="var(--accent-color)" style={{ flexShrink: 0 }} />
-                  ) : selectedStudent.submission.content.toLowerCase().includes('doc') ? (
-                    <FileDoc size={24} color="blue" style={{ flexShrink: 0 }} />
-                  ) : (
-                    <ImageIcon size={24} color="green" style={{ flexShrink: 0 }} />
-                  )}
-                  <Box style={{ flex: 1, minWidth: 0 }}>
-                    <Text size="xs" fw={600} truncate>Liên kết tệp bài làm gốc</Text>
-                    <Text size="10px" c="dimmed" truncate>{selectedStudent.submission.content}</Text>
-                  </Box>
-                </Group>
-                <Button
-                  variant="light"
-                  color="copper"
-                  size="xs"
-                  leftSection={<Download size={14} />}
-                  component="a"
-                  href={selectedStudent.submission.content}
-                  target="_blank"
-                  style={{ flexShrink: 0 }}
-                >
-                  Tải tệp gốc
-                </Button>
-              </Group>
-            </Card>
-          </Stack>
-        ) : (
-          <Grid gutter="md">
-            {/* Cột Xem tệp nộp bài */}
-            <Grid.Col span={{ base: 12, md: 8 }}>
-              <Stack gap="sm">
-                <FilePreview fileUrl={selectedStudent.submission.content} />
-
-                <Card withBorder p="sm" bg="var(--card-bg)" radius="md">
-                  <Group justify="space-between">
-                    <Group gap="xs">
-                      {selectedStudent.submission.content.toLowerCase().endsWith('.pdf') ? (
-                        <FilePdf size={24} color="var(--accent-color)" />
-                      ) : selectedStudent.submission.content.toLowerCase().includes('doc') ? (
-                        <FileDoc size={24} color="blue" />
-                      ) : (
-                        <ImageIcon size={24} color="green" />
-                      )}
-                      <Box style={{ maxWidth: '280px' }}>
-                        <Text size="xs" fw={600} truncate>Liên kết tệp bài làm gốc</Text>
-                        <Text size="10px" c="dimmed" truncate>{selectedStudent.submission.content}</Text>
-                      </Box>
-                    </Group>
-                    <Button
-                      variant="light"
-                      color="copper"
-                      size="xs"
-                      leftSection={<Download size={14} />}
-                      component="a"
-                      href={selectedStudent.submission.content}
-                      target="_blank"
-                    >
-                      Tải tệp gốc
-                    </Button>
-                  </Group>
-                </Card>
-              </Stack>
-            </Grid.Col>
-
-            {/* Cột form Chấm điểm & Chữa bài */}
-            <Grid.Col span={{ base: 12, md: 4 }}>
-              <Card withBorder p="md" bg="var(--card-bg)" radius="md" style={{ position: 'sticky', top: '10px' }}>
-                <Text fw={700} size="sm" mb="xs">Giao diện chấm điểm</Text>
-                <Divider mb="md" />
-
-                <Stack gap="md">
-                  <NumberInput
-                    label="Điểm số đạt được"
-                    placeholder={`Từ 0 đến ${assignment.maxPoints}`}
-                    min={0}
-                    max={assignment.maxPoints}
-                    decimalScale={1}
-                    value={grade}
-                    onChange={setGrade}
-                    required
-                    size="sm"
-                  />
-
-                  <Textarea
-                    label="Nhận xét của giáo viên"
-                    placeholder="Ghi chú nhận xét chi tiết..."
-                    minRows={4}
-                    value={remarks}
-                    onChange={(e) => setRemarks(e.target.value)}
-                    required
-                    size="sm"
-                  />
-
-                  {/* Phần tải tệp chữa bài */}
-                  <Stack gap="xs">
-                    <Text size="sm" fw={500}>Tệp bài thi đã chữa (nếu có)</Text>
-                    
-                    {uploadedCorrectionUrl ? (
-                      <Card withBorder p="xs" bg="rgba(0,0,0,0.03)" radius="md">
-                        <Group justify="space-between" wrap="nowrap">
-                          <Group gap="xs" style={{ flex: 1, minWidth: 0 }}>
-                            <Paperclip size={16} color="var(--accent-color)" />
-                            <Text size="xs" truncate style={{ flex: 1 }}>
-                              {correctionFile ? correctionFile.name : 'Đã tải lên tệp chữa bài'}
-                            </Text>
-                          </Group>
-                          <ActionIcon
-                            variant="subtle"
-                            color="red"
-                            size="sm"
-                            onClick={handleRemoveCorrectionFile}
-                          >
-                            <X size={14} />
-                          </ActionIcon>
-                        </Group>
-                      </Card>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        color="gray"
-                        size="sm"
-                        fullWidth
-                        leftSection={uploadingCorrection ? <Loader size="xs" color="gray" /> : <UploadSimple size={16} />}
-                        onClick={() => document.getElementById('correction-file-btn')?.click()}
-                        disabled={uploadingCorrection}
-                      >
-                        {uploadingCorrection ? 'Đang tải lên...' : 'Tải lên tệp đã chữa'}
-                      </Button>
-                    )}
-                    <input
-                      type="file"
-                      id="correction-file-btn"
-                      style={{ display: 'none' }}
-                      accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                      onChange={(e) => handleCorrectionFileChange(e.target.files?.[0])}
-                    />
-                  </Stack>
-
-                  <Button
-                    color="copper"
-                    leftSection={<CheckCircle size={16} />}
-                    onClick={handleSaveGrade}
-                    loading={submittingGrade}
-                    fullWidth
-                    mt="xs"
-                  >
-                    Lưu điểm số & Nhận xét
-                  </Button>
-                </Stack>
-              </Card>
-            </Grid.Col>
-          </Grid>
-        )
+        <GradingEditor
+          key={selectedStudent.studentId}
+          selectedStudent={selectedStudent}
+          assignment={assignment}
+          onRefresh={fetchSubmissions}
+          isMobile={isMobile}
+          onMobileComplete={setShowWorkspaceOnMobile}
+        />
       ) : (
         <Center py="100px">
           <Stack align="center" gap="xs">

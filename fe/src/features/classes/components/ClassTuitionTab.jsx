@@ -33,14 +33,13 @@ import {
 } from '@phosphor-icons/react';
 import dayjs from 'dayjs';
 
-import { useClassTuition } from '../hooks/useTuition';
+import { useClassTuition, useStudentTuition } from '../hooks/useTuition';
 import { useClassDetails } from '../hooks/useClasses';
 import { TuitionConfigModal } from './TuitionConfigModal';
 import { GenerateInvoicesModal } from './GenerateInvoicesModal';
 import { PaymentProofModal } from './PaymentProofModal';
 import { StudentPaymentProofModal } from './StudentPaymentProofModal';
 import { useAuth } from '../../auth';
-import { tuitionService } from '../services/tuition';
 
 export function ClassTuitionTab() {
   const { user } = useAuth();
@@ -52,31 +51,15 @@ export function ClassTuitionTab() {
   // Teacher hook called only if not student
   const teacherClassTuition = useClassTuition(isStudent ? null : classId);
 
+  const {
+    studentInvoices,
+    loadingStudentInvoices,
+    fetchStudentClassInvoices
+  } = useStudentTuition(isStudent ? classId : null);
+
   // Student specific state
-  const [studentInvoices, setStudentInvoices] = useState([]);
-  const [loadingStudentInvoices, setLoadingStudentInvoices] = useState(false);
   const [studentStatusFilter, setStudentStatusFilter] = useState('');
   const [studentSelectedInvoice, setStudentSelectedInvoice] = useState(null);
-
-  const fetchStudentClassInvoices = useCallback(async () => {
-    if (!classId) return;
-    try {
-      setLoadingStudentInvoices(true);
-      const allInvoices = await tuitionService.getStudentInvoices();
-      const filtered = allInvoices.filter(inv => inv.classId === classId);
-      setStudentInvoices(filtered);
-    } catch (error) {
-      console.error('Lỗi khi tải hóa đơn học sinh:', error);
-    } finally {
-      setLoadingStudentInvoices(false);
-    }
-  }, [classId]);
-
-  useEffect(() => {
-    if (isStudent && classId) {
-      fetchStudentClassInvoices();
-    }
-  }, [isStudent, classId, fetchStudentClassInvoices]);
 
   const {
     config,
@@ -129,6 +112,16 @@ export function ClassTuitionTab() {
     setGenerateModalOpened(true);
   };
 
+  const handleMonthFilterChange = (date) => {
+    setSelectedMonthDate(date ?? new Date());
+    setActivePage(1);
+  };
+
+  const handleStatusFilterChange = (value) => {
+    setStatusFilter(value ?? '');
+    setActivePage(1);
+  };
+
   const currentBillingMonth = selectedMonthDate ? dayjs(selectedMonthDate).format('YYYY-MM') : '';
 
   const handleFetch = useCallback(
@@ -147,7 +140,6 @@ export function ClassTuitionTab() {
 
   useEffect(() => {
     if (isStudent) return;
-    setActivePage(1);
     handleFetch(1);
   }, [currentBillingMonth, statusFilter, handleFetch, isStudent]);
 
@@ -351,13 +343,16 @@ export function ClassTuitionTab() {
           </ScrollArea>
         </Paper>
 
-        <StudentPaymentProofModal
-          opened={!!studentSelectedInvoice}
-          onClose={() => setStudentSelectedInvoice(null)}
-          invoice={studentSelectedInvoice}
-          teacherBank={teacherBank}
-          onSuccess={fetchStudentClassInvoices}
-        />
+        {studentSelectedInvoice && (
+          <StudentPaymentProofModal
+            key={studentSelectedInvoice.id}
+            opened={!!studentSelectedInvoice}
+            onClose={() => setStudentSelectedInvoice(null)}
+            invoice={studentSelectedInvoice}
+            teacherBank={teacherBank}
+            onSuccess={fetchStudentClassInvoices}
+          />
+        )}
       </Stack>
     );
   }
@@ -476,7 +471,7 @@ export function ClassTuitionTab() {
             <MonthPickerInput
               placeholder="Chọn tháng"
               value={selectedMonthDate}
-              onChange={(date) => setSelectedMonthDate(date || new Date())}
+              onChange={handleMonthFilterChange}
               maxDate={new Date()}
               valueFormat="MM/YYYY"
               locale="vi"
@@ -500,7 +495,7 @@ export function ClassTuitionTab() {
             <Select
               placeholder="Trạng thái"
               value={statusFilter}
-              onChange={(val) => setStatusFilter(val || '')}
+              onChange={handleStatusFilterChange}
               data={[
                 { value: '', label: 'Tất cả trạng thái' },
                 { value: 'Pending', label: 'Chờ đối soát' },
@@ -643,22 +638,28 @@ export function ClassTuitionTab() {
       </Paper>
 
       {/* ── Modals ─────────────────────────────────────────────── */}
-      <TuitionConfigModal
-        opened={configModalOpened}
-        onClose={() => setConfigModalOpened(false)}
-        currentAmount={config.amount}
-        onSave={updateConfig}
-        loading={submitting}
-      />
+      {configModalOpened && classId && (
+        <TuitionConfigModal
+          key={classId}
+          opened={configModalOpened}
+          onClose={() => setConfigModalOpened(false)}
+          currentAmount={config.amount}
+          onSave={updateConfig}
+          loading={submitting}
+        />
+      )}
 
-      <GenerateInvoicesModal
-        opened={generateModalOpened}
-        onClose={() => setGenerateModalOpened(false)}
-        defaultAmount={config.amount}
-        initialMonthDate={generateModalMonthDate}
-        onGenerate={generateInvoices}
-        loading={submitting}
-      />
+      {generateModalOpened && generateModalMonthDate && classId && (
+        <GenerateInvoicesModal
+          key={`${classId}-${generateModalMonthDate.getTime()}`}
+          opened={generateModalOpened}
+          onClose={() => setGenerateModalOpened(false)}
+          defaultAmount={config.amount}
+          initialMonthDate={generateModalMonthDate}
+          onGenerate={generateInvoices}
+          loading={submitting}
+        />
+      )}
 
       <PaymentProofModal
         opened={!!selectedInvoice}

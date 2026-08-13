@@ -1,42 +1,76 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { notifications } from '@mantine/notifications';
 import { materialService } from '../services/materials';
 
+const EMPTY_PAGINATION = {
+  totalItems: 0,
+  totalPages: 1,
+  currentPage: 1,
+  limit: 10
+};
+
 export function useMaterials(classId) {
   const [materials, setMaterials] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [pagination, setPagination] = useState({
-    totalItems: 0,
-    totalPages: 1,
-    currentPage: 1,
-    limit: 10
-  });
+  const [resolvedClassId, setResolvedClassId] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [uploadingClassId, setUploadingClassId] = useState(null);
+  const [pagination, setPagination] = useState(EMPTY_PAGINATION);
+
+  const requestIdRef = useRef(0);
+  const isMountedRef = useRef(true);
+  const currentClassIdRef = useRef(classId);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    currentClassIdRef.current = classId;
+  }, [classId]);
+
+  const loading = Boolean(classId) && (resolvedClassId !== classId || refreshing);
+  const uploading = Boolean(classId) && uploadingClassId === classId;
 
   const fetchMaterials = useCallback(async (page = 1) => {
     if (!classId) return;
-    setLoading(true);
+    const requestId = ++requestIdRef.current;
+    setRefreshing(true);
     try {
       const response = await materialService.getClassMaterials(classId, { page, limit: 10 });
-      setMaterials(response.items || []);
-      setPagination(response.pagination || {
-        totalItems: 0,
-        totalPages: 1,
-        currentPage: page,
-        limit: 10
-      });
+      if (requestId === requestIdRef.current) {
+        setMaterials(response.items || []);
+        setPagination(response.pagination || {
+          totalItems: 0,
+          totalPages: 1,
+          currentPage: page,
+          limit: 10
+        });
+        setResolvedClassId(classId);
+      }
     } catch (error) {
-      console.error('Lỗi khi tải tài liệu:', error);
-      // Lỗi hệ thống đã được handle và hiển thị toast trong apiClient.js
+      if (requestId === requestIdRef.current) {
+        if (resolvedClassId !== classId) {
+          setMaterials([]);
+          setPagination(EMPTY_PAGINATION);
+        }
+        console.error('Lỗi khi tải tài liệu:', error);
+      }
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setRefreshing(false);
+        setResolvedClassId(classId);
+      }
     }
-  }, [classId]);
+  }, [classId, resolvedClassId]);
 
   const uploadMaterial = useCallback(async ({ files, title, description }) => {
+    const mutationClassId = classId;
     const filesArray = Array.isArray(files) ? files : (files ? [files] : []);
-    if (!classId || filesArray.length === 0) return false;
-    setUploading(true);
+    if (!mutationClassId || filesArray.length === 0) return false;
+    setUploadingClassId(mutationClassId);
     try {
       const formData = new FormData();
       filesArray.forEach((file) => {
@@ -49,74 +83,104 @@ export function useMaterials(classId) {
         formData.append('description', description);
       }
 
-      await materialService.uploadMaterial(classId, formData);
-      
-      notifications.show({
-        title: 'Thành công',
-        message: `Tải lên ${filesArray.length} tài liệu học tập thành công`,
-        color: 'green'
-      });
-      
-      // Refresh danh sách về trang 1
-      await fetchMaterials(1);
+      await materialService.uploadMaterial(mutationClassId, formData);
+
+      if (isMountedRef.current && currentClassIdRef.current === mutationClassId) {
+        notifications.show({
+          title: 'Thành công',
+          message: `Tải lên ${filesArray.length} tài liệu học tập thành công`,
+          color: 'green'
+        });
+        await fetchMaterials(1);
+      }
       return true;
     } catch (error) {
-      console.error('Lỗi khi tải lên tài liệu:', error);
+      if (isMountedRef.current && currentClassIdRef.current === mutationClassId) {
+        console.error('Lỗi khi tải lên tài liệu:', error);
+      }
       return false;
     } finally {
-      setUploading(false);
+      if (isMountedRef.current) {
+        setUploadingClassId(current =>
+          current === mutationClassId ? null : current
+        );
+      }
     }
   }, [classId, fetchMaterials]);
 
   const deleteMaterial = useCallback(async (materialId) => {
     if (!materialId) return false;
+    const mutationClassId = currentClassIdRef.current;
     try {
       await materialService.deleteMaterial(materialId);
-      
-      notifications.show({
-        title: 'Thành công',
-        message: 'Xóa tài liệu học tập thành công',
-        color: 'green'
-      });
 
-      // Cập nhật trực tiếp state local để tránh hiện loading overlay gây cảm giác load lại trang
-      setMaterials((prev) => {
-        const nextList = prev.filter((item) => item.id !== materialId);
-        // Nếu trang hiện tại trống và không phải trang 1, tự động tải trang trước đó
-        if (nextList.length === 0 && pagination.currentPage > 1) {
-          fetchMaterials(pagination.currentPage - 1);
-        }
-        return nextList;
-      });
+      if (isMountedRef.current && currentClassIdRef.current === mutationClassId) {
+        notifications.show({
+          title: 'Thành công',
+          message: 'Xóa tài liệu học tập thành công',
+          color: 'green'
+        });
 
-      setPagination((prev) => {
-        const nextTotal = Math.max(0, prev.totalItems - 1);
-        const nextPages = Math.ceil(nextTotal / prev.limit) || 1;
-        return {
-          ...prev,
-          totalItems: nextTotal,
-          totalPages: nextPages,
-          currentPage: prev.currentPage > nextPages ? nextPages : prev.currentPage
-        };
-      });
+        const currentPage = pagination.currentPage;
+        const targetPage = materials.length === 1 && currentPage > 1 ? currentPage - 1 : currentPage;
+
+        await fetchMaterials(targetPage);
+      }
 
       return true;
     } catch (error) {
-      console.error('Lỗi khi xóa tài liệu:', error);
+      if (isMountedRef.current && currentClassIdRef.current === mutationClassId) {
+        console.error('Lỗi khi xóa tài liệu:', error);
+      }
       return false;
     }
-  }, [fetchMaterials, pagination.currentPage, pagination.limit]);
+  }, [fetchMaterials, pagination.currentPage, materials.length]);
 
   // Tự động fetch khi classId thay đổi
   useEffect(() => {
-    fetchMaterials(1);
-  }, [classId, fetchMaterials]);
+    if (!classId) return;
+    const requestId = ++requestIdRef.current;
+
+    const loadInitialMaterials = async () => {
+      try {
+        const response = await materialService.getClassMaterials(classId, { page: 1, limit: 10 });
+        if (requestId === requestIdRef.current) {
+          setMaterials(response.items || []);
+          setPagination(response.pagination || {
+            totalItems: 0,
+            totalPages: 1,
+            currentPage: 1,
+            limit: 10
+          });
+        }
+      } catch (error) {
+        if (requestId === requestIdRef.current) {
+          setMaterials([]);
+          setPagination(EMPTY_PAGINATION);
+          console.error('Lỗi khi tải tài liệu:', error);
+        }
+      } finally {
+        if (requestId === requestIdRef.current) {
+          setResolvedClassId(classId);
+        }
+      }
+    };
+
+    loadInitialMaterials();
+
+    return () => {
+      requestIdRef.current += 1;
+    };
+  }, [classId]);
+
+  const visibleMaterials = resolvedClassId === classId ? materials : [];
+  const visiblePagination = resolvedClassId === classId ? pagination : EMPTY_PAGINATION;
 
   return {
-    materials,
+    materials: visibleMaterials,
     loading,
     uploading,
-    pagination,
+    pagination: visiblePagination,
     fetchMaterials,
     uploadMaterial,
     deleteMaterial

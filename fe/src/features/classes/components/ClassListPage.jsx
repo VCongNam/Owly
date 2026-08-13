@@ -128,7 +128,7 @@ export function ClassListPage() {
         onClose={handleModalClose} 
         initialValues={selectedClass}
         onSubmit={async (values) => {
-          let success = false;
+          let success;
           if (selectedClass) {
             success = await updateClass(selectedClass.id, values);
           } else {

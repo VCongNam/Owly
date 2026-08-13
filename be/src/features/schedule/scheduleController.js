@@ -1,5 +1,6 @@
 import * as scheduleService from './scheduleService.js';
 import { getSessionsQuerySchema } from './scheduleSchema.js';
+import { AppError } from '../../utils/appError.js';
 
 export const getPersonalSchedule = async (req, res, next) => {
   try {
@@ -7,11 +8,9 @@ export const getPersonalSchedule = async (req, res, next) => {
     // Validate queries
     const parsedQuery = getSessionsQuerySchema.safeParse(req.query);
     if (!parsedQuery.success) {
-      return res.status(400).json({
-        success: false,
-        message: 'Các tham số lọc ngày không hợp lệ',
-        errors: parsedQuery.error.errors.map(err => err.message)
-      });
+      const appErr = new AppError('Các tham số lọc ngày không hợp lệ', 400);
+      appErr.errors = parsedQuery.error.errors.map((e) => ({ field: e.path.join('.'), message: e.message }));
+      return next(appErr);
     }
 
     const { startDate, endDate } = parsedQuery.data;

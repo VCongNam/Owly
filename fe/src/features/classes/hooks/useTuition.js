@@ -4,7 +4,7 @@ import { tuitionService } from '../services/tuition';
 
 export function useClassTuition(classId) {
   const [config, setConfig] = useState({ amount: 0, billingCycle: 'Monthly' });
-  const [loadingConfig, setLoadingConfig] = useState(false);
+  const [loadingConfig, setLoadingConfig] = useState(() => !!classId);
 
   const [invoices, setInvoices] = useState([]);
   const [loadingInvoices, setLoadingInvoices] = useState(false);
@@ -122,8 +122,30 @@ export function useClassTuition(classId) {
   }, []);
 
   useEffect(() => {
-    fetchConfig();
-  }, [classId, fetchConfig]);
+    if (!classId) return;
+    let active = true;
+
+    const loadConfig = async () => {
+      try {
+        const res = await tuitionService.getClassTuitionConfig(classId);
+        if (active) {
+          setConfig(res || { amount: 0, billingCycle: 'Monthly' });
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải cấu hình học phí:', error);
+      } finally {
+        if (active) {
+          setLoadingConfig(false);
+        }
+      }
+    };
+
+    loadConfig();
+
+    return () => {
+      active = false;
+    };
+  }, [classId]);
 
   return {
     config,
@@ -139,5 +161,57 @@ export function useClassTuition(classId) {
     fetchInvoices,
     generateInvoices,
     reviewTransaction,
+  };
+}
+
+export function useStudentTuition(classId) {
+  const [studentInvoices, setStudentInvoices] = useState([]);
+  const [loadingStudentInvoices, setLoadingStudentInvoices] = useState(() => !!classId);
+
+  const fetchStudentClassInvoices = useCallback(async () => {
+    if (!classId) return;
+    setLoadingStudentInvoices(true);
+    try {
+      const allInvoices = await tuitionService.getStudentInvoices();
+      const filtered = allInvoices.filter(inv => inv.classId === classId);
+      setStudentInvoices(filtered);
+    } catch (error) {
+      console.error('Lỗi khi tải hóa đơn học sinh:', error);
+    } finally {
+      setLoadingStudentInvoices(false);
+    }
+  }, [classId]);
+
+  useEffect(() => {
+    if (!classId) return;
+    let active = true;
+
+    const loadInvoices = async () => {
+      try {
+        const allInvoices = await tuitionService.getStudentInvoices();
+        const filtered = allInvoices.filter(inv => inv.classId === classId);
+        if (active) {
+          setStudentInvoices(filtered);
+        }
+      } catch (error) {
+        console.error('Lỗi khi tải hóa đơn học sinh:', error);
+      } finally {
+        if (active) {
+          setLoadingStudentInvoices(false);
+        }
+      }
+    };
+
+    loadInvoices();
+
+    return () => {
+      active = false;
+    };
+  }, [classId]);
+
+  return {
+    studentInvoices,
+    loadingStudentInvoices,
+    fetchStudentClassInvoices,
   };
 }

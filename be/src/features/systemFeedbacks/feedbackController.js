@@ -71,7 +71,7 @@ export const uploadImage = async (req, res, next) => {
           upsert: true
         });
 
-      if (error) throw new AppError(`Upload lỗi: ${error.message}`, 500);
+      if (error) throw new AppError('Tải tệp tin lên thất bại, vui lòng thử lại sau', 500);
 
 
       const { data: publicUrlData } = supabase

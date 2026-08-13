@@ -1,7 +1,7 @@
 import { prisma } from '../../config/db.js';
 import { formatToVietnamTime } from '../../utils/dateHelper.js';
 
-export const getSubjects = async (req, res) => {
+export const getSubjects = async (req, res, next) => {
   try {
     const subjects = await prisma.subject.findMany({
       orderBy: { name: 'asc' }
@@ -20,10 +20,7 @@ export const getSubjects = async (req, res) => {
       data: formattedSubjects
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: 'Lấy danh sách môn học thất bại',
-      errors: [error.message]
-    });
+    next(error);
   }
 };
+

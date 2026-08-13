@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Table, Button, Group, Badge, Text, ActionIcon } from '@mantine/core';
-import { FilePdf, FileWord, Pencil, Trash } from '@phosphor-icons/react';
+import { Pencil, Trash } from '@phosphor-icons/react';
 import { useAssignment } from '../../hooks/useAssignment';
 import AssignmentFormModal from './AssignmentFormModal';
 
 export default function AssignmentList({ classId, categoryId }) {
-  const { assignments, loading, fetchAssignments, createAssignment } = useAssignment(classId);
+  const { assignments, fetchAssignments, createAssignment } = useAssignment(classId);
   const [opened, setOpened] = useState(false);
 
   useEffect(() => {

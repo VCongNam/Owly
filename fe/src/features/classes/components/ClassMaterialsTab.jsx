@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import {
   Stack, Group, Title, Text, Button, Table, ActionIcon,
   Tooltip, Center, ThemeIcon, Loader, Modal, TextInput,
-  Textarea, FileInput, ScrollArea, Pagination, Card
+  Textarea, FileInput, Pagination
 } from '@mantine/core';
 import {
   Plus, Trash, Download, FilePdf, FileDoc, FileZip, FileImage, File, FolderOpen
@@ -27,7 +27,6 @@ const formatBytes = (bytes, decimals = 2) => {
 // Helper hiển thị icon tương ứng với định dạng file
 const getFileIcon = (mimeType, fileName) => {
   const ext = fileName?.split('.').pop()?.toLowerCase();
-  const color = 'copper';
   
   if (mimeType?.includes('pdf') || ext === 'pdf') {
     return <FilePdf size={24} weight="duotone" color="var(--mantine-color-red-6)" />;

@@ -1,4 +1,5 @@
 import * as gradeCategoryService from './gradeCategoryService.js';
+import { AppError } from '../../utils/appError.js';
 
 export const getGradeCategories = async (req, res, next) => {
   try {
@@ -19,10 +20,7 @@ export const createGradeCategory = async (req, res, next) => {
     const { name, weight } = req.body;
 
     if (!name || typeof name !== 'string' || !name.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Tên danh mục điểm không được để trống'
-      });
+      return next(new AppError('Tên danh mục điểm không được để trống', 400));
     }
 
     const category = await gradeCategoryService.createGradeCategory({
@@ -65,12 +63,6 @@ export const deleteGradeCategory = async (req, res, next) => {
       message: 'Đã xóa danh mục điểm và tự động chuyển các bài tập liên quan về "Bài tập chung".'
     });
   } catch (error) {
-    if (error.statusCode) {
-      return res.status(error.statusCode).json({
-        success: false,
-        message: error.message
-      });
-    }
     next(error);
   }
 };

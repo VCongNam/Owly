@@ -1,32 +1,42 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { attendanceApi } from '../services/attendanceApi';
 import { notifications } from '@mantine/notifications';
 
 export const useGetAttendances = (sessionId) => {
   const [data, setData] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(() => !!sessionId);
   const [isError, setIsError] = useState(false);
 
-  const fetchAttendances = useCallback(async () => {
+  useEffect(() => {
     if (!sessionId) return;
-    setIsLoading(true);
-    setIsError(false);
-    try {
-      const response = await attendanceApi.getAttendancesBySession(sessionId);
-      setData(response);
-    } catch (err) {
-      setIsError(true);
-      notifications.show({
-        title: 'Lỗi',
-        message: 'Không thể tải danh sách điểm danh.',
-        color: 'red'
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    let active = true;
+
+    const performFetch = async () => {
+      try {
+        const response = await attendanceApi.getAttendancesBySession(sessionId);
+        if (active) setData(response);
+      } catch {
+        if (active) {
+          setIsError(true);
+          notifications.show({
+            title: 'Lỗi',
+            message: 'Không thể tải danh sách điểm danh.',
+            color: 'red'
+          });
+        }
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    };
+
+    performFetch();
+
+    return () => {
+      active = false;
+    };
   }, [sessionId]);
 
-  return { data, isLoading, isError, refetch: fetchAttendances };
+  return { data, isLoading, isError };
 };
 
 export const useUpsertAttendances = (sessionId) => {
@@ -36,15 +46,8 @@ export const useUpsertAttendances = (sessionId) => {
     setIsPending(true);
     try {
       await attendanceApi.upsertAttendances(sessionId, attendances);
-      notifications.show({
-        title: 'Thành công',
-        message: 'Lưu điểm danh thành công!',
-        color: 'green'
-      });
-      if (options?.onSuccess) {
-        options.onSuccess();
-      }
     } catch (err) {
+      setIsPending(false);
       notifications.show({
         title: 'Lỗi',
         message: err?.response?.data?.message || 'Có lỗi xảy ra khi lưu điểm danh',
@@ -53,8 +56,17 @@ export const useUpsertAttendances = (sessionId) => {
       if (options?.onError) {
         options.onError(err);
       }
-    } finally {
-      setIsPending(false);
+      return;
+    }
+
+    setIsPending(false);
+    notifications.show({
+      title: 'Thành công',
+      message: 'Lưu điểm danh thành công!',
+      color: 'green'
+    });
+    if (options?.onSuccess) {
+      options.onSuccess();
     }
   };
 

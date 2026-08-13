@@ -135,7 +135,7 @@ export const uploadAvatar = async (userId, file) => {
     });
 
   if (error) {
-    throw new AppError(`Upload lỗi: ${error.message}`, 500);
+    throw new AppError('Tải ảnh đại diện thất bại, vui lòng thử lại', 500);
   }
 
   // Lấy Public URL của ảnh vừa upload

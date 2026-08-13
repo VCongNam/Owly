@@ -1,16 +1,14 @@
 import * as profileService from './profileService.js';
 import { updateProfileSchema } from './profileSchema.js';
+import { AppError } from '../../utils/appError.js';
 
-export const getProfile = async (req, res) => {
+export const getProfile = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const profile = await profileService.getProfile(userId);
 
     if (!profile) {
-      return res.status(404).json({
-        success: false,
-        message: 'Không tìm thấy hồ sơ cá nhân'
-      });
+      return next(new AppError('Không tìm thấy hồ sơ cá nhân', 404));
     }
 
     return res.status(200).json({
@@ -18,19 +16,15 @@ export const getProfile = async (req, res) => {
       data: profile
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: 'Lỗi máy chủ khi lấy hồ sơ',
-      error: error.message
-    });
+    next(error);
   }
 };
 
-export const updateProfile = async (req, res) => {
+export const updateProfile = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    
-    // Validate
+
+    // Validate — ZodError sẽ đi qua catch và được xử lý
     const validatedData = updateProfileSchema.parse(req.body);
 
     const updated = await profileService.updateProfile(userId, validatedData);
@@ -42,31 +36,22 @@ export const updateProfile = async (req, res) => {
     });
   } catch (error) {
     if (error.name === 'ZodError') {
-      return res.status(400).json({
-        success: false,
-        message: 'Dữ liệu không hợp lệ',
-        errors: error.errors
-      });
+      // Ánh xạ ZodError thành AppError có errors[] chuẩn — validation middleware ưu tiên nhưng nếu validate() thủ công tại đây thì xử lý đúng
+      const appErr = new AppError('Dữ liệu không hợp lệ', 400);
+      appErr.errors = error.errors.map((e) => ({ field: e.path.join('.'), message: e.message }));
+      return next(appErr);
     }
-
-    return res.status(500).json({
-      success: false,
-      message: 'Lỗi hệ thống khi cập nhật hồ sơ',
-      error: error.message
-    });
+    next(error);
   }
 };
 
-export const uploadAvatar = async (req, res) => {
+export const uploadAvatar = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const file = req.file;
 
     if (!file) {
-      return res.status(400).json({
-        success: false,
-        message: 'Vui lòng chọn ảnh để tải lên'
-      });
+      return next(new AppError('Vui lòng chọn ảnh để tải lên', 400));
     }
 
     const result = await profileService.uploadAvatar(userId, file);
@@ -77,9 +62,6 @@ export const uploadAvatar = async (req, res) => {
       data: result
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message || 'Lỗi hệ thống khi tải ảnh'
-    });
+    next(error);
   }
 };

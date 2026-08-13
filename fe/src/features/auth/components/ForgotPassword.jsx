@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Paper, Title, Text, TextInput, Button, Anchor, Box } from '@mantine/core';
+import { Paper, Title, Text, TextInput, Button, Anchor } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';

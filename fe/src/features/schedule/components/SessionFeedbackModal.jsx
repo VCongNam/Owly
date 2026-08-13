@@ -8,7 +8,7 @@ import { notifications } from '@mantine/notifications';
 import { scheduleService } from '../services/scheduleService';
 
 export function SessionFeedbackModal({ opened, onClose, sessionId, sessionTitle, onSaveSuccess }) {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const [sessionInfo, setSessionInfo] = useState(null);
@@ -20,26 +20,29 @@ export function SessionFeedbackModal({ opened, onClose, sessionId, sessionTitle,
 
   useEffect(() => {
     if (!opened || !sessionId) return;
-
-    setLoading(true);
-    setFeedbacks([]);
-    setCommonAcademic('');
-    setCommonAttitude('');
-    setCommonHomework('');
+    let active = true;
 
     scheduleService.getSessionFeedbacks(sessionId)
       .then(res => {
+        if (!active) return;
         setSessionInfo(res.session);
         setFeedbacks(res.feedbacks || []);
       })
       .catch(err => {
+        if (!active) return;
         notifications.show({
           title: 'Lỗi',
           message: err?.message || 'Không thể tải danh sách nhận xét học sinh',
           color: 'red'
         });
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, [opened, sessionId]);
 
   const handleApplyCommon = () => {

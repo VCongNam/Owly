@@ -20,6 +20,7 @@ import sepayRoutes from './features/tuition/sepayRoutes.js';
 import uploadRoutes from './features/upload/uploadRoutes.js';
 import excelRoutes from './features/upload/excelRoutes.js';
 import { errorHandler } from './middlewares/errorHandler.js';
+import { AppError } from './utils/appError.js';
 
 
 dotenv.config();
@@ -37,6 +38,9 @@ app.use('/api/classes', classRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/feedbacks', feedbackRoutes);
 app.use('/api/students', studentRoutes);
+// Webhook SePay không dùng hệ thống auth — PHẢI mount TRƯỚC mọi router có router.use(authMiddleware)
+// vì những router đó chặn mọi request /api/* ngay cả khi không có route khớp
+app.use('/api', sepayRoutes);
 app.use('/api', scheduleRoutes);
 app.use('/api/sessions/:sessionId/attendances', attendanceRoutes);
 app.use('/api/assignments', assignmentRoutes);
@@ -46,7 +50,6 @@ app.use('/api', materialRoutes);
 app.use('/api', postRoutes);
 app.use('/api', gradeCategoryRoutes);
 app.use('/api', tuitionRoutes);
-app.use('/api', sepayRoutes);
 
 
 // Test route
@@ -98,12 +101,14 @@ app.get('/health', async (req, res) => {
   });
 });
 
+// Route 404 Catch-All — đứng sau tất cả routes, trước errorHandler
+// Mọi request đến API không tồn tại sẽ nhận JSON chuẩn thay vì response mặc định của Express
+app.use((req, res, next) => {
+  next(new AppError('Đường dẫn API không tồn tại', 404));
+});
+
 // Global error handler — PHẢI đứng sau tất cả routes để Express nhận diện là error middleware
 app.use(errorHandler);
-
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
 
 export default app;
 

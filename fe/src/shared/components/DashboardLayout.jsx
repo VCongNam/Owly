@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Drawer, ActionIcon, Burger } from '@mantine/core';
+import { Drawer, Burger } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import { Sidebar } from './Sidebar';
 import { FeedbackDrawer } from '../../features/feedback/components/FeedbackDrawer';

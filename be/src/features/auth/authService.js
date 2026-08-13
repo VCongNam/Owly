@@ -265,11 +265,10 @@ export const signInUser = async (email, password, role) => {
 
   if (error) {
     // Chuyển đổi thông báo lỗi của Supabase sang Tiếng Việt thân thiện
-    let userFriendlyMessage = error.message;
     if (error.message.includes('Invalid login credentials')) {
-      userFriendlyMessage = 'Tên đăng nhập hoặc mật khẩu không chính xác';
+      throw new AppError('Tên đăng nhập hoặc mật khẩu không chính xác', 401);
     }
-    throw new AppError(userFriendlyMessage, 401);
+    throw new AppError('Đăng nhập thất bại, vui lòng thử lại', 401);
   }
 
   const profile = await getMyProfile(data.user.id);
@@ -418,7 +417,7 @@ export const refreshSession = async (refreshToken) => {
 export const signOutTeacher = async (token) => {
   const { error } = await supabase.auth.admin.signOut(token);
   if (error) {
-    throw new AppError(error.message, 500);
+    throw new AppError('Đăng xuất thất bại, vui lòng thử lại', 500);
   }
   return true;
 };
@@ -428,7 +427,7 @@ export const changeTeacherPassword = async (userId, newPassword) => {
     password: newPassword
   });
   if (error) {
-    throw new AppError(error.message, 500);
+    throw new AppError('Đổi mật khẩu thất bại, vui lòng thử lại', 500);
   }
   return data;
 };
@@ -438,7 +437,7 @@ export const forgotTeacherPassword = async (email, redirectTo) => {
     redirectTo
   });
   if (error) {
-    throw new AppError(error.message, 500);
+    throw new AppError('Yêu cầu khôi phục mật khẩu thất bại, vui lòng thử lại', 500);
   }
   return data;
 };

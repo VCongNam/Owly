@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   Drawer, Text, Group, Stack, Button,
-  TextInput, Title, Badge, LoadingOverlay,
+  TextInput, Title, Badge,
   Select, Textarea, Box, ActionIcon, Tooltip,
   Tabs, ScrollArea, Image, CloseButton, HoverCard, Modal, Accordion
 } from '@mantine/core';
@@ -48,32 +48,61 @@ export function FeedbackDrawer({ opened, onClose }) {
     }
   });
 
-  const fetchFeedbacks = async () => {
-    try {
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const handleTabChange = (value) => {
+    setActiveTab(value);
+    if (value === 'history') {
       setLoading(true);
-      const res = await feedbackService.getMyFeedbacks();
-      if (Array.isArray(res)) {
-        setFeedbacks(res);
-      } else if (res?.data) {
-        setFeedbacks(res.data);
-      }
-    } catch (err) {
-      console.error('Không thể tải lịch sử phản hồi:', err);
-      notifications.show({
-        title: 'Lỗi',
-        message: 'Không thể tải lịch sử phản hồi. Vui lòng thử lại sau!',
-        color: 'red'
-      });
-    } finally {
-      setLoading(false);
     }
   };
 
+  const handleRefresh = () => {
+    setLoading(true);
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleClose = () => {
+    setActiveTab('submit');
+    onClose();
+  };
+
   useEffect(() => {
-    if (opened && activeTab === 'history') {
-      fetchFeedbacks();
-    }
-  }, [opened, activeTab]);
+    if (!opened || activeTab !== 'history') return;
+    let active = true;
+
+    const performFetch = async () => {
+      try {
+        const res = await feedbackService.getMyFeedbacks();
+        if (active) {
+          if (Array.isArray(res)) {
+            setFeedbacks(res);
+          } else if (res?.data) {
+            setFeedbacks(res.data);
+          }
+        }
+      } catch (err) {
+        console.error('Không thể tải lịch sử phản hồi:', err);
+        if (active) {
+          notifications.show({
+            title: 'Lỗi',
+            message: 'Không thể tải lịch sử phản hồi. Vui lòng thử lại sau!',
+            color: 'red'
+          });
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    performFetch();
+
+    return () => {
+      active = false;
+    };
+  }, [opened, activeTab, refreshTrigger]);
 
   const addFiles = (files) => {
     const validFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
@@ -135,7 +164,7 @@ export function FeedbackDrawer({ opened, onClose }) {
         setImageFiles([]);
         setImagePreviews([]);
         setImageError('');
-        setActiveTab('history'); 
+        handleTabChange('history');
       }
     } catch (err) {
       console.error('Không thể gửi phản hồi:', err);
@@ -191,7 +220,7 @@ export function FeedbackDrawer({ opened, onClose }) {
     <>
       <Drawer
         opened={opened}
-        onClose={onClose}
+        onClose={handleClose}
         position="right"
         size="xl" 
         title={
@@ -207,7 +236,7 @@ export function FeedbackDrawer({ opened, onClose }) {
         }}
         overlayProps={{ opacity: 0.5, blur: 4 }}
       >
-        <Tabs value={activeTab} onChange={setActiveTab} classNames={{ list: classes.tabsList, tab: classes.tab }} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+        <Tabs value={activeTab} onChange={handleTabChange} classNames={{ list: classes.tabsList, tab: classes.tab }} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
           <Tabs.List>
             <Tabs.Tab value="submit" leftSection={<PaperPlaneRight size={16} />}>Gửi phản hồi</Tabs.Tab>
             <Tabs.Tab value="history" leftSection={<ClockCounterClockwise size={16} />}>Lịch sử của tôi</Tabs.Tab>
@@ -336,7 +365,7 @@ export function FeedbackDrawer({ opened, onClose }) {
                   />
                 </Box>
                 <Tooltip label="Làm mới">
-                  <ActionIcon variant="subtle" color="gray" size="lg" onClick={fetchFeedbacks} loading={loading}>
+                  <ActionIcon variant="subtle" color="gray" size="lg" onClick={handleRefresh} loading={loading}>
                     <ArrowCounterClockwise size={20} />
                   </ActionIcon>
                 </Tooltip>

@@ -287,7 +287,6 @@ export function ClassAssignmentsTab() {
       {categoriesModalOpened && (
         <GradeCategoriesModal
           classId={classId}
-          opened={categoriesModalOpened}
           onClose={() => {
             setCategoriesModalOpened(false);
             fetchAssignments(1);
@@ -318,7 +317,6 @@ export function ClassAssignmentsTab() {
 
       {submissionModalOpened && selectedAssignmentForSubmission && (
         <AssignmentSubmissionModal
-          opened={submissionModalOpened}
           onClose={() => {
             setSubmissionModalOpened(false);
             setSelectedAssignmentForSubmission(null);

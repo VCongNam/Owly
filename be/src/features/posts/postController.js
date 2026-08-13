@@ -66,11 +66,9 @@ export const createPost = async (req, res, next) => {
 
   } catch (error) {
     if (error.name === 'ZodError') {
-      return res.status(400).json({
-        success: false,
-        message: 'Dữ liệu không hợp lệ.',
-        errors: error.errors.map(err => err.message)
-      });
+      const appErr = new AppError('Dữ liệu không hợp lệ.', 400);
+      appErr.errors = error.errors.map((e) => ({ field: e.path.join('.'), message: e.message }));
+      return next(appErr);
     }
     next(error);
   }
@@ -342,11 +340,9 @@ export const createComment = async (req, res, next) => {
 
   } catch (error) {
     if (error.name === 'ZodError') {
-      return res.status(400).json({
-        success: false,
-        message: 'Dữ liệu không hợp lệ.',
-        errors: error.errors.map(err => err.message)
-      });
+      const appErr = new AppError('Dữ liệu không hợp lệ.', 400);
+      appErr.errors = error.errors.map((e) => ({ field: e.path.join('.'), message: e.message }));
+      return next(appErr);
     }
     next(error);
   }

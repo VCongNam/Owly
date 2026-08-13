@@ -78,7 +78,7 @@ if (isSessionExpired()) {
   clearSession();
 }
 
-export const useAuthStore = create((set, get) => ({
+export const useAuthStore = create((set) => ({
   user: getInitialUser(),
   token: getInitialToken(),
   loading: false,

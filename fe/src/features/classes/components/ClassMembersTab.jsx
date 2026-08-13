@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Stack, Group, Title, Text, Button, Table, Avatar, ActionIcon,
@@ -47,8 +47,8 @@ const StatCard = ({ label, value, color }) => (
 );
 
 // ── Modal Attendance Log ─────────────────────────────────────────────────────
-function AttendanceLogModal({ opened, onClose, student, classId }) {
-  const [loading, setLoading] = useState(false);
+function AttendanceLogModal({ onClose, student, classId }) {
+  const [loading, setLoading] = useState(true);
   const [logData, setLogData] = useState(null);
 
   // States cho Bộ lọc & Phân trang
@@ -59,18 +59,24 @@ function AttendanceLogModal({ opened, onClose, student, classId }) {
   const pageSize = 8; // Số bản ghi mỗi trang
 
   useEffect(() => {
-    if (!opened || !student || !classId) return;
-    setLogData(null);
-    setSearchQuery('');
-    setStatusFilter('all');
-    setSessionFilter('all');
-    setCurrentPage(1);
-    setLoading(true);
+    let active = true;
     studentService.getStudentAttendanceLog(classId, student.id)
-      .then(data => setLogData(data))
-      .catch(() => notifications.show({ title: 'Lỗi', message: 'Không thể tải nhật ký điểm danh', color: 'red' }))
-      .finally(() => setLoading(false));
-  }, [opened, student, classId]);
+      .then(data => {
+        if (active) setLogData(data);
+      })
+      .catch(() => {
+        if (active) {
+          notifications.show({ title: 'Lỗi', message: 'Không thể tải nhật ký điểm danh', color: 'red' });
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [classId, student.id]);
 
   const stats = logData?.stats;
   const sessionLogs = logData?.sessions || [];
@@ -157,7 +163,7 @@ function AttendanceLogModal({ opened, onClose, student, classId }) {
 
   return (
     <Modal
-      opened={opened}
+      opened={true}
       onClose={onClose}
       title={
         <Group gap={8}>
@@ -328,7 +334,20 @@ export function ClassMembersTab() {
   const isStudent = user?.role === 'student';
   const { classId } = useParams();
   const [members, setMembers] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [resolvedClassId, setResolvedClassId] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const requestIdRef = useRef(0);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  const loading = Boolean(classId) && (resolvedClassId !== classId || refreshing);
 
   // Modal states
   const [modalOpened, setModalOpened] = useState(false);
@@ -363,23 +382,60 @@ export function ClassMembersTab() {
   });
 
   // Tải danh sách thành viên lớp học
-  const fetchMembers = async () => {
+  const fetchMembers = useCallback(async () => {
+    if (!classId) return;
+    const requestId = ++requestIdRef.current;
+    setRefreshing(true);
     try {
-      setLoading(true);
       const res = await studentService.getClassMembers(classId);
-      setMembers(res?.items || []);
+      if (isMountedRef.current && requestId === requestIdRef.current) {
+        setMembers(res?.items || []);
+      }
     } catch (error) {
-      console.error('Lỗi tải thành viên lớp học:', error);
+      if (isMountedRef.current && requestId === requestIdRef.current) {
+        if (resolvedClassId !== classId) {
+          setMembers([]);
+        }
+        console.error('Lỗi tải thành viên lớp học:', error);
+      }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current && requestId === requestIdRef.current) {
+        setRefreshing(false);
+        setResolvedClassId(classId);
+      }
     }
-  };
+  }, [classId, resolvedClassId]);
 
   useEffect(() => {
-    if (classId) {
-      fetchMembers();
-    }
+    if (!classId) return;
+    const requestId = ++requestIdRef.current;
+
+    const loadInitialMembers = async () => {
+      try {
+        const res = await studentService.getClassMembers(classId);
+        if (isMountedRef.current && requestId === requestIdRef.current) {
+          setMembers(res?.items || []);
+        }
+      } catch (error) {
+        if (isMountedRef.current && requestId === requestIdRef.current) {
+          setMembers([]);
+          console.error('Lỗi tải thành viên lớp học:', error);
+        }
+      } finally {
+        if (isMountedRef.current && requestId === requestIdRef.current) {
+          setResolvedClassId(classId);
+        }
+      }
+    };
+
+    loadInitialMembers();
+
+    return () => {
+      requestIdRef.current += 1;
+    };
   }, [classId]);
+
+  const visibleMembers = resolvedClassId === classId ? members : [];
 
   // Tìm kiếm học sinh trên danh bạ hệ thống
   useEffect(() => {
@@ -493,7 +549,7 @@ HƯỚNG DẪN ĐĂNG NHẬP:
     }
   };
 
-  const rows = members.map((student) => (
+  const rows = visibleMembers.map((student) => (
     <Table.Tr key={student.id} className={classes.tableRow}>
       <Table.Td>
         <Group gap={10} wrap="nowrap">
@@ -567,7 +623,7 @@ HƯỚNG DẪN ĐĂNG NHẬP:
       <Group justify="space-between" align="center" wrap="wrap" gap="sm">
         <div>
           <Title order={3} style={{ fontSize: '20px', fontWeight: 700 }}>Danh sách Học viên</Title>
-          <Text size="sm" c="dimmed">{members.length} học viên tham gia lớp này</Text>
+          <Text size="sm" c="dimmed">{visibleMembers.length} học viên tham gia lớp này</Text>
         </div>
         {!isStudent && (
           <Group gap="xs">
@@ -595,7 +651,7 @@ HƯỚNG DẪN ĐĂNG NHẬP:
         <Center py={60}>
           <Loader color="copper" size="md" />
         </Center>
-      ) : members.length > 0 ? (
+      ) : visibleMembers.length > 0 ? (
         <div className={classes.tableWrapper}>
           <Table highlightOnHover verticalSpacing="md" className={classes.table}>
             <Table.Thead>
@@ -629,12 +685,14 @@ HƯỚNG DẪN ĐĂNG NHẬP:
       )}
 
       {/* ── UC-35: Modal Nhật ký Điểm danh ─────── */}
-      <AttendanceLogModal
-        opened={attendanceLogStudent !== null}
-        onClose={() => setAttendanceLogStudent(null)}
-        student={attendanceLogStudent}
-        classId={classId}
-      />
+      {attendanceLogStudent !== null && classId && (
+        <AttendanceLogModal
+          key={`${attendanceLogStudent.id}-${classId}`}
+          onClose={() => setAttendanceLogStudent(null)}
+          student={attendanceLogStudent}
+          classId={classId}
+        />
+      )}
 
       {/* ── Modal Thêm học viên ─────────────────── */}
       <Modal
@@ -681,7 +739,7 @@ HƯỚNG DẪN ĐĂNG NHẬP:
               {searchResults.length > 0 ? (
                 <Stack gap="xs" style={{ maxHeight: 240, overflowY: 'auto' }}>
                   {searchResults.map((student) => {
-                    const isAlreadyMember = members.some(m => m.id === student.id);
+                    const isAlreadyMember = visibleMembers.some(m => m.id === student.id);
                     return (
                       <Card key={student.id} withBorder p="xs" className={classes.studentSearchCard}>
                         <Group justify="space-between" align="center">
@@ -848,12 +906,15 @@ HƯỚNG DẪN ĐĂNG NHẬP:
         loading={unenrolling}
       />
       
-      <ImportStudentsModal
-        opened={importExcelOpened}
-        onClose={() => setImportExcelOpened(false)}
-        classId={classId}
-        onSuccess={fetchMembers}
-      />
+      {importExcelOpened && classId && (
+        <ImportStudentsModal
+          key={classId}
+          opened={importExcelOpened}
+          onClose={() => setImportExcelOpened(false)}
+          classId={classId}
+          onSuccess={fetchMembers}
+        />
+      )}
     </Stack>
   );
 }
