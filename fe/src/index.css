@@ -1,3 +1,70 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #fafaf8;
+  --color-foreground: #1a1a1a;
+  --color-card: #ffffff;
+  --color-muted: #f5f3f0;
+  --color-muted-foreground: #6b6b6b;
+  --color-accent: #b8860b;
+  --color-accent-secondary: #d4a84b;
+  --color-accent-foreground: #ffffff;
+  --color-accent-muted: rgb(184 134 11 / 0.06);
+  --color-border: #e8e4df;
+  --color-border-hover: #d8d0c4;
+  --color-ring: #b8860b;
+
+  --font-serif: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-sans: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --shadow-sm: 0 1px 2px rgb(26 26 26 / 0.04);
+  --shadow-md: 0 4px 12px rgb(26 26 26 / 0.06);
+  --shadow-lg: 0 8px 24px rgb(26 26 26 / 0.08);
+  --shadow-accent: 0 4px 14px rgb(184 134 11 / 0.25);
+}
+
+.small-caps {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.paper-texture {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  pointer-events: none;
+  opacity: 0.3;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.1 0 0 0 0 0.1 0 0 0 0 0.1 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Ép buộc Landing Page luôn hiển thị ở Light Mode */
+.landing-light-mode {
+  color-scheme: light !important;
+  --bg-color: #fafaf8 !important;
+  --text-color: #1a1a1a !important;
+  --card-bg: #ffffff !important;
+  --border-color: #e8e4df !important;
+  --color-background: #fafaf8 !important;
+  --color-foreground: #1a1a1a !important;
+  --color-card: #ffffff !important;
+  --color-muted: #f5f3f0 !important;
+  --color-muted-foreground: #6b6b6b !important;
+  --color-accent: #b8860b !important;
+  --color-accent-secondary: #d4a84b !important;
+  --color-accent-foreground: #ffffff !important;
+  --color-accent-muted: rgb(184 134 11 / 0.06) !important;
+  --color-border: #e8e4df !important;
+  --color-border-hover: #d8d0c4 !important;
+  --color-ring: #b8860b !important;
+
+  background-color: #fafaf8 !important;
+  color: #1a1a1a !important;
+}
+
 :root {
   --text: #1E2522;
   --background: #F7F5F0;

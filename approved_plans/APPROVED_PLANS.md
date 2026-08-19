@@ -474,3 +474,20 @@ Kế hoạch 5 giai đoạn nhằm chuẩn hóa dự án Owly từ 70% lên mứ
 - `pnpm exec bru run bruno/Security --env Local.private`
 - `pnpm lint` (fe): 0 errors, 0 warnings
 - `pnpm build` (fe): exit code 0
+
+---
+
+## 20. Tích hợp Trang chủ Landing giới thiệu Owly (Ngày 19/08/2026)
+
+### 1. Giữ nguyên 100% Thiết kế & Font chữ gốc
+- Nhập Google Fonts cho `Playfair Display`, `Source Sans 3` và `IBM Plex Mono` tại [index.html](file:///media/vcnam/Data/Data/Owly/fe/index.html).
+- Bảo lưu toàn bộ thiết kế, typography (`small-caps`, `font-serif`), hiệu ứng sần hạt paper texture và bảng màu editorial từ repo `landing-design`.
+
+### 2. Định tuyến Route & Trải nghiệm Người dùng
+- Cấu hình Route `/` hiển thị [LandingPage](file:///media/vcnam/Data/Data/Owly/fe/src/features/landing/LandingPage.jsx) làm trang chủ giới thiệu sản phẩm.
+- Chuyển Route Dashboard chính sang `/dashboard`.
+- Tự động kiểm tra auth session: Khách chưa đăng nhập thấy nút "Đăng nhập" (`/signin`) & "Bắt đầu ngay" (`/signup`); Người dùng đã đăng nhập thấy nút "Vào Dashboard" (`/dashboard`).
+
+### 3. Nghiệm thu
+- Build sản phẩm `pnpm build` thành công 100%.
+
