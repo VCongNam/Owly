@@ -8,6 +8,15 @@ import { useAuth } from "../../auth";
 export default function Pricing() {
   const { user } = useAuth();
 
+  const tierCount = pricing.tiers.length;
+
+  const gridClass =
+    tierCount === 1
+      ? "grid-cols-1 max-w-md mx-auto"
+      : tierCount === 2
+      ? "grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto"
+      : "grid-cols-1 md:grid-cols-3";
+
   return (
     <section
       id="pricing"
@@ -25,48 +34,74 @@ export default function Pricing() {
             >
               {pricing.heading}
             </h2>
-            <p className="mt-5 text-lg text-muted-foreground">{pricing.sub}</p>
+
+            <p className="mt-5 text-lg text-muted-foreground">
+              {pricing.sub}
+            </p>
           </div>
         </Reveal>
 
-        <div className="grid gap-8 md:grid-cols-3 lg:gap-10">
+        <div className={`grid gap-8 lg:gap-10 ${gridClass}`}>
           {pricing.tiers.map((tier, i) => {
             const btnHref = user ? "/dashboard" : "/signup";
+
             return (
-              <Reveal key={tier.name} delay={i * 120} className="h-full">
+              <Reveal
+                key={tier.name}
+                delay={i * 120}
+                className="h-full"
+              >
                 <Card
                   featured={tier.featured}
                   accentTop={tier.featured}
                   hoverEffect={!tier.featured}
                   className={`flex h-full flex-col ${
-                    tier.featured ? "md:-translate-y-4" : ""
+                    tier.featured && tierCount > 1
+                      ? "md:-translate-y-4"
+                      : ""
                   }`}
                 >
                   {tier.featured && (
-                    <p className="small-caps -mt-2 mb-3 text-accent">Phổ biến nhất</p>
+                    <p className="small-caps -mt-2 mb-3 text-accent">
+                      Phổ biến nhất
+                    </p>
                   )}
+
                   <h3 className="font-serif text-2xl leading-[1.3] text-foreground">
                     {tier.name}
                   </h3>
+
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                     {tier.blurb}
                   </p>
+
                   <p className="mt-6 flex items-baseline gap-2">
                     <span className="font-serif text-5xl tracking-tight text-foreground">
                       {tier.price}
                     </span>
-                    <span className="text-sm text-muted-foreground">{tier.period}</span>
+
+                    <span className="text-sm text-muted-foreground">
+                      {tier.period}
+                    </span>
                   </p>
+
                   <ul className="mt-8 flex-1 space-y-3 border-t border-border pt-8">
                     {tier.features.map((feature) => (
                       <li key={feature} className="flex gap-3">
-                        <span aria-hidden="true" className="shrink-0 text-accent">
+                        <span
+                          aria-hidden="true"
+                          className="shrink-0 text-accent"
+                        >
                           —
                         </span>
-                        <span className="text-muted-foreground">{feature}</span>
+
+                        <span className="text-muted-foreground">
+                          {feature}
+                        </span>
                       </li>
                     ))}
                   </ul>
+
                   <Button
                     href={btnHref}
                     variant={tier.featured ? "primary" : "outline"}
@@ -80,7 +115,9 @@ export default function Pricing() {
           })}
         </div>
 
-        <p className="small-caps mt-16 text-center text-muted-foreground">{pricing.note}</p>
+        <p className="small-caps mt-16 text-center text-muted-foreground">
+          {pricing.note}
+        </p>
       </div>
     </section>
   );

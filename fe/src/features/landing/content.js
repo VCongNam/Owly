@@ -1,257 +1,367 @@
 /*
-  Toàn bộ nội dung (copy) của trang giới thiệu Owly.
+  Nội dung landing page Owly
+  Định hướng: Simple · Friendly · Teacher-first
 */
 
 export const site = {
   name: "Owly",
-  tagline: "Nền tảng quản lý lớp học & học viên thông minh",
+  tagline: "Quản lý lớp học nhẹ nhàng hơn mỗi ngày",
 };
 
 export const nav = {
   links: [
     { label: "Tính năng", href: "#features" },
-    { label: "Giải pháp", href: "#benefits" },
-    { label: "Bảng giá", href: "#pricing" },
+    { label: "Vì sao chọn Owly", href: "#benefits" },
+    { label: "Trải nghiệm", href: "#pricing" },
     { label: "Hỏi đáp", href: "#faq" },
   ],
   cta: { label: "Đăng nhập", href: "/signin" },
 };
 
 export const hero = {
-  label: "Est. 2026 · Giải pháp quản lý lớp học toàn diện",
-  titleTop: "Quản lý lớp học",
-  titleAccent: "tinh tế & tối giản.",
-  sub: "Owly là nền tảng quản lý lớp học hiện đại dành cho Giáo viên, Học sinh và Phụ huynh — điểm danh tự động, nộp bài tập Cloudflare R2, và đối soát học phí VietQR trong một giao diện duy nhất.",
-  primaryCta: { label: "Trải nghiệm ngay — Miễn phí", href: "/signup" },
-  secondaryCta: { label: "Khám phá các tính năng", href: "#features" },
-  note: "Tự động hóa · An toàn · Tương thích đa thiết bị",
+  label: "Được tạo ra để việc dạy học trở nên đơn giản hơn",
+
+  titleTop: "Quản lý lớp học,",
+  titleAccent: "nhẹ nhàng hơn mỗi ngày.",
+
+  sub:
+    "Lịch học, điểm danh, bài tập, nhận xét và học phí — tất cả trong một nơi. Owly giúp giáo viên dành ít thời gian hơn cho việc quản lý và nhiều thời gian hơn cho việc giảng dạy.",
+
+  primaryCta: {
+    label: "Bắt đầu miễn phí",
+    href: "/signup",
+  },
+
+  secondaryCta: {
+    label: "Khám phá Owly",
+    href: "#features",
+  },
+
+  note:
+    "Không cần cài đặt · Dễ sử dụng · Dùng được trên nhiều thiết bị",
 };
 
 export const stats = [
-  { value: "100%", label: "Lớp học được số hóa" },
-  { value: "99.8%", label: "Chính xác khi điểm danh" },
-  { value: "0đ", label: "Phí khởi tạo ban đầu" },
-  { value: "24/7", label: "Truy cập mọi lúc mọi nơi" },
+  {
+    value: "Thuận tiện",
+    label: "Cho mọi công việc của lớp học",
+  },
+  {
+    value: "Dễ dàng",
+    label: "Điểm danh và theo dõi lớp",
+  },
+  {
+    value: "Tiện lợi",
+    label: "Giao bài và nhận bài",
+  },
+  {
+    value: "Linh hoạt",
+    label: "Truy cập khi bạn cần",
+  },
 ];
 
 export const features = {
-  label: "Tính năng nổi bật",
-  heading: "Mọi thứ phục vụ trải nghiệm dạy & học",
-  sub: "Sáu tính năng cốt lõi được thiết kế tối giản, loại bỏ thao tác thừa để giáo viên tập trung vào việc giảng dạy.",
+  label: "Tính năng",
+
+  heading: "Mọi thứ giáo viên cần, gọn trong một nơi",
+
+  sub:
+    "Owly giúp bạn quản lý những công việc quen thuộc của lớp học mà không phải chuyển qua lại giữa quá nhiều ứng dụng.",
+
   items: [
     {
       index: "01",
-      title: "Điểm danh & Lịch học tự động",
-      body: "Theo dõi sĩ số lớp, điểm danh theo thời gian thực và quản lý lịch học lặp lại theo tuần hoặc buổi học bù dễ dàng.",
+      title: "Quản lý lớp & học sinh",
+      body:
+        "Tạo lớp, thêm học sinh và theo dõi thông tin của từng lớp ngay trong một không gian rõ ràng, dễ tìm kiếm.",
     },
+
     {
       index: "02",
-      title: "Bài tập & Lưu trữ Cloudflare R2",
-      body: "Soạn bài tập phong phú với Tiptap Editor, nhập đề từ file Word (.docx) qua Mammoth, lưu trữ và nộp bài an toàn trên Cloudflare R2.",
+      title: "Lịch học & điểm danh",
+      body:
+        "Tạo lịch học cố định, thêm buổi học bù và ghi nhận có mặt, vắng hoặc đi muộn nhanh chóng sau mỗi buổi học.",
     },
+
     {
       index: "03",
-      title: "Đối soát Học phí VietQR",
-      body: "Tự động tạo hóa đơn theo tháng, phát hành mã VietQR động và xác nhận minh chứng chuyển khoản từ phụ huynh/học sinh.",
+      title: "Giao bài & nhận bài",
+      body:
+        "Tạo bài tập, đặt hạn nộp, đính kèm tài liệu và theo dõi học sinh nào đã hoàn thành ngay trong từng lớp.",
     },
+
     {
       index: "04",
-      title: "Bảng tin Lớp học & Thảo luận",
-      body: "Không gian dặn dò, thông báo học liệu mới tự động và trao đổi bình luận trực tiếp giữa giáo viên và học sinh.",
+      title: "Theo dõi tiến bộ của học sinh",
+      body:
+        "Lưu lại kết quả bài tập, chuyên cần và nhận xét sau từng buổi học để dễ dàng nhìn lại quá trình tiến bộ của mỗi học sinh.",
     },
+
     {
       index: "05",
-      title: "Học liệu & Tài liệu dùng chung",
-      body: "Tải lên và chia sẻ bài giảng, tài liệu ôn tập dạng PDF, Word, Excel không giới hạn số lượng bài viết.",
+      title: "Theo dõi học phí",
+      body:
+        "Tạo học phí theo từng lớp, theo dõi trạng thái thanh toán và quản lý minh chứng chuyển khoản của học sinh một cách gọn gàng.",
     },
+
     {
       index: "06",
-      title: "Thống kê & Nhật ký học tập",
-      body: "Báo cáo tỉ lệ chuyên cần, lịch sử nộp bài tập và tổng quan theo dõi sự tiến bộ của từng học sinh.",
+      title: "Thông báo & tài liệu lớp học",
+      body:
+        "Chia sẻ thông báo, tài liệu học tập và trao đổi với học sinh ngay trong lớp mà không cần tìm lại nội dung ở nhiều nơi.",
     },
   ],
 };
 
 export const benefits = {
   label: "Vì sao chọn Owly",
-  heading: "Xây dựng cho sự gắn kết lâu dài",
+
+  heading:
+    "Ít việc quản lý hơn. Nhiều thời gian cho việc dạy hơn.",
+
   paragraphs: [
-    "Các công cụ quản lý truyền thống thường rườm rà và phức tạp. Owly bắt đầu từ một triết lý khác: xây dựng một không gian tinh tế, trực quan, giúp việc tương tác giữa Giáo viên, Học sinh và Phụ huynh trở nên mượt mà nhất.",
-    "Không cần cài đặt phức tạp. Không quảng cáo gây xao nhãng. Mọi dữ liệu lớp học đều được bảo mật và truy cập tức thì từ máy tính, tablet hay điện thoại.",
+    "Một lớp học thường đi kèm rất nhiều việc nhỏ: lịch học, điểm danh, bài tập, nhận xét, tài liệu và học phí. Khi mỗi thứ nằm ở một nơi khác nhau, việc quản lý nhanh chóng trở nên mất thời gian.",
+
+    "Owly đưa những công việc đó về cùng một nơi với giao diện đơn giản, dễ làm quen. Bạn không cần phải là người rành công nghệ để bắt đầu.",
   ],
+
   points: [
-    "Giao diện chuẩn hóa Light/Dark mode tự động thích ứng",
-    "Phân quyền minh bạch: Giáo viên, Học sinh và Phụ huynh",
-    "Hỗ trợ xem trên di động và mọi kích thước màn hình",
-    "Bảo mật dữ liệu tuyệt đối và sao lưu liên tục",
+    "Dễ làm quen ngay từ lần đầu sử dụng",
+    "Thông tin lớp học được sắp xếp rõ ràng",
+    "Học sinh dễ theo dõi lịch học và bài tập",
+    "Dùng được trên máy tính, tablet và điện thoại",
   ],
 };
 
 export const testimonials = {
-  label: "Cảm nhận người dùng",
-  heading: "Tin cậy, tinh tế và hiệu quả",
+  label: "Owly đang được hoàn thiện",
+
+  heading: "Được xây dựng cùng những giáo viên đầu tiên",
+
   items: [
     {
       quote:
-        "Owly giúp tôi tiết kiệm hàng giờ mỗi tuần trong việc thu học phí và điểm danh. Việc giao bài tập qua Cloudflare R2 cũng vô cùng mượt mà.",
-      name: "Cô Nguyễn Thu Hà",
-      role: "Giáo viên Tiếng Anh, Hà Nội",
+        "Owly hiện vẫn đang trong quá trình phát triển. Những góp ý từ người dùng đầu tiên sẽ trực tiếp giúp chúng tôi quyết định các tính năng cần cải thiện tiếp theo.",
+
+      name: "Owly",
+      role: "Giai đoạn trải nghiệm sớm",
     },
+
     {
       quote:
-        "Giao diện Owly rất rõ ràng và dễ dùng. Con tôi theo dõi được lịch học và hạn nộp bài tập chính xác mà không lo bị nhầm lẫn.",
-      name: "Thầy Trần Minh Đức",
-      role: "Giáo viên Toán THPT, TP. Hồ Chí Minh",
+        "Mục tiêu của Owly không phải là thêm thật nhiều tính năng, mà là làm cho những công việc giáo viên phải làm mỗi ngày trở nên đơn giản hơn.",
+
+      name: "Owly",
+      role: "Triết lý sản phẩm",
     },
+
     {
       quote:
-        "Nhờ có mã VietQR động và báo cáo điểm danh, việc phụ huynh nộp học phí và nhận thông tin học tập của con vô cùng minh bạch.",
-      name: "Chị Lê Thanh Hương",
-      role: "Phụ huynh học sinh",
+        "Các tính năng mới sẽ được bổ sung từng bước dựa trên nhu cầu thực tế của giáo viên và học sinh.",
+
+      name: "Owly",
+      role: "Phát triển liên tục",
     },
   ],
 };
 
 export const pricing = {
-  label: "Bảng giá",
-  heading: "Gói dịch vụ minh bạch, linh hoạt",
-  sub: "Chọn gói phù hợp với quy mô lớp học của bạn. Nâng cấp hoặc thay đổi bất kỳ lúc nào.",
-  note: "Thanh toán theo tháng hoặc năm · Không phí ẩn · Hỗ trợ 24/7",
+  label: "Trải nghiệm sớm",
+
+  heading: "Bắt đầu sử dụng Owly miễn phí",
+
+  sub:
+    "Owly đang trong giai đoạn phát triển và hoàn thiện. Giáo viên có thể trải nghiệm các tính năng hiện có miễn phí và gửi góp ý trực tiếp cho chúng tôi.",
+
+  note:
+    "Không phí khởi tạo · Không cần thẻ thanh toán · Có thể thay đổi khi Owly ra mắt chính thức",
+
   tiers: [
     {
-      name: "Cá nhân (Học sinh)",
+      name: "Trải nghiệm Owly",
+
       price: "0đ",
-      period: "vĩnh viễn",
-      blurb: "Miễn phí toàn bộ cho học sinh tham gia lớp học và nộp bài.",
+
+      period: "trong giai đoạn trải nghiệm",
+
+      blurb:
+        "Phù hợp cho giáo viên muốn bắt đầu quản lý lớp học trên Owly và đồng hành cùng quá trình phát triển sản phẩm.",
+
       features: [
-        "Tham gia lớp học qua mã lớp",
-        "Xem lịch học & điểm danh",
-        "Nộp bài tập & xem kết quả chấm",
-        "Tải học liệu & thảo luận bài viết",
+        "Tạo và quản lý lớp học",
+        "Quản lý học sinh",
+        "Lịch học & điểm danh",
+        "Bài tập & bài nộp",
+        "Nhận xét và theo dõi tiến bộ",
+        "Theo dõi học phí",
+        "Tài liệu & thông báo lớp học",
       ],
-      cta: "Bắt đầu ngay",
-      featured: false,
-    },
-    {
-      name: "Giáo viên",
-      price: "199.000đ",
-      period: "mỗi tháng",
-      blurb: "Đầy đủ tính năng quản lý dành cho giáo viên trực tiếp giảng dạy.",
-      features: [
-        "Tất cả tính năng cá nhân",
-        "Quản lý không giới hạn lớp học & học sinh",
-        "Điểm danh & sinh lịch tuần lặp lại",
-        "Soạn bài tập Tiptap/Word & lưu R2",
-        "Quản lý học phí & VietQR tự động",
-      ],
-      cta: "Đăng ký dùng thử",
+
+      cta: "Bắt đầu miễn phí",
+
       featured: true,
-    },
-    {
-      name: "Trung tâm",
-      price: "499.000đ",
-      period: "mỗi tháng",
-      blurb: "Giải pháp mở rộng cho trung tâm đào tạo và nhiều trợ giảng.",
-      features: [
-        "Tất cả tính năng của gói Giáo viên",
-        "Tài khoản quản trị trung tâm",
-        "Phân quyền nhiều giáo viên & trợ giảng",
-        "Báo cáo tài chính & doanh thu học phí",
-      ],
-      cta: "Liên hệ tư vấn",
-      featured: false,
     },
   ],
 };
 
 export const faq = {
   label: "Hỏi đáp",
-  heading: "Thắc mắc thường gặp",
+
+  heading: "Những điều bạn có thể muốn biết",
+
   contact: {
-    text: "Cần trợ giúp thêm? Gửi thư cho chúng tôi tại — support@owly.edu.vn",
+    text:
+      "Bạn có góp ý hoặc cần hỗ trợ? Hãy liên hệ với đội ngũ Owly.",
     href: "#top",
   },
+
   items: [
     {
-      q: "Owly hỗ trợ những đối tượng người dùng nào?",
-      a: "Owly hỗ trợ 3 nhóm người dùng chính: Giáo viên (tạo lớp, quản lý bài tập, điểm danh, thu học phí), Học sinh (xem lịch, nộp bài, thảo luận) và Phụ huynh (theo dõi chuyên cần và nộp học phí).",
+      q: "Owly dành cho ai?",
+
+      a:
+        "Owly hiện được xây dựng chủ yếu dành cho giáo viên cá nhân, giáo viên dạy thêm và những người đang trực tiếp quản lý lớp học của mình. Học sinh có thể đăng nhập để theo dõi lớp, lịch học, bài tập và các thông tin liên quan.",
     },
+
     {
-      q: "Việc thu học phí qua VietQR hoạt động như thế nào?",
-      a: "Hệ thống tự động tạo mã VietQR kèm số tiền và nội dung chuyển khoản chính xác cho từng hóa đơn học sinh. Giáo viên nhận tiền trực tiếp về tài khoản ngân hàng của mình và duyệt giao dịch nhanh chóng.",
+      q: "Tôi có cần cài đặt phần mềm không?",
+
+      a:
+        "Không. Owly hoạt động trên trình duyệt web nên bạn chỉ cần đăng nhập và sử dụng. Giao diện được thiết kế để có thể sử dụng trên máy tính, tablet và điện thoại.",
     },
+
     {
-      q: "Dữ liệu bài tập và tài liệu được lưu trữ ở đâu?",
-      a: "Toàn bộ tài liệu bài giảng và tệp nộp bài tập của học sinh được lưu trữ an toàn trên dịch vụ lưu trữ đám mây Cloudflare R2 với tốc độ tải cực nhanh và tính bảo mật cao.",
+      q: "Điểm danh có hoàn toàn tự động không?",
+
+      a:
+        "Hiện tại giáo viên có thể điểm danh nhanh theo từng buổi học và ghi nhận các trạng thái như có mặt, vắng hoặc đi muộn. Owly sẽ tiếp tục bổ sung thêm các cách điểm danh tiện lợi hơn trong tương lai.",
     },
+
     {
-      q: "Tôi có thể truy cập Owly trên điện thoại không?",
-      a: "Có, giao diện Owly được thiết kế tương thích hoàn hảo trên điện thoại di động, máy tính bảng và máy tính bàn thông qua trình duyệt web.",
+      q: "Owly hỗ trợ quản lý học phí như thế nào?",
+
+      a:
+        "Giáo viên có thể tạo thông tin học phí, theo dõi trạng thái thanh toán và kiểm tra minh chứng chuyển khoản ngay trong hệ thống. Các tính năng thanh toán và xác nhận tự động đang nằm trong kế hoạch phát triển tiếp theo.",
     },
+
     {
-      q: "Dữ liệu cá nhân và điểm số của học sinh có an toàn không?",
-      a: "Hoàn toàn an toàn. Owly áp dụng chính sách phân quyền nghiêm ngặt, học sinh chỉ xem được điểm số và bài làm của chính mình, các thông tin liên hệ được bảo vệ nghiêm ngặt.",
+      q: "Phụ huynh có tài khoản riêng không?",
+
+      a:
+        "Ở phiên bản hiện tại, Owly tập trung vào giáo viên và học sinh. Các tính năng dành riêng cho phụ huynh có thể được phát triển thêm dựa trên nhu cầu thực tế của người dùng.",
+    },
+
+    {
+      q: "Owly có miễn phí không?",
+
+      a:
+        "Trong giai đoạn trải nghiệm và phát triển, Owly cho phép người dùng bắt đầu miễn phí. Chính sách giá chính thức sẽ được công bố sau khi sản phẩm hoàn thiện hơn.",
     },
   ],
 };
 
 export const journal = {
-  label: "Tin tức & Cập nhật",
-  heading: "Nhật ký phát triển Owly",
-  sub: "Những thông tin cập nhật mới nhất về tính năng và kinh nghiệm quản lý lớp học hiệu quả.",
+  label: "Sắp tới trên Owly",
+
+  heading: "Owly sẽ tiếp tục tốt hơn",
+
+  sub:
+    "Chúng tôi đang phát triển thêm những tính năng giúp giáo viên giảm bớt các công việc lặp lại và tập trung nhiều hơn vào việc giảng dạy.",
+
   posts: [
     {
-      category: "Tính năng mới",
-      date: "12 Tháng 8, 2026",
-      title: "Tự động hóa Nộp bài tập từ File Word",
+      category: "Đang phát triển",
+
+      date: "Roadmap",
+
+      title: "AI hỗ trợ soạn bài tập",
+
       excerpt:
-        "Tích hợp Mammoth.js cho phép giáo viên kéo thả file bài tập .docx trực tiếp vào trình soạn thảo một cách nhanh chóng.",
+        "Chọn chủ đề, trình độ và dạng bài mong muốn để Owly hỗ trợ tạo nội dung bài tập, sau đó giáo viên có thể chỉnh sửa trước khi giao cho học sinh.",
     },
+
     {
-      category: "Hướng dẫn",
-      date: "28 Tháng 7, 2026",
-      title: "Tối ưu hóa Thu học phí Lớp học",
+      category: "Đang phát triển",
+
+      date: "Roadmap",
+
+      title: "Thanh toán & xác nhận học phí tự động",
+
       excerpt:
-        "Cách ứng dụng mã VietQR động để giảm thiểu 90% thời gian đối soát tiền học phí hàng tháng.",
+        "Giảm bớt việc kiểm tra thủ công bằng cách hỗ trợ theo dõi giao dịch và cập nhật trạng thái học phí thuận tiện hơn.",
     },
+
     {
-      category: "Bảo mật",
-      date: "02 Tháng 7, 2026",
-      title: "Nâng cấp Hạ tầng Cloudflare R2",
+      category: "Tương lai",
+
+      date: "Roadmap",
+
+      title: "Nhiều công cụ hơn cho giáo viên",
+
       excerpt:
-        "Đảm bảo tốc độ truy cập bài giảng và học liệu tức thì cho hơn 10.000 học sinh trên toàn hệ thống.",
+        "Owly sẽ tiếp tục bổ sung tính năng dựa trên những vấn đề thực tế mà giáo viên gặp phải trong quá trình quản lý lớp học.",
     },
   ],
 };
 
 export const cta = {
-  label: "Lời mời trải nghiệm",
-  heading: "Bắt đầu số hóa lớp học của bạn ngay hôm nay.",
-  sub: "Gia nhập hàng nghìn giáo viên đang nâng cao chất lượng quản lý lớp học cùng Owly. Đăng ký hoàn toàn miễn phí và bắt đầu chỉ trong vài phút.",
-  emailPlaceholder: "email-cua-ban@example.com",
-  buttonLabel: "Đăng ký tài khoản",
+  label: "Bắt đầu với Owly",
+
+  heading:
+    "Dành ít thời gian hơn cho việc quản lý. Dành nhiều thời gian hơn cho việc dạy.",
+
+  sub:
+    "Tạo lớp học đầu tiên của bạn trên Owly và trải nghiệm cách quản lý lịch học, điểm danh, bài tập và học phí trong cùng một nơi.",
+
+  emailPlaceholder: "Nhập email của bạn",
+
+  buttonLabel: "Bắt đầu miễn phí",
+
   successMessage:
-    "Cảm ơn bạn đã quan tâm! Chúng tôi đã nhận được yêu cầu và sẽ hỗ trợ bạn ngay.",
-  note: "Khởi tạo nhanh chóng · Dễ dàng cài đặt",
+    "Cảm ơn bạn đã quan tâm đến Owly! Chúng tôi đã nhận được thông tin của bạn.",
+
+  note: "Bắt đầu miễn phí · Không cần cài đặt",
 };
 
 export const footer = {
   blurb:
-    "Nền tảng quản lý học tập, lớp học, điểm danh và học phí thông minh dành cho Giáo viên & Học sinh.",
+    "Owly giúp giáo viên quản lý lớp học, học sinh, lịch học, bài tập và học phí trong một không gian đơn giản và dễ sử dụng.",
+
   columns: [
     {
-      heading: "Sản phẩm",
-      links: ["Tính năng", "Bảng giá", "Quy trình nộp bài", "Học liệu Cloudflare"],
+      heading: "Owly",
+      links: [
+        "Tính năng",
+        "Trải nghiệm miễn phí",
+        "Sắp tới trên Owly",
+        "Giới thiệu",
+      ],
     },
+
     {
-      heading: "Hệ thống",
-      links: ["Giới thiệu Owly", "Bảo mật dữ liệu", "Điều khoản dịch vụ", "Chính sách quyền riêng tư"],
+      heading: "Sản phẩm",
+      links: [
+        "Quản lý lớp học",
+        "Bài tập",
+        "Điểm danh",
+        "Học phí",
+      ],
     },
+
     {
       heading: "Hỗ trợ",
-      links: ["Trung tâm trợ giúp", "Hướng dẫn sử dụng", "Liên hệ Giáo viên", "Trạng thái hệ thống"],
+      links: [
+        "Hướng dẫn sử dụng",
+        "Gửi góp ý",
+        "Liên hệ",
+        "Chính sách quyền riêng tư",
+      ],
     },
   ],
-  copyright: "© 2026 Owly Platform. Mọi quyền được bảo lưu.",
-  colophon: "Thiết kế chuẩn font Playfair Display · Source Sans 3 · IBM Plex Mono",
+
+  copyright:
+    "© 2026 Owly. Mọi quyền được bảo lưu.",
+
+  colophon:
+    "Được tạo ra để việc quản lý lớp học trở nên đơn giản hơn.",
 };
