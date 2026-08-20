@@ -5,14 +5,14 @@ import { ClassListPage, ClassDetailPage, ArchivedClassesPage, AssignmentCreatePa
 import { StudentListPage } from '../features/students';
 import { SchedulePage } from '../features/schedule';
 import { DashboardLayout, ProtectedRoute } from '../shared';
-
-
+import { LandingPage } from '../features/landing';
 import { ProfilePage } from '../features/profile/components/ProfilePage';
 
 export function AppRoutes() {
   return (
     <Routes>
       {/* ── Public routes (no layout) ────────── */}
+      <Route path="/" element={<LandingPage />} />
       <Route path="/signin" element={<SignIn />} />
       <Route path="/signup" element={<SignUp />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -26,7 +26,7 @@ export function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<DashboardPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
 
         {/* Classes */}
         <Route path="/classes" element={<ClassListPage />} />
@@ -39,7 +39,6 @@ export function AppRoutes() {
 
         {/* Schedule */}
         <Route path="/schedule" element={<SchedulePage />} />
-
 
         {/* Profile & settings */}
         <Route path="/profile" element={<ProfilePage />} />
